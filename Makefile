@@ -1,37 +1,31 @@
-NAME		:= Project
-DESCRIPTION	:= An example C project
-COMPANY		:= Company
+NAME		:= Haiyajan-UI
+DESCRIPTION	:= UI for Haiyajan
+COMPANY		:= Deltabeard
 COPYRIGHT	:= Copyright (c) 2020 Mahyar Koshkouei
-LICENSE_SPDX	:= 0BSD
+LICENSE_SPDX	:= All Rights Reserved
 
 # Default compiler options for GCC and Clang
 CC	:= cc
 OBJEXT	:= o
 RM	:= rm -f
 EXEOUT	:= -o
-CFLAGS	:= -std=c99 -pedantic -Wall -Wextra -O2 -g3
+CFLAGS	:= -std=c99 -pedantic -Wall -O0 -g3
 EXE	:= $(NAME)
-LICENSE := $(COPYRIGHT); Released under the $(LICENSE_SPDX) License.
+LICENSE := $(COPYRIGHT); $(LICENSE_SPDX).
 GIT_VER := $(shell git describe --dirty --always --tags --long)
 
-# Default configurable build options
-EXAMPLE_OPTION := 0
-
 define help_txt
-C template project.
+$(NAME) - $(DESCRIPTION)
+
 Available options and their descriptions when enabled:
-  EXAMPLE_OPTION=$(EXAMPLE_OPTION)
-          Enables debug symbols and reduces optimisation.
+  SDL_FLAGS=$(SDL_FLAGS)
+  SDL_LIBS=$(SDL_LIBS)
 
 $(LICENSE)
 endef
 
-ifeq ($(EXAMPLE_OPTION),1)
-	$(info EXAMPLE_OPTION was enabled!)
-	# Add relevant defines to CFLAGS. Example:
-	#   override CFLAGS += -DEXAMPLE_OPTION
-	# "-D" is compatible with GCC, Clang, and MSVC.
-endif
+SDL_FLAGS := $(shell sdl2-config --cflags)
+SDL_LIBS := $(shell sdl2-config --libs)
 
 SRCS := $(wildcard src/*.c)
 OBJS := $(SRCS:.c=.$(OBJEXT))
@@ -46,11 +40,12 @@ ifeq ($(GIT_VER),)
 	GIT_VER := LOCAL
 endif
 
-override CFLAGS += -Iinc
+override CFLAGS += -Iinc $(SDL_FLAGS)
+override LDLIBS += $(SDL_LIBS)
 
 all: $(NAME)
 $(NAME): $(OBJS) $(RES)
-	$(CC) $(CFLAGS) $(EXEOUT)$@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(EXEOUT)$@ $^ $(LDFLAGS) $(LDLIBS)
 
 %.obj: %.c
 	$(CC) $(CFLAGS) /Fo$@ /c /TC $^

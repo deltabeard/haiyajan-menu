@@ -13,4 +13,6 @@
 !meta/**/*.rc
 !meta/**/*.ico
 
+!ext/**/*.cab
+
 !*/
