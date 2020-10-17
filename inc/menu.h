@@ -33,21 +33,26 @@ struct menu_ctx_s
 };
 typedef struct menu_ctx_s menu_ctx;
 
-enum menu_instruction_e {
+enum menu_instruction_e
+{
 	/* Go back to the previous item.
-	 * Could be used when user presses UP. */
+	 * Could be used when user presses UP.
+	*/
 	MENU_INSTR_PREV_ITEM,
 
 	/* Go to next item in menu.
-	 * Could be used when user presses DOWN. */
+	 * Could be used when user presses DOWN.
+	*/
 	MENU_INSTR_NEXT_ITEM,
 
 	/* Go to parent menu if one exists.
-	 * Could be used when user presses BACKSPACE. */
+	 * Could be used when user presses BACKSPACE.
+	*/
 	MENU_INSTR_PARENT_MENU,
 
 	/* Execute item operation.
-	 * Could be used when user presses ENTER. */
+	 * Could be used when user presses ENTER.
+	*/
 	MENU_INSTR_EXEC_ITEM
 };
 typedef enum menu_instruction_e menu_instruction;
@@ -94,6 +99,6 @@ typedef struct menu_item_s menu_item;
  * Add an item to a given menu. First item shown first in menu.
  */
 void menu_init(menu_ctx *menu, menu_ctx *parent, const char *title,
-		const char *help, unsigned long items_nmemb, menu_item *items);
+	       const char *help, unsigned long items_nmemb, menu_item *items);
 void menu_set_items(menu_ctx *menu, unsigned long nmemb, menu_item *items);
 menu_ctx *menu_instruct(menu_ctx *ctx, menu_instruction instr);

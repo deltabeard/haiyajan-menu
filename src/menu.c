@@ -13,13 +13,12 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-#include "menu.h"
-
+#include <menu.h>
 #include <stdlib.h>
 
 void menu_init(menu_ctx *menu, menu_ctx *parent, const char *title,
-		const char *help, unsigned long items_nmemb,
-		struct menu_item_s *items)
+	       const char *help, unsigned long items_nmemb,
+	       struct menu_item_s *items)
 {
 	menu->parent = parent;
 	menu->title = title;
@@ -30,7 +29,7 @@ void menu_init(menu_ctx *menu, menu_ctx *parent, const char *title,
 }
 
 void menu_set_items(menu_ctx *menu, unsigned long nmemb,
-		struct menu_item_s *items)
+		    struct menu_item_s *items)
 {
 	menu->items_nmemb = nmemb;
 	menu->items = items;
@@ -41,51 +40,51 @@ menu_ctx *menu_instruct(menu_ctx *ctx, menu_instruction instr)
 	menu_ctx *ret = ctx;
 	switch(instr)
 	{
-		case MENU_INSTR_PREV_ITEM:
-			if(ctx->item_selected > 0)
-				ctx->item_selected--;
+	case MENU_INSTR_PREV_ITEM:
+		if(ctx->item_selected > 0)
+			ctx->item_selected--;
 
+		break;
+
+	case MENU_INSTR_NEXT_ITEM:
+		if(ctx->item_selected < (ctx->items_nmemb - 1))
+			ctx->item_selected++;
+
+		break;
+
+	case MENU_INSTR_PARENT_MENU:
+		if(ctx->parent != NULL)
+			ret = ctx->parent;
+
+		break;
+
+	case MENU_INSTR_EXEC_ITEM:
+	{
+		const struct menu_item_s *item =
+			ctx->items + ctx->item_selected;
+
+		switch(item->op)
+		{
+		case MENU_SUB_MENU:
+			ret = item->param.sub_menu;
 			break;
 
-		case MENU_INSTR_NEXT_ITEM:
-			if(ctx->item_selected < (ctx->items_nmemb - 1))
-				ctx->item_selected++;
-
+		case MENU_EXEC_FUNC:
+		{
+			void *p = item->param.exec_func.ctx;
+			item->param.exec_func.func(p);
 			break;
+		}
 
-		case MENU_INSTR_PARENT_MENU:
-			if(ctx->parent != NULL)
-				ret = ctx->parent;
-
+		case MENU_SET_VAL:
+		{
+			int val = item->param.set_val.val;
+			*item->param.set_val.set = val;
 			break;
-
-		case MENU_INSTR_EXEC_ITEM:
-			{
-				const struct menu_item_s *item =
-					ctx->items + ctx->item_selected;
-
-				switch(item->op)
-				{
-					case MENU_SUB_MENU:
-						ret = item->param.sub_menu;
-						break;
-
-					case MENU_EXEC_FUNC:
-						{
-							void *p = item->param.exec_func.ctx;
-							item->param.exec_func.func(p);
-							break;
-						}
-
-					case MENU_SET_VAL:
-						{
-							int val = item->param.set_val.val;
-							*item->param.set_val.set = val;
-							break;
-						}
-				}
-				break;
-			}
+		}
+		}
+		break;
+	}
 	}
 
 	return ret;
