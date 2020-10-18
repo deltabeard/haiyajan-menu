@@ -7,11 +7,63 @@
 #include <SDL.h>
 #include <ui.h>
 
+struct transition_s
+{
+	/* Required. */
+	SDL_Texture *start;
+
+	/* Not required. If NULL, the texture is not drawn if the starting
+	* texture has flipped. Otherwise, the end texture is shown on flip. */
+	SDL_Texture *end;
+
+	/* The original coordinates and dimensions of the starting texture. */
+	rel_rect begin;
+	SDL_Rect begin_actual;
+
+	/* The destination coordinates. */
+	rel_rect dest;
+	SDL_Rect dest_actual;
+
+	/* The current progress of the transition. Set to zero. */
+	Uint32 anim_progress_ms;
+
+	/* The maximum duration of the transition is 800ms if the incremented
+	*  transition value below is set to 1. Setting to 2 halves the
+	*  duration. */
+	Uint8 anim_speed;
+
+	/* Apply uniform fading during animation. */
+	unsigned fading : 1;
+};
+
+struct fixed_s
+{
+	SDL_Texture *tex;
+	SDL_Rect coordinates;
+};
+
+struct elements_s
+{
+	enum type_e
+	{
+		ELEM_TYPE_FIXED,
+		ELEM_TYPE_TRANSITION
+	} type;
+
+	union elem_u
+	{
+		struct fixed_s *fixed;
+		struct transition_s *transition;
+	} elem;
+
+	struct elements_s *next;
+};
+
 struct ui_ctx_s
 {
 	SDL_Renderer *ren;
 	SDL_Texture *tex;
-	void *font_atlas;
+	//void *font_atlas;
 	float dpi;
 };
 
@@ -23,6 +75,7 @@ static double *ease_out_quint_transition = NULL;
 /* The animation is for 800ms. */
 static const unsigned ease_out_quint_duration_ms = 800;
 
+#if 0
 int ui_redraw(struct ui_s *ui, SDL_Renderer *rend)
 {
 	SDL_Rect main_menu_box = {150, 50, 100, 100};
@@ -61,6 +114,7 @@ int ui_redraw(struct ui_s *ui, SDL_Renderer *rend)
 
 	return 0;
 }
+#endif
 
 void ui_input(struct ui_s *ui, SDL_GameControllerButton btn)
 {
@@ -98,6 +152,7 @@ SDL_Texture *ui_render_frame(ui_ctx *c)
 
 void ui_process_event(ui_ctx *c, SDL_Event *e)
 {
+	/* Recalculate begin_actual coordinates on resolution and DPI change. */
 	return;
 }
 
@@ -120,11 +175,14 @@ static int init_transition_lut(void *ptr)
 	return 0;
 }
 
-ui_ctx *ui_init(SDL_Renderer *ren, Uint32 texture_format)
+ui_ctx *ui_init(SDL_Window *win, SDL_Renderer *ren)
 {
 	int w, h;
 	ui_ctx *c;
+	Uint32 texture_format;
+	int display_id;
 
+	SDL_assert_paranoid(win != NULL);
 	SDL_assert_paranoid(ren != NULL);
 
 	c = SDL_calloc(1, sizeof(ui_ctx));
@@ -134,12 +192,18 @@ ui_ctx *ui_init(SDL_Renderer *ren, Uint32 texture_format)
 	if(SDL_GetRendererOutputSize(ren, &w, &h) != 0)
 		goto err;
 
-	if(SDL_GetDisplayDPI(0, &c->dpi, NULL, NULL) != 0)
+	display_id = SDL_GetWindowDisplayIndex(win);
+	if(display_id < 0)
+		goto err;
+
+	if(SDL_GetDisplayDPI(display_id, &c->dpi, NULL, NULL) != 0)
 		goto err;
 
 	/* We keep the Renderer so that we can create textures in the
 	future. */
 	c->ren = ren;
+
+	texture_format = SDL_GetWindowPixelFormat(win);
 	c->tex = SDL_CreateTexture(ren, texture_format,
 				   SDL_TEXTUREACCESS_TARGET, w, h);
 	if(c->tex == NULL)

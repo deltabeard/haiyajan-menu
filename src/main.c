@@ -7,10 +7,10 @@
 #include <SDL.h>
 #include <ui.h>
 
-static void loop(SDL_Window *win, SDL_Renderer *rend, struct ui_s *ui)
+static void loop(SDL_Window *win, SDL_Renderer *ren, struct ui_s *ui)
 {
 	SDL_Event e;
-	SDL_SetRenderDrawColor(rend, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
 
 	while(SDL_PollEvent(&e))
 	{
@@ -57,15 +57,15 @@ static void loop(SDL_Window *win, SDL_Renderer *rend, struct ui_s *ui)
 		char title[64];
 
 		ui->redraw_required = SDL_FALSE;
-		SDL_RenderClear(rend);
-		ui_redraw(ui, rend);
+		SDL_RenderClear(ren);
+		ui_redraw(ui, ren);
 
 		SDL_snprintf(title, sizeof(title), "%s",
 			     ui->current->items[ui->current->item_selected].name);
 		SDL_SetWindowTitle(win, title);
 	}
 
-	SDL_RenderPresent(rend);
+	SDL_RenderPresent(ren);
 
 	return;
 }
@@ -79,7 +79,7 @@ static void ui_nop_cb(void *ctx)
 int main(int argc, char *argv[])
 {
 	SDL_Window *win = NULL;
-	SDL_Renderer *rend = NULL;
+	SDL_Renderer *ren = NULL;
 	int ret;
 	struct ui_s ui = {0};
 	static SDL_bool quit = SDL_FALSE;
@@ -106,17 +106,16 @@ int main(int argc, char *argv[])
 	if(win == NULL)
 		goto err;
 
-	rend = SDL_CreateRenderer(win, -1,
-				  SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
-	if(rend == NULL)
+	ren = SDL_CreateRenderer(win, -1,
+				 SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
+	if(ren == NULL)
 		goto err;
 
 	SDL_SetWindowMinimumSize(win, 320, 240);
 
 	{
 		ui_ctx *ui_priv;
-		Uint32 texture_format = SDL_GetWindowPixelFormat(win);
-		ui_priv = ui_init(rend, texture_format);
+		ui_priv = ui_init(win, ren);
 	}
 
 	menu_init(&ui.root, NULL, NULL, NULL,
@@ -129,10 +128,10 @@ int main(int argc, char *argv[])
 	//open_menu.style = MENU_STYLE_MAIN;
 
 	while(SDL_QuitRequested() == SDL_FALSE && quit == SDL_FALSE)
-		loop(win, rend, &ui);
+		loop(win, ren, &ui);
 
 out:
-	SDL_DestroyRenderer(rend);
+	SDL_DestroyRenderer(ren);
 	SDL_DestroyWindow(win);
 	SDL_Quit();
 	return ret;
