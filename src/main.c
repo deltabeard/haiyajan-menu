@@ -6,11 +6,12 @@
 #include <menu.h>
 #include <SDL.h>
 #include <ui.h>
+#include <win_dirent.h>
 
-static void loop(SDL_Window *win, SDL_Renderer *ren, struct ui_s *ui)
+static void loop(SDL_Window *win, SDL_Renderer *ren, ui_ctx *ui)
 {
 	SDL_Event e;
-	SDL_SetRenderDrawColor(ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_bool redraw;
 
 	while(SDL_PollEvent(&e))
 	{
@@ -52,20 +53,13 @@ static void loop(SDL_Window *win, SDL_Renderer *ren, struct ui_s *ui)
 		}
 	}
 
-	if(ui->redraw_required == SDL_TRUE)
-	{
-		char title[64];
+	redraw = ui_should_redraw(ui);
+	ui_render_frame(ui);
 
-		ui->redraw_required = SDL_FALSE;
-		SDL_RenderClear(ren);
-		ui_redraw(ui, ren);
-
-		SDL_snprintf(title, sizeof(title), "%s",
-			     ui->current->items[ui->current->item_selected].name);
-		SDL_SetWindowTitle(win, title);
-	}
-
-	SDL_RenderPresent(ren);
+	if(redraw == SDL_TRUE)
+		SDL_RenderPresent(ren);
+	else
+		SDL_Delay(1);
 
 	return;
 }
@@ -81,16 +75,40 @@ int main(int argc, char *argv[])
 	SDL_Window *win = NULL;
 	SDL_Renderer *ren = NULL;
 	int ret;
-	struct ui_s ui = {0};
 	static SDL_bool quit = SDL_FALSE;
-	menu_ctx open_menu;
-	menu_item open_items[] = {
-		{ "File 1", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb }}
+	ui_ctx *ui;
+
+	struct menu_item root_items[] = {
+		{
+		"Continue", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb },
+		.bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
+		.selected_outline = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE},
+		.icon = MENU_ICON_PLAY, .icon_transition = ICON_TRANSITION_TILT,
+		.transition_data.tilt = {.end_angle = 45.0F }
+		},
+		{
+		"Open", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb },
+		.bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
+		.selected_outline = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE},
+		.icon = MENU_ICON_FOLDER, .icon_transition = ICON_TRANSITION_FADE,
+		.transition_data.fade = {.end_icon = MENU_ICON_FOLDEROPEN }
+		},
+		{
+		"Exit", NULL, MENU_SET_VAL, .param.set_val = { 1, &quit },
+		.bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
+		.selected_outline = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
+		.icon = MENU_ICON_POWERBUTTON, .icon_transition = ICON_TRANSITION_NONE
+		}
 	};
-	menu_item root_items[] = {
-		{ "Continue", NULL, MENU_SET_VAL, .param.set_val = { SDL_TRUE, &ui.cont }},
-		{ "Open", NULL, MENU_SUB_MENU, .param.sub_menu = &open_menu },
-		{ "Exit", NULL, MENU_SET_VAL, .param.set_val = { SDL_TRUE, &quit }}
+	struct menu_ctx root_menu = {
+		.parent = NULL, .title = "Main Menu", .help = NULL,
+		.item_selected = 0,
+		.list_type = LIST_TYPE_STATIC,
+		.items_u.static_list =
+		{
+		.items_nmemb = SDL_arraysize(root_items),
+		.items = root_items
+		}
 	};
 
 	(void)argc;
@@ -100,6 +118,8 @@ int main(int argc, char *argv[])
 	if(ret != 0)
 		goto err;
 
+	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_INFO);
+
 	win = SDL_CreateWindow("Haiyajan UI",
 			       SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 			       1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
@@ -107,28 +127,18 @@ int main(int argc, char *argv[])
 		goto err;
 
 	ren = SDL_CreateRenderer(win, -1,
-				 SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
+				 SDL_RENDERER_ACCELERATED |
+				 SDL_RENDERER_PRESENTVSYNC |
+				 SDL_RENDERER_TARGETTEXTURE);
 	if(ren == NULL)
 		goto err;
 
 	SDL_SetWindowMinimumSize(win, 320, 240);
 
-	{
-		ui_ctx *ui_priv;
-		ui_priv = ui_init(win, ren);
-	}
-
-	menu_init(&ui.root, NULL, NULL, NULL,
-		  SDL_arraysize(root_items), root_items);
-	menu_init(&open_menu, &ui.root, "Select a file to play in Haiyajan", NULL,
-		  SDL_arraysize(open_items), open_items);
-	ui.current = &ui.root;
-	//ui.root.style = MENU_STYLE_MAIN;
-	ui.redraw_required = SDL_TRUE;
-	//open_menu.style = MENU_STYLE_MAIN;
+	ui = ui_init(win, ren, &root_menu);
 
 	while(SDL_QuitRequested() == SDL_FALSE && quit == SDL_FALSE)
-		loop(win, ren, &ui);
+		loop(win, ren, ui);
 
 out:
 	SDL_DestroyRenderer(ren);

@@ -16,28 +16,16 @@
 #include <menu.h>
 #include <stdlib.h>
 
-void menu_init(menu_ctx *menu, menu_ctx *parent, const char *title,
-	       const char *help, unsigned long items_nmemb,
-	       struct menu_item_s *items)
+void menu_set_items(struct menu_ctx *menu, unsigned long nmemb,
+		    struct menu_item *items)
 {
-	menu->parent = parent;
-	menu->title = title;
-	menu->help = help;
-	menu->item_selected = 0;
-	menu->items_nmemb = items_nmemb;
-	menu->items = items;
+	menu->items_u.static_list.items_nmemb = nmemb;
+	menu->items_u.static_list.items = items;
 }
 
-void menu_set_items(menu_ctx *menu, unsigned long nmemb,
-		    struct menu_item_s *items)
+struct menu_ctx *menu_instruct(struct menu_ctx *ctx, menu_instruction_e instr)
 {
-	menu->items_nmemb = nmemb;
-	menu->items = items;
-}
-
-menu_ctx *menu_instruct(menu_ctx *ctx, menu_instruction instr)
-{
-	menu_ctx *ret = ctx;
+	struct menu_ctx *ret = ctx;
 	switch(instr)
 	{
 	case MENU_INSTR_PREV_ITEM:
@@ -47,7 +35,7 @@ menu_ctx *menu_instruct(menu_ctx *ctx, menu_instruction instr)
 		break;
 
 	case MENU_INSTR_NEXT_ITEM:
-		if(ctx->item_selected < (ctx->items_nmemb - 1))
+		if(ctx->item_selected < (ctx->items_u.static_list.items_nmemb - 1))
 			ctx->item_selected++;
 
 		break;
@@ -60,8 +48,8 @@ menu_ctx *menu_instruct(menu_ctx *ctx, menu_instruction instr)
 
 	case MENU_INSTR_EXEC_ITEM:
 	{
-		const struct menu_item_s *item =
-			ctx->items + ctx->item_selected;
+		const struct menu_item *item =
+			ctx->items_u.static_list.items + ctx->item_selected;
 
 		switch(item->op)
 		{

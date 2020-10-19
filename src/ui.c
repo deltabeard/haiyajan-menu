@@ -7,6 +7,7 @@
 #include <SDL.h>
 #include <ui.h>
 
+#if 0
 struct transition_s
 {
 	/* Required. */
@@ -42,7 +43,7 @@ struct fixed_s
 	SDL_Rect coordinates;
 };
 
-struct elements_s
+struct elements
 {
 	enum type_e
 	{
@@ -56,14 +57,32 @@ struct elements_s
 		struct transition_s *transition;
 	} elem;
 
-	struct elements_s *next;
+	struct elements *next;
 };
 
-struct ui_ctx_s
+struct ui_texture_cache
 {
-	SDL_Renderer *ren;
+	void *hash;
 	SDL_Texture *tex;
-	//void *font_atlas;
+	struct ui_texture_cache *next;
+};
+#endif
+
+struct ui_ctx
+{
+	/* Required to recreate texture on resizing. */
+	SDL_Renderer *ren;
+
+	/* Texture to render on. */
+	SDL_Texture *tex;
+	SDL_bool redraw;
+
+	/* Root Menu. */
+	struct menu_ctx *root;
+	/* Currently rendered menu. */
+	struct menu_ctx *current;
+
+	/* DPI that tex texture is rendered for. */
 	float dpi;
 };
 
@@ -116,7 +135,7 @@ int ui_redraw(struct ui_s *ui, SDL_Renderer *rend)
 }
 #endif
 
-void ui_input(struct ui_s *ui, SDL_GameControllerButton btn)
+void ui_input(ui_ctx *ui, SDL_GameControllerButton btn)
 {
 	switch(btn)
 	{
@@ -140,14 +159,64 @@ void ui_input(struct ui_s *ui, SDL_GameControllerButton btn)
 		return;
 	}
 
-	ui->redraw_required = SDL_TRUE;
-
+	SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "Redraw requested");
+	ui->redraw = SDL_TRUE;
 	return;
 }
 
-SDL_Texture *ui_render_frame(ui_ctx *c)
+SDL_bool ui_should_redraw(ui_ctx *c)
 {
-	return 0;
+	return c->redraw;
+}
+
+int ui_render_frame(ui_ctx *c)
+{
+	int ret = 0;
+	SDL_assert(c->tex != NULL);
+
+	if(c->redraw == SDL_FALSE)
+		goto out;
+
+	ret = SDL_SetRenderTarget(c->ren, c->tex);
+
+	SDL_SetRenderDrawColor(c->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderClear(c->ren);
+
+	SDL_Rect main_menu_box = {150, 50, 100, 100};
+	const unsigned box_spacing = 120;
+
+	for(unsigned item = 0; item < c->current->items_u.static_list.items_nmemb; item++)
+	{
+		const SDL_Colour fg = c->current->items_u.static_list.items[item].selected_outline;
+		const SDL_Colour bg = c->current->items_u.static_list.items[item].bg;
+
+		if(item == c->current->item_selected)
+		{
+			SDL_Rect bg_box = main_menu_box;
+			bg_box.x -= 5;
+			bg_box.y -= 5;
+			bg_box.w += 10;
+			bg_box.h += 10;
+			SDL_SetRenderDrawColor(c->ren, bg.r, bg.g, bg.b, bg.a);
+			SDL_RenderFillRect(c->ren, &bg_box);
+			SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "Selected %s",
+				    c->current->items_u.static_list.items[item].name);
+		}
+
+		SDL_SetRenderDrawColor(c->ren, fg.r, fg.g, fg.b, fg.a);
+		SDL_RenderFillRect(c->ren, &main_menu_box);
+		main_menu_box.y += box_spacing;
+	}
+
+	ret = SDL_SetRenderTarget(c->ren, NULL);
+	SDL_RenderCopy(c->ren, c->tex, NULL, NULL);
+
+	SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "UI Rendered %s",
+		    c->current->title);
+	c->redraw = SDL_FALSE;
+
+out:
+	return ret;
 }
 
 void ui_process_event(ui_ctx *c, SDL_Event *e)
@@ -175,7 +244,7 @@ static int init_transition_lut(void *ptr)
 	return 0;
 }
 
-ui_ctx *ui_init(SDL_Window *win, SDL_Renderer *ren)
+struct ui_ctx *ui_init(SDL_Window *win, SDL_Renderer *ren, struct menu_ctx *root)
 {
 	int w, h;
 	ui_ctx *c;
@@ -210,6 +279,10 @@ ui_ctx *ui_init(SDL_Window *win, SDL_Renderer *ren)
 		goto err;
 
 	SDL_CreateThread(init_transition_lut, "UI Make LUT", NULL);
+
+	c->root = root;
+	c->current = root;
+	c->redraw = SDL_TRUE;
 
 out:
 	return c;

@@ -20,21 +20,14 @@ SOFTWARE.
 
 #pragma once
 
-#ifndef __DIRENT_H_9DE6B42C_8D0C_4D31_A8EF_8E4C30E6C46A__
-#define __DIRENT_H_9DE6B42C_8D0C_4D31_A8EF_8E4C30E6C46A__
-
 #ifndef _WIN32
-
-#pragma message("this dirent.h implementation is for Windows only!")
-
+/* Use POSIX for dirent if not on Windows NT. */
+#define _POSIX_C_SOURCE 200809L
+#include <sys/types.h>
+#include <dirent.h>
 #else /* _WIN32 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
 #include <sys/types.h>
-
 #include <Windows.h>
 
 #ifndef NAME_MAX
@@ -509,10 +502,4 @@ int versionsort(const void* a, const void* b)
 	return __strverscmp((*dira)->d_name, (*dirb)->d_name);
 }
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-
 #endif /* _WIN32 */
-
-#endif /* __DIRENT_H_9DE6B42C_8D0C_4D31_A8EF_8E4C30E6C46A__ */

@@ -14,6 +14,8 @@
 */
 
 #pragma once
+
+#include <SDL.h>
 #include <stdlib.h>
 
 #define MENU_SELECT_ITEM(menu, sel)				\
@@ -22,18 +24,34 @@
 			menu->item_selected = sel;		\
 	}while(0)
 
-struct menu_ctx_s
+struct menu_ctx
 {
 	struct menu_ctx_s *parent;
 	const char *title;
 	const char *help;
-	unsigned long item_selected;
-	unsigned long items_nmemb;
-	const struct menu_item_s *items;
-};
-typedef struct menu_ctx_s menu_ctx;
+	enum
+	{
+		STYLE_MAIN_MENU,
+		STYLE_LIST_MENU,
+	} style;
 
-enum menu_instruction_e
+	unsigned long item_selected;
+	enum
+	{
+		LIST_TYPE_STATIC,
+		//LIST_TYPE_DYNAMIC
+	} list_type;
+	union
+	{
+		struct
+		{
+			unsigned long items_nmemb;
+			struct menu_item *items;
+		} static_list;
+	} items_u;
+};
+
+typedef enum
 {
 	/* Go back to the previous item.
 	 * Could be used when user presses UP.
@@ -54,13 +72,21 @@ enum menu_instruction_e
 	 * Could be used when user presses ENTER.
 	*/
 	MENU_INSTR_EXEC_ITEM
-};
-typedef enum menu_instruction_e menu_instruction;
+} menu_instruction_e;
 
-struct menu_item_s
+typedef enum
 {
-	const char *name;
-	const char *help;
+	MENU_ICON_FOLDER = 0xE8B7,
+	MENU_ICON_FOLDEROPEN = 0xE838,
+	MENU_ICON_PLAY = 0xE768,
+	MENU_ICON_POWERBUTTON = 0xE7E8,
+	MENU_ICON_DOCUMENT = 0xE8A5
+} icon_utf32_e;
+
+struct menu_item
+{
+	char *name;
+	char *help;
 	enum menu_op_e
 	{
 		/* Opens a sub menu. */
@@ -76,7 +102,7 @@ struct menu_item_s
 	union param_u
 	{
 		/* Pointer to sub menu. */
-		menu_ctx *sub_menu;
+		struct menu_ctx *sub_menu;
 
 		/* Pointer to function to execute if item selected. */
 		struct exec_func_s
@@ -92,13 +118,37 @@ struct menu_item_s
 			int *set;
 		} set_val;
 	} param;
+
+	SDL_Colour bg;
+	SDL_Colour selected_outline;
+
+	/* Item icon. */
+	icon_utf32_e icon;
+
+	/* Type of transition to use for icons when entering or leaving item
+	* highlight. */
+	enum icon_transition_e
+	{
+		ICON_TRANSITION_NONE,
+		ICON_TRANSITION_FADE,
+		ICON_TRANSITION_TILT
+	} icon_transition;
+
+	union transition_data_u
+	{
+		struct
+		{
+			icon_utf32_e end_icon;
+		} fade;
+		struct
+		{
+			float end_angle;
+		} tilt;
+	} transition_data;
 };
-typedef struct menu_item_s menu_item;
 
 /**
  * Add an item to a given menu. First item shown first in menu.
  */
-void menu_init(menu_ctx *menu, menu_ctx *parent, const char *title,
-	       const char *help, unsigned long items_nmemb, menu_item *items);
-void menu_set_items(menu_ctx *menu, unsigned long nmemb, menu_item *items);
-menu_ctx *menu_instruct(menu_ctx *ctx, menu_instruction instr);
+void menu_set_items(struct menu_ctx *menu, unsigned long nmemb, struct menu_item *items);
+struct menu_ctx *menu_instruct(struct menu_ctx *ctx, menu_instruction_e instr);
