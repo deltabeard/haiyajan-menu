@@ -24,9 +24,9 @@
 			menu->item_selected = sel;		\
 	}while(0)
 
-typedef struct menu_ctx
+struct menu_ctx
 {
-	struct menu_ctx_s *parent;
+	struct menu_ctx *parent;
 	const char *title;
 	const char *help;
 	enum
@@ -49,7 +49,7 @@ typedef struct menu_ctx
 			struct menu_item *items;
 		} static_list;
 	} items_u;
-} menu_ctx_s;
+};
 
 typedef enum
 {

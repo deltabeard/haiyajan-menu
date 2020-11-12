@@ -119,7 +119,7 @@ $(EXE): $(OBJS) $(RES)
 
 # cl always prints the source file name, so we just add the CC suffix.
 %.obj: %.c
-	echo CC $(dir $^)$(shell $(CC) $(CFLAGS) /Fo$@ /c /TC $^)
+	$(CC) $(CFLAGS) /Fo$@ /c /TC $^
 
 %.res: %.rc
 	$(info RC $@)

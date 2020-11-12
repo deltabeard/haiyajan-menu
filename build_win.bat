@@ -1,8 +1,9 @@
 @ECHO OFF
 SETLOCAL
 
-set sdlincdir=ext\inc
-set sdllibdir=ext\lib
+SET sdlincdir=ext\inc
+SET sdllibdir=ext\lib
+SET buildtype=DEBUG
 
 IF NOT DEFINED VSCMD_VER (
 	ECHO You must run this within Visual Studio Native Tools Command Line
@@ -20,8 +21,25 @@ IF ERRORLEVEL 1 (
 	EXIT /B 1
 )
 
-IF %1.==build. GOTO build
-IF %1.==prepare. GOTO prepare
+IF /I %1.==build. (
+	IF /I %2.==RELEASE. (SET buildtype=RELEASE)
+	IF /I %2.==RELDEBUG. (SET buildtype=RELDEBUG)
+	IF /I %2.==RELMINSIZE. (SET buildtype=RELMINSIZE)
+	IF /I %2.==DEBUG. (SET buildtype=DEBUG)
+
+	CALL :build
+	EXIT /b
+)
+
+IF %1.==prepare. (
+	CALL :prepare
+	EXIT /b
+)
+
+IF %1.==help. (
+	ECHO USAGE: build_win.bat [build[ DEBUG^|RELEASE^|RELDEBUG^|RELMINSIZE]^|prepare^|help]
+	EXIT /b 0
+)
 
 REM Prepare and perform full build by default.
 
@@ -43,7 +61,7 @@ set ldlibs=SDL2main.lib SDL2-static.lib winmm.lib msimg32.lib version.lib ^
 	odbc32.lib odbccp32.lib
 
 @ECHO ON
-GNUMAKE.EXE EXTRA_CFLAGS=/I%sdlincdir% EXTRA_LDFLAGS="/LTCG /NODEFAULTLIB:LIBCMT %ldlibs% /LIBPATH:'%sdllibdir%'"
+GNUMAKE.EXE -B BUILD=%buildtype% EXTRA_CFLAGS=/I%sdlincdir% EXTRA_LDFLAGS="/LTCG %ldlibs% /LIBPATH:'%sdllibdir%'"
 @ECHO OFF
 
 ENDLOCAL
