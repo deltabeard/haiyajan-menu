@@ -6,12 +6,11 @@
 #include <menu.h>
 #include <SDL.h>
 #include <ui.h>
-#include <win_dirent.h>
+ //#include <win_dirent.h>
 
 static void loop(SDL_Window *win, SDL_Renderer *ren, ui_ctx *ui)
 {
 	SDL_Event e;
-	SDL_bool redraw;
 
 	while(SDL_PollEvent(&e))
 	{
@@ -42,9 +41,11 @@ static void loop(SDL_Window *win, SDL_Renderer *ren, ui_ctx *ui)
 
 			case SDLK_SPACE:
 			case SDLK_RETURN:
+			case SDLK_z:
 				ui_input(ui, SDL_CONTROLLER_BUTTON_A);
 				break;
 
+			case SDLK_x:
 			case SDLK_BACKSPACE:
 				ui_input(ui, SDL_CONTROLLER_BUTTON_B);
 				break;
@@ -53,11 +54,11 @@ static void loop(SDL_Window *win, SDL_Renderer *ren, ui_ctx *ui)
 		}
 	}
 
-	redraw = ui_should_redraw(ui);
-	ui_render_frame(ui);
-
-	if(redraw == SDL_TRUE)
+	if(ui_should_redraw(ui) == SDL_TRUE)
+	{
+		ui_render_frame(ui);
 		SDL_RenderPresent(ren);
+	}
 	else
 		SDL_Delay(1);
 
@@ -75,7 +76,7 @@ int main(int argc, char *argv[])
 	SDL_Window *win = NULL;
 	SDL_Renderer *ren = NULL;
 	int ret;
-	static SDL_bool quit = SDL_FALSE;
+	static int quit = SDL_FALSE;
 	ui_ctx *ui;
 
 	struct menu_item root_items[] = {
@@ -133,11 +134,12 @@ int main(int argc, char *argv[])
 	if(ren == NULL)
 		goto err;
 
+	SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 	SDL_SetWindowMinimumSize(win, 320, 240);
 
 	ui = ui_init(win, ren, &root_menu);
 
-	while(SDL_QuitRequested() == SDL_FALSE && quit == SDL_FALSE)
+	while(SDL_QuitRequested() == SDL_FALSE && quit == 0)
 		loop(win, ren, ui);
 
 out:
