@@ -83,22 +83,17 @@ int main(int argc, char *argv[])
 		{
 		"Continue", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb },
 		.bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
-		.selected_outline = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE},
-		.icon = MENU_ICON_PLAY, .icon_transition = ICON_TRANSITION_TILT,
-		.transition_data.tilt = {.end_angle = 45.0F }
+		.selected_outline = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE}
 		},
 		{
 		"Open", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb },
 		.bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
-		.selected_outline = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE},
-		.icon = MENU_ICON_FOLDER, .icon_transition = ICON_TRANSITION_FADE,
-		.transition_data.fade = {.end_icon = MENU_ICON_FOLDEROPEN }
+		.selected_outline = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE}
 		},
 		{
 		"Exit", NULL, MENU_SET_VAL, .param.set_val = { 1, &quit },
 		.bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
-		.selected_outline = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
-		.icon = MENU_ICON_POWERBUTTON, .icon_transition = ICON_TRANSITION_NONE
+		.selected_outline = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE}
 		}
 	};
 	struct menu_ctx root_menu = {

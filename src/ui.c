@@ -7,67 +7,6 @@
 #include <SDL.h>
 #include <ui.h>
 
-#if 0
-struct transition_s
-{
-	/* Required. */
-	SDL_Texture *start;
-
-	/* Not required. If NULL, the texture is not drawn if the starting
-	* texture has flipped. Otherwise, the end texture is shown on flip. */
-	SDL_Texture *end;
-
-	/* The original coordinates and dimensions of the starting texture. */
-	rel_rect begin;
-	SDL_Rect begin_actual;
-
-	/* The destination coordinates. */
-	rel_rect dest;
-	SDL_Rect dest_actual;
-
-	/* The current progress of the transition. Set to zero. */
-	Uint32 anim_progress_ms;
-
-	/* The maximum duration of the transition is 800ms if the incremented
-	*  transition value below is set to 1. Setting to 2 halves the
-	*  duration. */
-	Uint8 anim_speed;
-
-	/* Apply uniform fading during animation. */
-	unsigned fading : 1;
-};
-
-struct fixed_s
-{
-	SDL_Texture *tex;
-	SDL_Rect coordinates;
-};
-
-struct elements
-{
-	enum type_e
-	{
-		ELEM_TYPE_FIXED,
-		ELEM_TYPE_TRANSITION
-	} type;
-
-	union elem_u
-	{
-		struct fixed_s *fixed;
-		struct transition_s *transition;
-	} elem;
-
-	struct elements *next;
-};
-
-struct ui_texture_cache
-{
-	void *hash;
-	SDL_Texture *tex;
-	struct ui_texture_cache *next;
-};
-#endif
-
 struct ui_ctx
 {
 	/* Required to recreate texture on resizing. */
@@ -87,14 +26,6 @@ struct ui_ctx
 	/* DPI that tex texture is rendered for. */
 	float dpi;
 };
-
-/**
- * Ease out quint transition look up table. When transitioning from A to B,
- * the animation is defined as (B - A) * duration_ms.
-*/
-static double *ease_out_quint_transition = NULL;
-/* The animation is for 800ms. */
-static const unsigned ease_out_quint_duration_ms = 800;
 
 void ui_input(ui_ctx *ui, SDL_GameControllerButton btn)
 {
@@ -182,25 +113,6 @@ void ui_process_event(ui_ctx *c, SDL_Event *e)
 	return;
 }
 
-static int init_transition_lut(void *ptr)
-{
-	double *lut = SDL_malloc(ease_out_quint_duration_ms * sizeof(ease_out_quint_transition));
-	(void)ptr;
-
-	/* If allocation fails, then the LUT will remain NULL. The UI driver is
-	 * expected to continue working without animations in this case. */
-	if(lut == NULL)
-		return -1;
-
-	for(unsigned ms = 0; ms < ease_out_quint_duration_ms; ms++)
-	{
-		lut[ms] = 1.0 - SDL_pow(1.0 - ((double)ms / (double)ease_out_quint_duration_ms), 5.0);
-	}
-
-	ease_out_quint_transition = lut;
-	return 0;
-}
-
 struct ui_ctx *ui_init(SDL_Window *win, SDL_Renderer *ren, struct menu_ctx *root)
 {
 	int w, h;
@@ -235,8 +147,6 @@ struct ui_ctx *ui_init(SDL_Window *win, SDL_Renderer *ren, struct menu_ctx *root
 	if(c->tex == NULL)
 		goto err;
 
-	SDL_CreateThread(init_transition_lut, "UI Make LUT", NULL);
-
 	c->root = root;
 	c->current = root;
 	c->redraw = SDL_TRUE;
@@ -253,6 +163,4 @@ err:
 void ui_exit(ui_ctx *c)
 {
 	SDL_free(c);
-	SDL_free(ease_out_quint_transition);
-	ease_out_quint_transition = NULL;
 }

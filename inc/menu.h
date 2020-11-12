@@ -24,7 +24,7 @@
 			menu->item_selected = sel;		\
 	}while(0)
 
-struct menu_ctx
+typedef struct menu_ctx
 {
 	struct menu_ctx_s *parent;
 	const char *title;
@@ -49,7 +49,7 @@ struct menu_ctx
 			struct menu_item *items;
 		} static_list;
 	} items_u;
-};
+} menu_ctx_s;
 
 typedef enum
 {
@@ -73,15 +73,6 @@ typedef enum
 	*/
 	MENU_INSTR_EXEC_ITEM
 } menu_instruction_e;
-
-typedef enum
-{
-	MENU_ICON_FOLDER = 0xE8B7,
-	MENU_ICON_FOLDEROPEN = 0xE838,
-	MENU_ICON_PLAY = 0xE768,
-	MENU_ICON_POWERBUTTON = 0xE7E8,
-	MENU_ICON_DOCUMENT = 0xE8A5
-} icon_utf32_e;
 
 struct menu_item
 {
@@ -119,32 +110,10 @@ struct menu_item
 		} set_val;
 	} param;
 
+	void *priv;
+
 	SDL_Colour bg;
 	SDL_Colour selected_outline;
-
-	/* Item icon. */
-	icon_utf32_e icon;
-
-	/* Type of transition to use for icons when entering or leaving item
-	* highlight. */
-	enum icon_transition_e
-	{
-		ICON_TRANSITION_NONE,
-		ICON_TRANSITION_FADE,
-		ICON_TRANSITION_TILT
-	} icon_transition;
-
-	union transition_data_u
-	{
-		struct
-		{
-			icon_utf32_e end_icon;
-		} fade;
-		struct
-		{
-			float end_angle;
-		} tilt;
-	} transition_data;
 };
 
 /**
