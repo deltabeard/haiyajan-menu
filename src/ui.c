@@ -51,7 +51,7 @@ void ui_input(ui_ctx *ui, SDL_GameControllerButton btn)
 		return;
 	}
 
-	SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "Redraw requested");
+	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Redraw requested");
 	ui->redraw = SDL_TRUE;
 	return;
 }
@@ -74,33 +74,34 @@ int ui_render_frame(ui_ctx *c)
 	SDL_SetRenderDrawColor(c->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(c->ren);
 
-	SDL_Rect main_menu_box = {150, 50, 100, 100};
+	SDL_Rect main_menu_box = { 150, 50, 100, 100 };
+	SDL_Rect bg_box = { 145, 45, 110, 110 };
 	const unsigned box_spacing = 120;
 
 	for(unsigned item = 0; item < c->current->items_u.static_list.items_nmemb; item++)
 	{
-		const SDL_Colour ol = c->current->items_u.static_list.items[item].selected_outline;
-		const SDL_Colour bg = c->current->items_u.static_list.items[item].bg;
+		const SDL_Colour ol = c->current->items_u.static_list.items[item].style.selected_outline;
+		const SDL_Colour bg = c->current->items_u.static_list.items[item].style.bg;
 
 		if(item == c->current->item_selected)
 		{
-			SDL_Rect bg_box = main_menu_box;
 			SDL_SetRenderDrawColor(c->ren, ol.r, ol.g, ol.b, ol.a);
-			SDL_RenderDrawRect(c->ren, &bg_box);
+			SDL_RenderFillRect(c->ren, &bg_box);
 			SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "Selected %s",
-				    c->current->items_u.static_list.items[item].name);
+				c->current->items_u.static_list.items[item].name);
 		}
 
 		SDL_SetRenderDrawColor(c->ren, bg.r, bg.g, bg.b, bg.a);
 		SDL_RenderFillRect(c->ren, &main_menu_box);
 		main_menu_box.y += box_spacing;
+		bg_box.y += box_spacing;
 	}
 
 	ret = SDL_SetRenderTarget(c->ren, NULL);
 	SDL_RenderCopy(c->ren, c->tex, NULL, NULL);
 
 	SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "UI Rendered %s",
-		    c->current->title);
+		c->current->title);
 	c->redraw = SDL_FALSE;
 
 out:
@@ -110,6 +111,107 @@ out:
 void ui_process_event(ui_ctx *c, SDL_Event *e)
 {
 	/* Recalculate begin_actual coordinates on resolution and DPI change. */
+	if(e->type == SDL_WINDOWEVENT && e->window.event == SDL_WINDOWEVENT_RESIZED)
+	{
+		SDL_Texture *new_tex;
+		SDL_Window *win;
+		SDL_Renderer *ren;
+		Uint32 texture_format;
+		Sint32 new_w, new_h;
+
+		win = SDL_GetWindowFromID(e->window.windowID);
+		if(win == NULL)
+		{
+			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+				"Unable to obtain window from ID %d: %s",
+				e->window.windowID, SDL_GetError());
+			return;
+		}
+
+		ren = SDL_GetRenderer(win);
+		if(ren == NULL)
+		{
+			SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
+				"Unable to obtain renderer from window: %s",
+				SDL_GetError());
+			return;
+		}
+
+		texture_format = SDL_GetWindowPixelFormat(win);
+		new_w = e->window.data1;
+		new_h = e->window.data2;
+
+		new_tex = SDL_CreateTexture(ren, texture_format,
+			SDL_TEXTUREACCESS_TARGET, new_w, new_h);
+		if(new_tex == NULL)
+		{
+			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+				"Unable to create new texture: %s",
+				SDL_GetError());
+			return;
+		}
+
+		SDL_DestroyTexture(c->tex);
+		c->tex = new_tex;
+
+		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
+			"Successfully resized texture size to %dW %dH",
+			new_w, new_h);
+
+#if 0
+		Sint32 min_w, min_h;
+		Sint32 new_w, new_h;
+		SDL_Window *win;
+		SDL_Renderer *ren;
+
+		new_w = e->window.data1;
+		new_h = e->window.data2;
+
+		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
+			"Resizing render logical size with window size");
+		
+		win = SDL_GetWindowFromID(e->window.windowID);
+		if(win == NULL)
+		{
+			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+				"Unable to obtain window from ID %d: %s",
+				e->window.windowID, SDL_GetError());
+			return;
+		}
+
+		/* Limit minimum renderer logic size to minimum window size. */
+		SDL_GetWindowMinimumSize(win, &min_w, &min_h);
+		if(new_w < min_w)
+			new_w = min_w;
+
+		if(new_h < min_h)
+			new_h = min_h;
+
+		ren = SDL_GetRenderer(win);
+		if(ren == NULL)
+		{
+			SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
+				"Unable to obtain renderer from window: %s",
+				SDL_GetError());
+			return;
+		}
+
+		if(SDL_RenderSetLogicalSize(ren, new_w, new_h) != 0)
+		{
+			SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
+				"Unable to set renderer logical size to %dW %dH: %s",
+				new_w, new_h, SDL_GetError());
+			return;
+		}
+
+		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
+			"Successfully resized render logical size to %dW %dH",
+			new_w, new_h);
+#endif
+
+		c->redraw = SDL_TRUE;
+	}
+
 	return;
 }
 
@@ -143,7 +245,7 @@ struct ui_ctx *ui_init(SDL_Window *win, SDL_Renderer *ren, struct menu_ctx *root
 
 	texture_format = SDL_GetWindowPixelFormat(win);
 	c->tex = SDL_CreateTexture(ren, texture_format,
-				   SDL_TEXTUREACCESS_TARGET, w, h);
+		SDL_TEXTUREACCESS_TARGET, w, h);
 	if(c->tex == NULL)
 		goto err;
 
@@ -163,4 +265,5 @@ err:
 void ui_exit(ui_ctx *c)
 {
 	SDL_free(c);
+	c = NULL;
 }

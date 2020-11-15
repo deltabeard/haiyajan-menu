@@ -17,6 +17,7 @@
 
 #include <SDL.h>
 #include <stdlib.h>
+#include <ui.h>
 
 #define MENU_SELECT_ITEM(menu, sel)				\
 	do{							\
@@ -110,10 +111,7 @@ struct menu_item
 		} set_val;
 	} param;
 
-	void *priv;
-
-	SDL_Colour bg;
-	SDL_Colour selected_outline;
+	struct ui_entry_style style;
 };
 
 /**

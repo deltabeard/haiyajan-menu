@@ -16,42 +16,43 @@
 #include <menu.h>
 #include <stdlib.h>
 
-void menu_set_items(struct menu_ctx *menu, unsigned long nmemb,
-		    struct menu_item *items)
+void menu_set_items(struct menu_ctx* menu, unsigned long nmemb,
+	struct menu_item* items)
 {
 	menu->items_u.static_list.items_nmemb = nmemb;
 	menu->items_u.static_list.items = items;
 }
 
-struct menu_ctx *menu_instruct(struct menu_ctx *ctx, menu_instruction_e instr)
+struct menu_ctx* menu_instruct(struct menu_ctx* ctx, menu_instruction_e instr)
 {
-	struct menu_ctx *ret = ctx;
-	switch(instr)
+	struct menu_ctx* ret = ctx;
+
+	switch (instr)
 	{
 	case MENU_INSTR_PREV_ITEM:
-		if(ctx->item_selected > 0)
+		if (ctx->item_selected > 0)
 			ctx->item_selected--;
 
 		break;
 
 	case MENU_INSTR_NEXT_ITEM:
-		if(ctx->item_selected < (ctx->items_u.static_list.items_nmemb - 1))
+		if (ctx->item_selected < (ctx->items_u.static_list.items_nmemb - 1))
 			ctx->item_selected++;
 
 		break;
 
 	case MENU_INSTR_PARENT_MENU:
-		if(ctx->parent != NULL)
+		if (ctx->parent != NULL)
 			ret = ctx->parent;
 
 		break;
 
 	case MENU_INSTR_EXEC_ITEM:
 	{
-		const struct menu_item *item =
+		const struct menu_item* item =
 			ctx->items_u.static_list.items + ctx->item_selected;
 
-		switch(item->op)
+		switch (item->op)
 		{
 		case MENU_SUB_MENU:
 			ret = item->param.sub_menu;
@@ -59,7 +60,7 @@ struct menu_ctx *menu_instruct(struct menu_ctx *ctx, menu_instruction_e instr)
 
 		case MENU_EXEC_FUNC:
 		{
-			void *p = item->param.exec_func.ctx;
+			void* p = item->param.exec_func.ctx;
 			item->param.exec_func.func(p);
 			break;
 		}
