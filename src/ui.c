@@ -3,9 +3,25 @@
  * Copyright (c) 2020 Mahyar Koshkouei
  */
 
+#include <font.h>
 #include <menu.h>
 #include <SDL.h>
 #include <ui.h>
+
+#define MENU_BOX_W 100
+#define MENU_BOX_H 100
+#define MENU_BOX_SPACING 120
+
+#if 0
+struct ui_texture_cache_entry
+{
+	/* Reference to the data that this texture represents. */
+	void *reference;
+
+	/* Cached texture. */
+	SDL_Texture *tex;
+};
+#endif
 
 struct ui_ctx
 {
@@ -25,6 +41,14 @@ struct ui_ctx
 
 	/* DPI that tex texture is rendered for. */
 	float dpi;
+
+	/* Font context used to draw text on UI elements. */
+	font_ctx *font;
+
+#if 0
+	Uint32 num_entries;
+	struct ui_texture_cache_entry *entries;
+#endif
 };
 
 void ui_input(ui_ctx *ui, SDL_GameControllerButton btn)
@@ -51,7 +75,6 @@ void ui_input(ui_ctx *ui, SDL_GameControllerButton btn)
 		return;
 	}
 
-	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Redraw requested");
 	ui->redraw = SDL_TRUE;
 	return;
 }
@@ -82,6 +105,7 @@ int ui_render_frame(ui_ctx *c)
 	{
 		const SDL_Colour ol = c->current->items_u.static_list.items[item].style.selected_outline;
 		const SDL_Colour bg = c->current->items_u.static_list.items[item].style.bg;
+		SDL_Rect text_loc = { .x = main_menu_box.x, .y = main_menu_box.y, .h = 1, .w = 1 };
 
 		if(item == c->current->item_selected)
 		{
@@ -93,11 +117,15 @@ int ui_render_frame(ui_ctx *c)
 
 		SDL_SetRenderDrawColor(c->ren, bg.r, bg.g, bg.b, bg.a);
 		SDL_RenderFillRect(c->ren, &main_menu_box);
+		SDL_SetRenderDrawColor(c->ren, 0xFA, 0xFA, 0xFA, SDL_ALPHA_OPAQUE);
+		FontPrintToRenderer(c->font, c->current->items_u.static_list.items[item].name, &text_loc);
 		main_menu_box.y += box_spacing;
 		bg_box.y += box_spacing;
 	}
 
 	ret = SDL_SetRenderTarget(c->ren, NULL);
+
+	/* TODO: Do not copy full to full. */
 	SDL_RenderCopy(c->ren, c->tex, NULL, NULL);
 
 	SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "UI Rendered %s",
@@ -158,78 +186,37 @@ void ui_process_event(ui_ctx *c, SDL_Event *e)
 			"Successfully resized texture size to %dW %dH",
 			new_w, new_h);
 
-#if 0
-		Sint32 min_w, min_h;
-		Sint32 new_w, new_h;
-		SDL_Window *win;
-		SDL_Renderer *ren;
-
-		new_w = e->window.data1;
-		new_h = e->window.data2;
-
-		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
-			"Resizing render logical size with window size");
-		
-		win = SDL_GetWindowFromID(e->window.windowID);
-		if(win == NULL)
-		{
-			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
-				"Unable to obtain window from ID %d: %s",
-				e->window.windowID, SDL_GetError());
-			return;
-		}
-
-		/* Limit minimum renderer logic size to minimum window size. */
-		SDL_GetWindowMinimumSize(win, &min_w, &min_h);
-		if(new_w < min_w)
-			new_w = min_w;
-
-		if(new_h < min_h)
-			new_h = min_h;
-
-		ren = SDL_GetRenderer(win);
-		if(ren == NULL)
-		{
-			SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
-				"Unable to obtain renderer from window: %s",
-				SDL_GetError());
-			return;
-		}
-
-		if(SDL_RenderSetLogicalSize(ren, new_w, new_h) != 0)
-		{
-			SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
-				"Unable to set renderer logical size to %dW %dH: %s",
-				new_w, new_h, SDL_GetError());
-			return;
-		}
-
-		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
-			"Successfully resized render logical size to %dW %dH",
-			new_w, new_h);
-#endif
-
 		c->redraw = SDL_TRUE;
 	}
 
 	return;
 }
 
-struct ui_ctx *ui_init(SDL_Window *win, SDL_Renderer *ren, struct menu_ctx *root)
+struct ui_ctx *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font)
 {
 	int w, h;
 	ui_ctx *c;
 	Uint32 texture_format;
 	int display_id;
 
+	/* TODO: Create texture size limited by number of menu entries. */
+
 	SDL_assert_paranoid(win != NULL);
-	SDL_assert_paranoid(ren != NULL);
 
 	c = SDL_calloc(1, sizeof(ui_ctx));
 	if(c == NULL)
 		goto err;
 
-	if(SDL_GetRendererOutputSize(ren, &w, &h) != 0)
+	c->ren = SDL_GetRenderer(win);
+	if(c->ren == NULL)
+	{
+		SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
+			"Unable to obtain renderer from window: %s",
+			SDL_GetError());
+		goto err;
+	}
+
+	if(SDL_GetRendererOutputSize(c->ren, &w, &h) != 0)
 		goto err;
 
 	display_id = SDL_GetWindowDisplayIndex(win);
@@ -239,12 +226,8 @@ struct ui_ctx *ui_init(SDL_Window *win, SDL_Renderer *ren, struct menu_ctx *root
 	if(SDL_GetDisplayDPI(display_id, &c->dpi, NULL, NULL) != 0)
 		goto err;
 
-	/* We keep the Renderer so that we can create textures in the
-	future. */
-	c->ren = ren;
-
 	texture_format = SDL_GetWindowPixelFormat(win);
-	c->tex = SDL_CreateTexture(ren, texture_format,
+	c->tex = SDL_CreateTexture(c->ren, texture_format,
 		SDL_TEXTUREACCESS_TARGET, w, h);
 	if(c->tex == NULL)
 		goto err;
@@ -252,6 +235,7 @@ struct ui_ctx *ui_init(SDL_Window *win, SDL_Renderer *ren, struct menu_ctx *root
 	c->root = root;
 	c->current = root;
 	c->redraw = SDL_TRUE;
+	c->font = font;
 
 out:
 	return c;

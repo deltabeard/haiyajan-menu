@@ -55,13 +55,10 @@ if errorlevel 1 (
 )
 
 :build
-set ldlibs=SDL2main.lib SDL2-static.lib winmm.lib msimg32.lib version.lib ^
-	imm32.lib setupapi.lib kernel32.lib user32.lib gdi32.lib winspool.lib ^
-	comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib ^
-	odbc32.lib odbccp32.lib
+set ldlibs=SDL2main.lib SDL2.lib shell32.lib
 
 @ECHO ON
-GNUMAKE.EXE -B BUILD=%buildtype% EXTRA_CFLAGS=/I%sdlincdir% EXTRA_LDFLAGS="/LTCG %ldlibs% /LIBPATH:'%sdllibdir%'"
+GNUMAKE.EXE -B BUILD=%buildtype% EXTRA_CFLAGS=/I%sdlincdir% EXTRA_LDFLAGS="%ldlibs% /LIBPATH:'%sdllibdir%'"
 @ECHO OFF
 
 ENDLOCAL

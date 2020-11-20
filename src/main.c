@@ -3,6 +3,7 @@
  * Copyright (c) 2020 Mahyar Koshkouei
  */
 
+#include <font.h>
 #include <menu.h>
 #include <SDL.h>
 #include <ui.h>
@@ -80,6 +81,7 @@ int main(int argc, char *argv[])
 	int ret;
 	static int quit = SDL_FALSE;
 	ui_ctx *ui;
+	font_ctx *font;
 
 	struct menu_item root_items[] = {
 		{
@@ -131,9 +133,12 @@ int main(int argc, char *argv[])
 
 	SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 	SDL_SetWindowMinimumSize(win, 320, 240);
+	font = FontStartup(ren);
+	if(font == NULL)
+		goto err;
 
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
-	ui = ui_init(win, ren, &root_menu);
+	ui = ui_init(win, &root_menu, font);
 
 	while(SDL_QuitRequested() == SDL_FALSE && quit == 0)
 		loop(win, ren, ui);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <font.h>
 #include <menu.h>
 #include <SDL.h>
 
@@ -23,5 +24,5 @@ struct ui_entry_style {
 int ui_render_frame(ui_ctx *c);
 void ui_process_event(ui_ctx *c, SDL_Event *e);
 void ui_input(ui_ctx *ui, SDL_GameControllerButton btn);
-struct ui_ctx *ui_init(SDL_Window *win, SDL_Renderer *ren, struct menu_ctx *root);
+struct ui_ctx *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font);
 SDL_bool ui_should_redraw(ui_ctx *c);

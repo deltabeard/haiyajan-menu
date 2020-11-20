@@ -93,7 +93,7 @@ endif
 
 # Apply build type settings
 ifeq ($(BUILD),DEBUG)
-	CFLAGS += $(call MSVC_GCC,/Zi /MTd /RTC1,-O0 -g3)
+	CFLAGS += $(call MSVC_GCC,/Zi /MD /RTC1,-O0 -g3)
 else ifeq ($(BUILD),RELEASE)
 	CFLAGS += $(call MSVC_GCC,/MT /O2 /fp:fast,-Ofast -s)
 else ifeq ($(BUILD),RELDEBUG)
@@ -110,7 +110,7 @@ override LDFLAGS += $(EXTRA_LDFLAGS)
 all: $(EXE)
 $(EXE): $(OBJS) $(RES)
 	$(info LINK $^)
-	@$(CC) $(CFLAGS) $(EXEOUT)$@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(EXEOUT)$@ $^ $(LDFLAGS)
 	$(info OUT $@)
 
 %.o: %.c
