@@ -8,8 +8,7 @@
 #include <SDL.h>
 #include <ui.h>
 
-#define MENU_BOX_W 100
-#define MENU_BOX_H 100
+#define MENU_BOX_DIM 100
 #define MENU_BOX_SPACING 120
 
 #if 0
@@ -97,15 +96,18 @@ int ui_render_frame(ui_ctx *c)
 	SDL_SetRenderDrawColor(c->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(c->ren);
 
-	SDL_Rect main_menu_box = { 150, 50, 100, 100 };
+	SDL_Rect main_menu_box = { 150, 50, MENU_BOX_DIM, MENU_BOX_DIM };
 	SDL_Rect bg_box = { 145, 45, 110, 110 };
-	const unsigned box_spacing = 120;
 
 	for(unsigned item = 0; item < c->current->items_u.static_list.items_nmemb; item++)
 	{
 		const SDL_Colour ol = c->current->items_u.static_list.items[item].style.selected_outline;
 		const SDL_Colour bg = c->current->items_u.static_list.items[item].style.bg;
-		SDL_Rect text_loc = { .x = main_menu_box.x, .y = main_menu_box.y, .h = 1, .w = 1 };
+		SDL_Rect text_loc = {
+			.x = main_menu_box.x + 6,
+			.y = main_menu_box.y + 80,
+			.h = 1, .w = 1
+		};
 
 		if(item == c->current->item_selected)
 		{
@@ -119,8 +121,8 @@ int ui_render_frame(ui_ctx *c)
 		SDL_RenderFillRect(c->ren, &main_menu_box);
 		SDL_SetRenderDrawColor(c->ren, 0xFA, 0xFA, 0xFA, SDL_ALPHA_OPAQUE);
 		FontPrintToRenderer(c->font, c->current->items_u.static_list.items[item].name, &text_loc);
-		main_menu_box.y += box_spacing;
-		bg_box.y += box_spacing;
+		main_menu_box.y += MENU_BOX_SPACING;
+		bg_box.y += MENU_BOX_SPACING;
 	}
 
 	ret = SDL_SetRenderTarget(c->ren, NULL);
