@@ -7,7 +7,7 @@
 #include <menu.h>
 #include <SDL.h>
 #include <ui.h>
- //#include <win_dirent.h>
+//#include <win_dirent.h>
 
 static void loop(SDL_Window *win, SDL_Renderer *ren, ui_ctx *ui)
 {

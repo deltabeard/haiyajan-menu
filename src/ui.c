@@ -194,42 +194,25 @@ void ui_process_event(ui_ctx *c, SDL_Event *e)
 	return;
 }
 
-struct ui_ctx *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font)
+struct ui_ctx *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
+	struct menu_ctx *root, font_ctx *font)
 {
 	int w, h;
 	ui_ctx *c;
-	Uint32 texture_format;
-	int display_id;
 
 	/* TODO: Create texture size limited by number of menu entries. */
-
-	SDL_assert_paranoid(win != NULL);
+	SDL_assert_paranoid(rend != NULL);
 
 	c = SDL_calloc(1, sizeof(ui_ctx));
 	if(c == NULL)
 		goto err;
 
-	c->ren = SDL_GetRenderer(win);
-	if(c->ren == NULL)
-	{
-		SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
-			"Unable to obtain renderer from window: %s",
-			SDL_GetError());
-		goto err;
-	}
+	c->ren = rend;
 
 	if(SDL_GetRendererOutputSize(c->ren, &w, &h) != 0)
 		goto err;
 
-	display_id = SDL_GetWindowDisplayIndex(win);
-	if(display_id < 0)
-		goto err;
-
-	if(SDL_GetDisplayDPI(display_id, &c->dpi, NULL, NULL) != 0)
-		goto err;
-
-	texture_format = SDL_GetWindowPixelFormat(win);
-	c->tex = SDL_CreateTexture(c->ren, texture_format,
+	c->tex = SDL_CreateTexture(c->ren, format,
 		SDL_TEXTUREACCESS_TARGET, w, h);
 	if(c->tex == NULL)
 		goto err;
@@ -245,6 +228,42 @@ out:
 err:
 	SDL_free(c);
 	c = NULL;
+	goto out;
+}
+
+struct ui_ctx *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font)
+{
+	ui_ctx *ctx = NULL;
+	Uint32 format;
+	int display_id;
+	SDL_Renderer *rend;
+	float dpi;
+
+	SDL_assert_paranoid(win != NULL);
+
+	rend = SDL_GetRenderer(win);
+	if(rend == NULL)
+	{
+		SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
+			"Unable to obtain renderer from window: %s",
+			SDL_GetError());
+		goto err;
+	}
+
+	display_id = SDL_GetWindowDisplayIndex(win);
+	if(display_id < 0)
+		goto err;
+
+	if(SDL_GetDisplayDPI(display_id, &dpi, NULL, NULL) != 0)
+		goto err;
+
+	format = SDL_GetWindowPixelFormat(win);
+	ctx = ui_init_renderer(rend, dpi, format, root, font);
+
+out:
+	return ctx;
+
+err:
 	goto out;
 }
 

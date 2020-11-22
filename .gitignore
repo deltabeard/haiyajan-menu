@@ -15,4 +15,8 @@
 
 !ext/**/*.cab
 
+!test/**/*.c
+!test/**/*.h
+!test/**/*.png
+
 !*/
