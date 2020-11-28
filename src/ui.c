@@ -212,8 +212,6 @@ struct ui_ctx *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 	if(SDL_GetRendererOutputSize(c->ren, &w, &h) != 0)
 		goto err;
 
-	c->tex = SDL_CreateTexture(c->ren, format,
-		SDL_TEXTUREACCESS_TARGET, w, h);
 	if(c->tex == NULL)
 		goto err;
 
@@ -255,7 +253,11 @@ struct ui_ctx *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font)
 		goto err;
 
 	if(SDL_GetDisplayDPI(display_id, &dpi, NULL, NULL) != 0)
-		goto err;
+	{
+		dpi = 96.0f;
+		SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
+			"Unable to determine display DPI");
+        }
 
 	format = SDL_GetWindowPixelFormat(win);
 	ctx = ui_init_renderer(rend, dpi, format, root, font);

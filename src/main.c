@@ -139,6 +139,8 @@ int main(int argc, char *argv[])
 
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 	ui = ui_init(win, &root_menu, font);
+	if(ui == NULL)
+		goto err;
 
 	while(SDL_QuitRequested() == SDL_FALSE && quit == 0)
 		loop(win, ren, ui);
