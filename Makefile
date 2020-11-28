@@ -49,7 +49,8 @@ else
 	OBJEXT	:= o
 	RM	:= rm -f
 	EXEOUT	:= -o
-	CFLAGS	:= -std=c99 -pedantic -Wall -Wextra
+	CFLAGS	:= -std=c99 -pedantic -Wall -Wextra $(shell sdl2-config --cflags)
+	LDFLAGS	:= $(shell sdl2-config --libs)
 endif
 
 # Options specific to 32-bit platforms
