@@ -138,6 +138,8 @@ int main(int argc, char *argv[])
 	SDL_SetWindowMinimumSize(win, 320, 240);
 
 	ui = ui_init(win, ren, &root_menu);
+    if(ui == NULL)
+        goto err;
 
 	while(SDL_QuitRequested() == SDL_FALSE && quit == 0)
 		loop(win, ren, ui);
