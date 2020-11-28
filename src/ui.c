@@ -223,7 +223,11 @@ struct ui_ctx *ui_init(SDL_Window *win, SDL_Renderer *ren, struct menu_ctx *root
 		goto err;
 
 	if(SDL_GetDisplayDPI(display_id, &c->dpi, NULL, NULL) != 0)
-		goto err;
+	{
+		c->dpi = 96;
+		SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
+			"Unable to determine display DPI");
+        }
 
 	/* We keep the Renderer so that we can create textures in the
 	future. */
