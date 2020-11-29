@@ -16,8 +16,6 @@
 #pragma once
 
 #include <SDL.h>
-#include <stdlib.h>
-#include <ui.h>
 
 #define MENU_SELECT_ITEM(menu, sel)				\
 	do{							\
@@ -111,7 +109,7 @@ struct menu_item
 		} set_val;
 	} param;
 
-	struct ui_entry_style style;
+	unsigned style;
 };
 
 /**

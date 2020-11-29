@@ -51,6 +51,10 @@ static void loop(SDL_Window *win, SDL_Renderer *ren, ui_ctx *ui)
 				break;
 			}
 		}
+		else if(e.type == SDL_KEYUP)
+		{
+			ui_force_redraw(ui);
+		}
 		else if(e.type & UI_EVENT_MASK)
 		{
 			ui_process_event(ui, &e);
@@ -86,18 +90,15 @@ int main(int argc, char *argv[])
 	struct menu_item root_items[] = {
 		{
 		"Continue", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb },
-		.style = {.bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
-		.selected_outline = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE}}
+		.style = 0
 		},
 		{
 		"Open", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb },
-		.style = {.bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
-		.selected_outline = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE}}
+		.style = 1
 		},
 		{
 		"Exit", NULL, MENU_SET_VAL, .param.set_val = { 1, &quit },
-		.style = {.bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
-		.selected_outline = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE}}
+		.style = 2
 		}
 	};
 	struct menu_ctx root_menu = {

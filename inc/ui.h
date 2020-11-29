@@ -5,13 +5,7 @@
 #include <SDL.h>
 
 /* Private UI Context. */
-typedef struct ui_ctx ui_ctx;
-
-/* Configurable UI settings. */
-struct ui_entry_style {
-	SDL_Colour bg;
-	SDL_Colour selected_outline;
-};
+typedef struct ui_ctx_s ui_ctx;
 
 #define UI_EVENT_MASK (SDL_WINDOWEVENT)
 
@@ -24,7 +18,7 @@ struct ui_entry_style {
 int ui_render_frame(ui_ctx *c);
 void ui_process_event(ui_ctx *c, SDL_Event *e);
 void ui_input(ui_ctx *ui, SDL_GameControllerButton btn);
-struct ui_ctx *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
-	struct menu_ctx *root, font_ctx *font);
-struct ui_ctx *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font);
+ui_ctx *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format, struct menu_ctx *root, font_ctx *font);
+ui_ctx *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font);
+void ui_force_redraw(ui_ctx *c);
 SDL_bool ui_should_redraw(ui_ctx *c);

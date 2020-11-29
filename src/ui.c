@@ -11,18 +11,22 @@
 #define MENU_BOX_DIM 100
 #define MENU_BOX_SPACING 120
 
-#if 0
-struct ui_texture_cache_entry
-{
-	/* Reference to the data that this texture represents. */
-	void *reference;
-
-	/* Cached texture. */
-	SDL_Texture *tex;
+/* Configurable UI settings. */
+struct ui_entry_style {
+	SDL_Colour bg;
+	SDL_Colour selected_outline;
 };
-#endif
 
-struct ui_ctx
+const struct ui_entry_style ui_styles[] = {
+	{ .bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
+		.selected_outline = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE }},
+	{ .bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
+		.selected_outline = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE }},
+	{ .bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
+		.selected_outline = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE }}
+};
+
+struct ui_ctx_s
 {
 	/* Required to recreate texture on resizing. */
 	SDL_Renderer *ren;
@@ -43,11 +47,6 @@ struct ui_ctx
 
 	/* Font context used to draw text on UI elements. */
 	font_ctx *font;
-
-#if 0
-	Uint32 num_entries;
-	struct ui_texture_cache_entry *entries;
-#endif
 };
 
 void ui_input(ui_ctx *ui, SDL_GameControllerButton btn)
@@ -78,6 +77,11 @@ void ui_input(ui_ctx *ui, SDL_GameControllerButton btn)
 	return;
 }
 
+void ui_force_redraw(ui_ctx *c)
+{
+	c->redraw = SDL_TRUE;
+}
+
 SDL_bool ui_should_redraw(ui_ctx *c)
 {
 	return c->redraw;
@@ -101,8 +105,8 @@ int ui_render_frame(ui_ctx *c)
 
 	for(unsigned item = 0; item < c->current->items_u.static_list.items_nmemb; item++)
 	{
-		const SDL_Colour ol = c->current->items_u.static_list.items[item].style.selected_outline;
-		const SDL_Colour bg = c->current->items_u.static_list.items[item].style.bg;
+		const SDL_Colour ol = ui_styles[c->current->items_u.static_list.items[item].style].selected_outline;
+		const SDL_Colour bg = ui_styles[c->current->items_u.static_list.items[item].style].bg;
 		SDL_Rect text_loc = {
 			.x = main_menu_box.x + 6,
 			.y = main_menu_box.y + 80,
@@ -194,7 +198,7 @@ void ui_process_event(ui_ctx *c, SDL_Event *e)
 	return;
 }
 
-struct ui_ctx *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
+ui_ctx *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 	struct menu_ctx *root, font_ctx *font)
 {
 	int w, h;
@@ -212,6 +216,8 @@ struct ui_ctx *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 	if(SDL_GetRendererOutputSize(c->ren, &w, &h) != 0)
 		goto err;
 
+	c->tex = SDL_CreateTexture(c->ren, format,
+		SDL_TEXTUREACCESS_TARGET, w, h);
 	if(c->tex == NULL)
 		goto err;
 
@@ -229,7 +235,7 @@ err:
 	goto out;
 }
 
-struct ui_ctx *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font)
+ui_ctx *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font)
 {
 	ui_ctx *ctx = NULL;
 	Uint32 format;
