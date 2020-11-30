@@ -11,22 +11,7 @@
 #define MENU_BOX_DIM 100
 #define MENU_BOX_SPACING 120
 
-/* Configurable UI settings. */
-struct ui_entry_style {
-	SDL_Colour bg;
-	SDL_Colour selected_outline;
-};
-
-const struct ui_entry_style ui_styles[] = {
-	{ .bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
-		.selected_outline = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE }},
-	{ .bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
-		.selected_outline = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE }},
-	{ .bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
-		.selected_outline = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE }}
-};
-
-struct ui_ctx_s
+struct ui_ctx
 {
 	/* Required to recreate texture on resizing. */
 	SDL_Renderer *ren;
@@ -49,100 +34,105 @@ struct ui_ctx_s
 	font_ctx *font;
 };
 
-void ui_input(ui_ctx *ui, SDL_GameControllerButton btn)
+void ui_input(ui_ctx_s *ctx, SDL_GameControllerButton btn)
 {
 	switch(btn)
 	{
 	case SDL_CONTROLLER_BUTTON_DPAD_UP:
-		ui->current = menu_instruct(ui->current, MENU_INSTR_PREV_ITEM);
+		ctx->current = menu_instruct(ctx->current, MENU_INSTR_PREV_ITEM);
 		break;
 
 	case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-		ui->current = menu_instruct(ui->current, MENU_INSTR_NEXT_ITEM);
+		ctx->current = menu_instruct(ctx->current, MENU_INSTR_NEXT_ITEM);
 		break;
 
 	case SDL_CONTROLLER_BUTTON_A:
-		ui->current = menu_instruct(ui->current, MENU_INSTR_EXEC_ITEM);
+		ctx->current = menu_instruct(ctx->current, MENU_INSTR_EXEC_ITEM);
 		break;
 
 	case SDL_CONTROLLER_BUTTON_B:
-		ui->current = menu_instruct(ui->current, MENU_INSTR_PARENT_MENU);
+		ctx->current = menu_instruct(ctx->current, MENU_INSTR_PARENT_MENU);
 		break;
 
 	default:
 		return;
 	}
 
-	ui->redraw = SDL_TRUE;
+	ctx->redraw = SDL_TRUE;
 	return;
 }
 
-void ui_force_redraw(ui_ctx *c)
+void ui_force_redraw(ui_ctx_s *ctx)
 {
-	c->redraw = SDL_TRUE;
+	ctx->redraw = SDL_TRUE;
 }
 
-SDL_bool ui_should_redraw(ui_ctx *c)
+SDL_bool ui_should_redraw(ui_ctx_s *ctx)
 {
-	return c->redraw;
+	return ctx->redraw;
 }
 
-int ui_render_frame(ui_ctx *c)
+int ui_render_frame(ui_ctx_s *ctx)
 {
 	int ret = 0;
-	SDL_assert(c->tex != NULL);
+	SDL_assert(ctx->tex != NULL);
 
-	if(c->redraw == SDL_FALSE)
+	if(ctx->redraw == SDL_FALSE)
 		goto out;
 
-	ret = SDL_SetRenderTarget(c->ren, c->tex);
+	ret = SDL_SetRenderTarget(ctx->ren, ctx->tex);
 
-	SDL_SetRenderDrawColor(c->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderClear(c->ren);
+	SDL_SetRenderDrawColor(ctx->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderClear(ctx->ren);
 
 	SDL_Rect main_menu_box = { 150, 50, MENU_BOX_DIM, MENU_BOX_DIM };
 	SDL_Rect bg_box = { 145, 45, 110, 110 };
 
-	for(unsigned item = 0; item < c->current->items_u.static_list.items_nmemb; item++)
+	for(struct menu_item *item = ctx->current->items.static_list.items;
+		item < ctx->current->items.static_list.items + ctx->current->items.static_list.items_nmemb;
+		item++)
 	{
-		const SDL_Colour ol = ui_styles[c->current->items_u.static_list.items[item].style].selected_outline;
-		const SDL_Colour bg = ui_styles[c->current->items_u.static_list.items[item].style].bg;
+		struct item_priv *style = item->priv;
+		const SDL_Colour ol = style->fg;
+		const SDL_Colour bg = style->bg;
 		SDL_Rect text_loc = {
 			.x = main_menu_box.x + 6,
 			.y = main_menu_box.y + 80,
 			.h = 1, .w = 1
 		};
 
-		if(item == c->current->item_selected)
+		if(item == ctx->current->items.static_list.items + ctx->current->item_selected)
 		{
-			SDL_SetRenderDrawColor(c->ren, ol.r, ol.g, ol.b, ol.a);
-			SDL_RenderFillRect(c->ren, &bg_box);
+			SDL_SetRenderDrawColor(ctx->ren, ol.r, ol.g, ol.b, ol.a);
+			SDL_RenderFillRect(ctx->ren, &bg_box);
 			SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "Selected %s",
-				c->current->items_u.static_list.items[item].name);
+				item->name);
 		}
 
-		SDL_SetRenderDrawColor(c->ren, bg.r, bg.g, bg.b, bg.a);
-		SDL_RenderFillRect(c->ren, &main_menu_box);
-		SDL_SetRenderDrawColor(c->ren, 0xFA, 0xFA, 0xFA, SDL_ALPHA_OPAQUE);
-		FontPrintToRenderer(c->font, c->current->items_u.static_list.items[item].name, &text_loc);
+		SDL_SetRenderDrawColor(ctx->ren, bg.r, bg.g, bg.b, bg.a);
+		SDL_RenderFillRect(ctx->ren, &main_menu_box);
+		SDL_SetRenderDrawColor(ctx->ren, 0xFA, 0xFA, 0xFA, SDL_ALPHA_OPAQUE);
+		FontPrintToRenderer(ctx->font, item->name, &text_loc);
 		main_menu_box.y += MENU_BOX_SPACING;
 		bg_box.y += MENU_BOX_SPACING;
 	}
 
-	ret = SDL_SetRenderTarget(c->ren, NULL);
-
+	ret = SDL_SetRenderTarget(ctx->ren, NULL);
+	SDL_SetRenderDrawColor(ctx->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderClear(ctx->ren);
+	
 	/* TODO: Do not copy full to full. */
-	SDL_RenderCopy(c->ren, c->tex, NULL, NULL);
+	SDL_RenderCopy(ctx->ren, ctx->tex, NULL, NULL);
 
-	SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "UI Rendered %s",
-		c->current->title);
-	c->redraw = SDL_FALSE;
+	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "UI Rendered %s",
+		ctx->current->title);
+	ctx->redraw = SDL_FALSE;
 
 out:
 	return ret;
 }
 
-void ui_process_event(ui_ctx *c, SDL_Event *e)
+void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 {
 	/* Recalculate begin_actual coordinates on resolution and DPI change. */
 	if(e->type == SDL_WINDOWEVENT && e->window.event == SDL_WINDOWEVENT_RESIZED)
@@ -185,59 +175,59 @@ void ui_process_event(ui_ctx *c, SDL_Event *e)
 			return;
 		}
 
-		SDL_DestroyTexture(c->tex);
-		c->tex = new_tex;
+		SDL_DestroyTexture(ctx->tex);
+		ctx->tex = new_tex;
 
 		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
 			"Successfully resized texture size to %dW %dH",
 			new_w, new_h);
 
-		c->redraw = SDL_TRUE;
+		ctx->redraw = SDL_TRUE;
 	}
 
 	return;
 }
 
-ui_ctx *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
+ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 	struct menu_ctx *root, font_ctx *font)
 {
 	int w, h;
-	ui_ctx *c;
+	ui_ctx_s *ctx;
 
 	/* TODO: Create texture size limited by number of menu entries. */
 	SDL_assert_paranoid(rend != NULL);
 
-	c = SDL_calloc(1, sizeof(ui_ctx));
-	if(c == NULL)
+	ctx = SDL_calloc(1, sizeof(ui_ctx_s));
+	if(ctx == NULL)
 		goto err;
 
-	c->ren = rend;
+	ctx->ren = rend;
 
-	if(SDL_GetRendererOutputSize(c->ren, &w, &h) != 0)
+	if(SDL_GetRendererOutputSize(ctx->ren, &w, &h) != 0)
 		goto err;
 
-	c->tex = SDL_CreateTexture(c->ren, format,
+	ctx->tex = SDL_CreateTexture(ctx->ren, format,
 		SDL_TEXTUREACCESS_TARGET, w, h);
-	if(c->tex == NULL)
+	if(ctx->tex == NULL)
 		goto err;
 
-	c->root = root;
-	c->current = root;
-	c->redraw = SDL_TRUE;
-	c->font = font;
+	ctx->root = root;
+	ctx->current = root;
+	ctx->redraw = SDL_TRUE;
+	ctx->font = font;
 
 out:
-	return c;
+	return ctx;
 
 err:
-	SDL_free(c);
-	c = NULL;
+	SDL_free(ctx);
+	ctx = NULL;
 	goto out;
 }
 
-ui_ctx *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font)
+ui_ctx_s *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font)
 {
-	ui_ctx *ctx = NULL;
+	ui_ctx_s *ctx = NULL;
 	Uint32 format;
 	int display_id;
 	SDL_Renderer *rend;
@@ -262,7 +252,7 @@ ui_ctx *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font)
 	{
 		dpi = 96.0f;
 		SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-			"Unable to determine display DPI");
+			"Unable to determine display DPI: %s", SDL_GetError());
         }
 
 	format = SDL_GetWindowPixelFormat(win);
@@ -275,8 +265,8 @@ err:
 	goto out;
 }
 
-void ui_exit(ui_ctx *c)
+void ui_exit(ui_ctx_s *ctx)
 {
-	SDL_free(c);
-	c = NULL;
+	SDL_free(ctx);
+	ctx = NULL;
 }

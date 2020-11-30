@@ -9,7 +9,22 @@
 #include <ui.h>
 //#include <win_dirent.h>
 
-static void loop(SDL_Window *win, SDL_Renderer *ren, ui_ctx *ui)
+#if defined(__ANDROID__) | defined(__TVOS__) | defined(__IPHONEOS__) | defined(__NACL__) | defined(__PNACL__) | defined(__DREAMCAST__) | defined(__PSP__)
+# define APP_ALWAYS_FULLSCREEN 1
+#else
+# define APP_ALWAYS_FULLSCREEN 0
+#endif
+
+struct item_priv ui_styles[] = {
+	{ .bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
+		.fg = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE }},
+	{ .bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
+		.fg = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE }},
+	{ .bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
+		.fg = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE }}
+};
+
+static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 {
 	SDL_Event e;
 
@@ -51,10 +66,6 @@ static void loop(SDL_Window *win, SDL_Renderer *ren, ui_ctx *ui)
 				break;
 			}
 		}
-		else if(e.type == SDL_KEYUP)
-		{
-			ui_force_redraw(ui);
-		}
 		else if(e.type & UI_EVENT_MASK)
 		{
 			ui_process_event(ui, &e);
@@ -84,31 +95,30 @@ int main(int argc, char *argv[])
 	SDL_Renderer *ren = NULL;
 	int ret;
 	static int quit = SDL_FALSE;
-	ui_ctx *ui;
+	ui_ctx_s *ui;
 	font_ctx *font;
 
 	struct menu_item root_items[] = {
 		{
 		"Continue", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb },
-		.style = 0
+		.priv = &ui_styles[0]
 		},
 		{
 		"Open", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb },
-		.style = 1
+		.priv = &ui_styles[1]
 		},
 		{
 		"Exit", NULL, MENU_SET_VAL, .param.set_val = { 1, &quit },
-		.style = 2
+		.priv = &ui_styles[2]
 		}
 	};
 	struct menu_ctx root_menu = {
 		.parent = NULL, .title = "Main Menu", .help = NULL,
 		.item_selected = 0,
 		.list_type = LIST_TYPE_STATIC,
-		.items_u.static_list =
-		{
-		.items_nmemb = SDL_arraysize(root_items),
-		.items = root_items
+		.items.static_list = {
+			.items_nmemb = SDL_arraysize(root_items),
+			.items = root_items
 		}
 	};
 
@@ -120,20 +130,26 @@ int main(int argc, char *argv[])
 		goto err;
 
 	win = SDL_CreateWindow("Haiyajan UI",
-		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240,
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | 
+		SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN |
+		APP_ALWAYS_FULLSCREEN ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_MAXIMIZED);
 	if(win == NULL)
 		goto err;
-
-	ren = SDL_CreateRenderer(win, -1,
-		SDL_RENDERER_ACCELERATED |
-		SDL_RENDERER_PRESENTVSYNC |
-		SDL_RENDERER_TARGETTEXTURE);
+	
+	if(APP_ALWAYS_FULLSCREEN)
+	{
+		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
+			"Starting in fullscreen mode");
+	}
+	
+	ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED |
+		SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
 	if(ren == NULL)
 		goto err;
 
-	SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 	SDL_SetWindowMinimumSize(win, 320, 240);
+	SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 	font = FontStartup(ren);
 	if(font == NULL)
 		goto err;
@@ -144,7 +160,7 @@ int main(int argc, char *argv[])
 		goto err;
 
 	while(SDL_QuitRequested() == SDL_FALSE && quit == 0)
-		loop(win, ren, ui);
+		loop(ren, ui);
 
 out:
 	SDL_DestroyRenderer(ren);

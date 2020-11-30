@@ -25,59 +25,72 @@
 
 struct menu_ctx
 {
+	/* The menu to show when the user wants to go up a level. NULL if this
+	 * is the root menu. */
 	struct menu_ctx *parent;
+	
+	/* Name of the menu option. */
 	const char *title;
+	
+	/* Help text to show for the menu option.
+	 * NULL if no help text is available. */
 	const char *help;
+	
 	enum
 	{
-		STYLE_MAIN_MENU,
-		STYLE_LIST_MENU,
-	} style;
+		/* Small list using large icons. */
+		STYLE_MENU_LARGE_LIST,
+		
+		/* Long list. */
+		STYLE_MENU_LIST,
+		
+		/* Grid of options. */
+		STYLE_MENU_GRID
+	} style_menu;
 
-	unsigned long item_selected;
 	enum
 	{
+		/* The items in this menu do not change from initilisation. */
 		LIST_TYPE_STATIC,
-		//LIST_TYPE_DYNAMIC
+		
+		/* The items in this menu will be created when entering the
+		 * menu. */
+		LIST_TYPE_DYNAMIC
 	} list_type;
+	
 	union
 	{
 		struct
 		{
-			unsigned long items_nmemb;
+			Uint32 items_nmemb;
 			struct menu_item *items;
 		} static_list;
-	} items_u;
+		struct
+		{
+			/* Private pointer passed to function. May be NULL. */
+			void *priv;
+			
+			/* Function to call when the dynamic menu is selected.
+			 *
+			 * \param priv	Private pointer.
+			 * \param items	Pointer to save menu items.
+			 * \return	Number of items saved. UINT32_MAX on error.
+			 */
+			unsigned long (*fill_items)(void *priv, struct menu_item **items);
+		} dynamic_list;
+	} items;
+	
+	/* The currently highlighted item. Must be 0 on initialisation.
+	 * 0 is the first menu item. */
+	unsigned long item_selected;
 };
-
-typedef enum
-{
-	/* Go back to the previous item.
-	 * Could be used when user presses UP.
-	*/
-	MENU_INSTR_PREV_ITEM,
-
-	/* Go to next item in menu.
-	 * Could be used when user presses DOWN.
-	*/
-	MENU_INSTR_NEXT_ITEM,
-
-	/* Go to parent menu if one exists.
-	 * Could be used when user presses BACKSPACE.
-	*/
-	MENU_INSTR_PARENT_MENU,
-
-	/* Execute item operation.
-	 * Could be used when user presses ENTER.
-	*/
-	MENU_INSTR_EXEC_ITEM
-} menu_instruction_e;
 
 struct menu_item
 {
 	char *name;
 	char *help;
-	enum menu_op_e
+	
+	enum
 	{
 		/* Opens a sub menu. */
 		MENU_SUB_MENU,
@@ -89,31 +102,46 @@ struct menu_item
 		MENU_SET_VAL
 	} op;
 
-	union param_u
+	union
 	{
 		/* Pointer to sub menu. */
 		struct menu_ctx *sub_menu;
 
 		/* Pointer to function to execute if item selected. */
-		struct exec_func_s
+		struct
 		{
 			void *ctx;
 			void (*func)(void *ctx);
 		} exec_func;
 
 		/* Pointer to integer to set. */
-		struct set_val_s
+		struct
 		{
 			int val;
 			int *set;
 		} set_val;
 	} param;
 
-	unsigned style;
+	void *priv;
 };
 
-/**
- * Add an item to a given menu. First item shown first in menu.
- */
-void menu_set_items(struct menu_ctx *menu, unsigned long nmemb, struct menu_item *items);
+typedef enum
+{
+	/* Go back to the previous item.
+	 * Could be used when user presses UP. */
+	MENU_INSTR_PREV_ITEM,
+
+	/* Go to next item in menu.
+	 * Could be used when user presses DOWN. */
+	MENU_INSTR_NEXT_ITEM,
+
+	/* Go to parent menu if one exists.
+	 * Could be used when user presses BACKSPACE. */
+	MENU_INSTR_PARENT_MENU,
+
+	/* Execute item operation.
+	 * Could be used when user presses ENTER. */
+	MENU_INSTR_EXEC_ITEM
+} menu_instruction_e;
+
 struct menu_ctx *menu_instruct(struct menu_ctx *ctx, menu_instruction_e instr);
