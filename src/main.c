@@ -124,6 +124,8 @@ int main(int argc, char *argv[])
 
 	(void)argc;
 	(void)argv;
+	
+	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
 	ret = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 	if(ret != 0)
@@ -133,14 +135,19 @@ int main(int argc, char *argv[])
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | 
 		SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN |
-		APP_ALWAYS_FULLSCREEN ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_MAXIMIZED);
+		((APP_ALWAYS_FULLSCREEN != 0) ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_MAXIMIZED));
 	if(win == NULL)
 		goto err;
 	
-	if(APP_ALWAYS_FULLSCREEN)
+	if(APP_ALWAYS_FULLSCREEN != 0)
 	{
 		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
 			"Starting in fullscreen mode");
+	}
+	else
+	{
+		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
+			"Starting in desktop mode");
 	}
 	
 	ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED |
@@ -154,7 +161,6 @@ int main(int argc, char *argv[])
 	if(font == NULL)
 		goto err;
 
-	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 	ui = ui_init(win, &root_menu, font);
 	if(ui == NULL)
 		goto err;
