@@ -78,7 +78,11 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 		SDL_RenderPresent(ren);
 	}
 	else
-		SDL_Delay(1);
+	{
+		const int frame_delay = 5;
+		SDL_Delay(frame_delay);
+	}
+
 
 	return;
 }
