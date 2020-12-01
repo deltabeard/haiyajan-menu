@@ -110,12 +110,9 @@ override LDFLAGS += $(EXTRA_LDFLAGS)
 
 all: $(EXE)
 $(EXE): $(OBJS) $(RES)
-	$(info LINK $^)
 	$(CC) $(CFLAGS) $(EXEOUT)$@ $^ $(LDFLAGS)
-	$(info OUT $@)
 
 %.o: %.c
-	$(info CC $@)
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
 
 # cl always prints the source file name, so we just add the CC suffix.
@@ -123,8 +120,7 @@ $(EXE): $(OBJS) $(RES)
 	$(CC) $(CFLAGS) /Fo$@ /c /TC $^
 
 %.res: %.rc
-	$(info RC $@)
-	@rc /nologo /DCOMPANY="$(COMPANY)" /DDESCRIPTION="$(DESCRIPTION)" \
+	rc /nologo /DCOMPANY="$(COMPANY)" /DDESCRIPTION="$(DESCRIPTION)" \
 		/DLICENSE="$(LICENSE)" /DGIT_VER="$(GIT_VER)" \
 		/DNAME="$(NAME)" /DICON_FILE="$(ICON_FILE)" $^
 
