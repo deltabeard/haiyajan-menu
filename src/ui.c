@@ -374,6 +374,7 @@ err:
 
 void ui_exit(ui_ctx_s *ctx)
 {
+	SDL_DestroyTexture(ctx->tex);
 	SDL_free(ctx->boxes_input);
 	SDL_free(ctx);
 	ctx = NULL;
