@@ -7,7 +7,7 @@
 /* Private UI Context. */
 typedef struct ui_ctx ui_ctx_s;
 
-#define UI_EVENT_MASK (SDL_WINDOWEVENT)
+#define UI_EVENT_MASK (SDL_WINDOWEVENT | SDL_MOUSEMOTION)
 
 /* UI configuration for item. Must be provided to menu entry priv pointer. */
 struct item_priv {

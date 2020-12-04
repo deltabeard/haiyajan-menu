@@ -40,7 +40,7 @@ ifdef VSCMD_VER
 	RM	:= del
 	EXEOUT	:= /Fe
 	CFLAGS	:= /nologo /analyze /diagnostics:caret /W3
-	LDFLAGS := /link /SUBSYSTEM:CONSOLE
+	LDFLAGS := /link /SUBSYSTEM:WINDOWS
 	ICON_FILE := icon.ico
 	RES	:= meta\winres.res
 else

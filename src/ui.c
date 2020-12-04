@@ -11,8 +11,7 @@
 #define MENU_BOX_DIM 100
 #define MENU_BOX_SPACING 120
 
-struct ui_ctx
-{
+struct ui_ctx {
 	/* Required to recreate texture on resizing. */
 	SDL_Renderer *ren;
 
@@ -32,6 +31,15 @@ struct ui_ctx
 
 	/* Font context used to draw text on UI elements. */
 	font_ctx *font;
+
+	/* Rendered input boxes for touch and mouse input. */
+	struct boxes_input {
+		/* Dimensions of hit-box on screen. */
+		SDL_Rect hit_box;
+
+		/* Menu item associated with hit-box. */
+		struct menu_item *item;
+	} *boxes_input;
 };
 
 void ui_input(ui_ctx_s *ctx, SDL_GameControllerButton btn)
@@ -85,14 +93,16 @@ int ui_render_frame(ui_ctx_s *ctx)
 	SDL_SetRenderDrawColor(ctx->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(ctx->ren);
 
-	SDL_Rect main_menu_box = { 150, 50, MENU_BOX_DIM, MENU_BOX_DIM };
-	SDL_Rect bg_box = { 145, 45, 110, 110 };
+	/* Define size of each box in the main menu. */
+	SDL_Rect main_menu_box = {150, 50, MENU_BOX_DIM, MENU_BOX_DIM};
+	SDL_Rect bg_box = {145, 45, 110, 110};
 
-	for(struct menu_item *item = ctx->current->items.static_list.items;
-		item < ctx->current->items.static_list.items + ctx->current->items.static_list.items_nmemb;
+	for(unsigned item = 0;
+		item < ctx->current->items.static_list.items_nmemb;
 		item++)
 	{
-		struct item_priv *style = item->priv;
+		struct menu_item *this_item = &ctx->current->items.static_list.items[item];
+		struct item_priv *style = this_item->priv;
 		const SDL_Colour ol = style->fg;
 		const SDL_Colour bg = style->bg;
 		SDL_Rect text_loc = {
@@ -101,18 +111,34 @@ int ui_render_frame(ui_ctx_s *ctx)
 			.h = 1, .w = 1
 		};
 
-		if(item == ctx->current->items.static_list.items + ctx->current->item_selected)
+		if(item == ctx->current->item_selected)
 		{
 			SDL_SetRenderDrawColor(ctx->ren, ol.r, ol.g, ol.b, ol.a);
 			SDL_RenderFillRect(ctx->ren, &bg_box);
 			SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "Selected %s",
-				item->name);
+				this_item->name);
 		}
 
+		/* Draw item box. */
 		SDL_SetRenderDrawColor(ctx->ren, bg.r, bg.g, bg.b, bg.a);
 		SDL_RenderFillRect(ctx->ren, &main_menu_box);
+
+		/* Record hit-box information. */
+		if(ctx->boxes_input != NULL)
+		{
+			ctx->boxes_input[item].hit_box.x = main_menu_box.x;
+			ctx->boxes_input[item].hit_box.y = main_menu_box.y;
+			ctx->boxes_input[item].hit_box.w = main_menu_box.w;
+			ctx->boxes_input[item].hit_box.h = main_menu_box.h;
+
+			ctx->boxes_input[item].item = this_item;
+			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Hit box generated for (%d, %d)(%d, %d)",
+				main_menu_box.x, main_menu_box.y, main_menu_box.h, main_menu_box.w);
+		}
+
+		/* Draw item text. */
 		SDL_SetRenderDrawColor(ctx->ren, 0xFA, 0xFA, 0xFA, SDL_ALPHA_OPAQUE);
-		FontPrintToRenderer(ctx->font, item->name, &text_loc);
+		FontPrintToRenderer(ctx->font, this_item->name, &text_loc);
 		main_menu_box.y += MENU_BOX_SPACING;
 		bg_box.y += MENU_BOX_SPACING;
 	}
@@ -120,7 +146,7 @@ int ui_render_frame(ui_ctx_s *ctx)
 	ret = SDL_SetRenderTarget(ctx->ren, NULL);
 	SDL_SetRenderDrawColor(ctx->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(ctx->ren);
-	
+
 	/* TODO: Do not copy full to full. */
 	SDL_RenderCopy(ctx->ren, ctx->tex, NULL, NULL);
 
@@ -184,6 +210,36 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 
 		ctx->redraw = SDL_TRUE;
 	}
+	else if(e->type == SDL_MOUSEMOTION && ctx->boxes_input != NULL)
+	{
+		SDL_Point p = {
+			.x = e->motion.x,
+			.y = e->motion.y
+		};
+
+		for(Uint32 box = 0;
+			box < ctx->current->items.static_list.items_nmemb;
+			box++)
+		{
+			struct boxes_input *this_box = &ctx->boxes_input[box];
+			const SDL_Rect *r = &this_box->hit_box;
+			SDL_bool intersects = SDL_PointInRect(&p, r);
+
+			if(intersects == SDL_FALSE)
+				continue;
+
+			if(ctx->current->item_selected != box)
+			{
+				ctx->redraw = SDL_TRUE;
+				ctx->current->item_selected = box;
+				SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
+					"Selected item %d using motion",
+					ctx->current->item_selected);
+			}
+
+			break;
+		}
+	}
 
 	return;
 }
@@ -215,6 +271,16 @@ ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 	ctx->current = root;
 	ctx->redraw = SDL_TRUE;
 	ctx->font = font;
+	ctx->boxes_input = SDL_calloc(root->items.static_list.items_nmemb,
+		sizeof(*ctx->boxes_input));
+
+	if(ctx->boxes_input == NULL)
+	{
+		SDL_LogWarn(SDL_LOG_CATEGORY_INPUT,
+			"Unable to initialise memory for hit-box recording: %s. "
+			"Mouse motion input will not be available.",
+			SDL_GetError());
+	}
 
 out:
 	return ctx;
@@ -253,7 +319,7 @@ ui_ctx_s *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font)
 		dpi = 96.0f;
 		SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
 			"Unable to determine display DPI: %s", SDL_GetError());
-        }
+	}
 
 	format = SDL_GetWindowPixelFormat(win);
 	ctx = ui_init_renderer(rend, dpi, format, root, font);
@@ -267,6 +333,7 @@ err:
 
 void ui_exit(ui_ctx_s *ctx)
 {
+	SDL_free(ctx->boxes_input);
 	SDL_free(ctx);
 	ctx = NULL;
 }
