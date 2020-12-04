@@ -115,7 +115,7 @@ int ui_render_frame(ui_ctx_s *ctx)
 		{
 			SDL_SetRenderDrawColor(ctx->ren, ol.r, ol.g, ol.b, ol.a);
 			SDL_RenderFillRect(ctx->ren, &bg_box);
-			SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "Selected %s",
+			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Selected %s",
 				this_item->name);
 		}
 
@@ -236,6 +236,47 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 					"Selected item %d using motion",
 					ctx->current->item_selected);
 			}
+
+			break;
+		}
+	}
+	else if(e->type == SDL_MOUSEBUTTONUP && ctx->boxes_input != NULL)
+	{
+		SDL_Point p = {
+			.x = e->button.x,
+			.y = e->button.y
+		};
+
+		if(e->button.button != SDL_BUTTON_LEFT)
+			return;
+
+		if(e->button.clicks == 0)
+			return;
+
+		for(Uint32 box = 0;
+			box < ctx->current->items.static_list.items_nmemb;
+			box++)
+		{
+			struct boxes_input *this_box = &ctx->boxes_input[box];
+			const SDL_Rect *r = &this_box->hit_box;
+			SDL_bool intersects = SDL_PointInRect(&p, r);
+
+			if(intersects == SDL_FALSE)
+				continue;
+
+			if(ctx->current->item_selected != box)
+			{
+				ctx->redraw = SDL_TRUE;
+				ctx->current->item_selected = box;
+				SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
+					"Selected item %d using button",
+					ctx->current->item_selected);
+			}
+
+			ui_input(ctx, SDL_CONTROLLER_BUTTON_A);
+			SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
+				"Executed item %d using button",
+				ctx->current->item_selected);
 
 			break;
 		}
