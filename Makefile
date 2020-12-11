@@ -3,8 +3,8 @@
 NAME		:= Haiyajan-UI
 DESCRIPTION	:= UI toolkit for Haiyajan
 COMPANY		:= Deltabeard
-COPYRIGHT	:= Copyright (c) 2020 Mahyar Koshkouei
-LICENSE_SPDX	:= NONE
+AUTHOR		:= Mahyar Koshkouei
+LICENSE_SPDX	:= All Rights Reserved
 
 # Default configurable build options
 BUILD	:= DEBUG
@@ -39,8 +39,8 @@ ifdef VSCMD_VER
 	OBJEXT	:= obj
 	RM	:= del
 	EXEOUT	:= /Fe
-	CFLAGS	:= /nologo /analyze /diagnostics:caret /W3
-	LDFLAGS := /link /SUBSYSTEM:WINDOWS
+	CFLAGS	:= /nologo /analyze /diagnostics:caret /utf-8 /std:c11 /W3 /Iext\inc
+	LDFLAGS := /link /SUBSYSTEM:CONSOLE SDL2main.lib SDL2.lib shell32.lib /LIBPATH:ext\lib_$(VSCMD_ARG_TGT_ARCH)
 	ICON_FILE := icon.ico
 	RES	:= meta\winres.res
 else
@@ -55,19 +55,18 @@ endif
 
 # Options specific to 32-bit platforms
 ifeq ($(VSCMD_ARG_TGT_ARCH),x32)
-	# Uncomment the following to use SSE instructions (since Pentium III).
-	# The default is /arch:SSE2 (since Pentium4).
-	#CFLAGS += /arch:SSE
+	# Use SSE instructions (since Pentium III).
+	CFLAGS += /arch:SSE
 
-	# Uncomment the following to support ReactOS and Windows XP.
-	#CFLAGS += /Fdvc141.pdb
+	# Add support for ReactOS and Windows XP.
+	CFLAGS += /Fdvc141.pdb
 endif
 
 #
 # No need to edit anything past this line.
 #
 EXE	:= $(NAME)
-LICENSE := $(COPYRIGHT); Released under the $(LICENSE_SPDX) License.
+LICENSE := (C) $(AUTHOR). $(LICENSE_SPDX).
 GIT_VER := $(shell git describe --dirty --always --tags --long)
 
 SRCS := $(wildcard src/*.c)
@@ -94,15 +93,25 @@ endif
 
 # Apply build type settings
 ifeq ($(BUILD),DEBUG)
-	CFLAGS += $(call MSVC_GCC,/Zi /MD /RTC1,-O0 -g3)
+	CFLAGS += $(call MSVC_GCC,/Zi /MDd /RTC1 /sdl,-O0 -g3)
 else ifeq ($(BUILD),RELEASE)
-	CFLAGS += $(call MSVC_GCC,/MT /O2 /fp:fast,-Ofast -s)
+	CFLAGS += $(call MSVC_GCC,/MD /O2 /fp:fast,-Ofast -s)
 else ifeq ($(BUILD),RELDEBUG)
-	CFLAGS += $(call MSVC_GCC,/MTd /O2 /fp:fast,-Ofast -g3)
+	CFLAGS += $(call MSVC_GCC,/MDd /O2 /fp:fast,-Ofast -g3)
 else ifeq ($(BUILD),RELMINSIZE)
-	CFLAGS += $(call MSVC_GCC,/MT /O1 /fp:fast,-Os -ffast-math -s)
+	CFLAGS += $(call MSVC_GCC,/MD /O1 /fp:fast,-Os -ffast-math -s)
 else
 	err := $(error Unknown build configuration '$(BUILD)')
+endif
+
+# WHen compiling with MSVC, check if SDL2 has been expanded from prepared cab file.
+ifeq ($(CC)$(wildcard SDL2.dll),cl)
+    $(info Preparing SDL2 development libraries)
+    EXPAND_CMD := expand ext/SDL2-2.0.12-VC.cab -F:* ext
+    UNUSED := $(shell $(EXPAND_CMD))
+
+    # Copy SDL2.DLL to output EXE directory.
+    UNUSED := $(shell COPY ext\lib_$(VSCMD_ARG_TGT_ARCH)\SDL2.dll SDL2.dll)
 endif
 
 override CFLAGS += -Iinc $(EXTRA_CFLAGS)
@@ -110,17 +119,21 @@ override LDFLAGS += $(EXTRA_LDFLAGS)
 
 all: $(EXE)
 $(EXE): $(OBJS) $(RES)
+	$(info LINK $@)
 	$(CC) $(CFLAGS) $(EXEOUT)$@ $^ $(LDFLAGS)
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
+	$(info CC $@)
+	@$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
 
 # cl always prints the source file name, so we just add the CC suffix.
 %.obj: %.c
-	$(CC) $(CFLAGS) /Fo$@ /c /TC $^
+	$(info CC $<)
+	@$(CC) $(CFLAGS) /Fo$@ /c /TC $^
 
 %.res: %.rc
-	rc /nologo /DCOMPANY="$(COMPANY)" /DDESCRIPTION="$(DESCRIPTION)" \
+	$(info RC $@)
+	@rc /nologo /DCOMPANY="$(COMPANY)" /DDESCRIPTION="$(DESCRIPTION)" \
 		/DLICENSE="$(LICENSE)" /DGIT_VER="$(GIT_VER)" \
 		/DNAME="$(NAME)" /DICON_FILE="$(ICON_FILE)" $^
 
@@ -129,5 +142,5 @@ clean:
 	cd src && $(RM) *.$(OBJEXT)
 
 help:
-	@cd
+	@exit
 	$(info $(help_txt))
