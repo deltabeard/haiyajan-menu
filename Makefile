@@ -39,7 +39,7 @@ ifdef VSCMD_VER
 	OBJEXT	:= obj
 	RM	:= del
 	EXEOUT	:= /Fe
-	CFLAGS	:= /nologo /analyze /diagnostics:caret /utf-8 /std:c11 /W3 /Iext\inc
+	CFLAGS	:= /nologo /analyze /diagnostics:caret /utf-8 /std:c11 /W1 /Iext\inc
 	LDFLAGS := /link /SUBSYSTEM:CONSOLE SDL2main.lib SDL2.lib shell32.lib /LIBPATH:ext\lib_$(VSCMD_ARG_TGT_ARCH)
 	ICON_FILE := icon.ico
 	RES	:= meta\winres.res
@@ -65,7 +65,7 @@ endif
 #
 # No need to edit anything past this line.
 #
-EXE	:= $(NAME)
+EXE	 = $(call ISTARGNT,$(NAME).exe,$(NAME))
 LICENSE := (C) $(AUTHOR). $(LICENSE_SPDX).
 GIT_VER := $(shell git describe --dirty --always --tags --long)
 
@@ -78,7 +78,7 @@ ifeq ($(GIT_VER),)
 endif
 
 # Function to check if running within MSVC Native Tools Command Prompt.
-MSVC_GCC = $(if $(VSCMD_VER),$(1),$(2))
+ISTARGNT = $(if $(VSCMD_VER),$(1),$(2))
 
 # Select default build type
 ifndef BUILD
@@ -87,13 +87,13 @@ endif
 
 # Apply build type settings
 ifeq ($(BUILD),DEBUG)
-	CFLAGS += $(call MSVC_GCC,/Zi /MDd /RTC1 /sdl,-O0 -g3)
+	CFLAGS += $(call ISTARGNT,/Zi /MDd /RTC1 /sdl,-O0 -g3)
 else ifeq ($(BUILD),RELEASE)
-	CFLAGS += $(call MSVC_GCC,/MD /O2 /fp:fast,-Ofast -s)
+	CFLAGS += $(call ISTARGNT,/MD /O2 /fp:fast,-Ofast -s)
 else ifeq ($(BUILD),RELDEBUG)
-	CFLAGS += $(call MSVC_GCC,/MDd /O2 /fp:fast,-Ofast -g3)
+	CFLAGS += $(call ISTARGNT,/MDd /O2 /fp:fast,-Ofast -g3)
 else ifeq ($(BUILD),RELMINSIZE)
-	CFLAGS += $(call MSVC_GCC,/MD /O1 /fp:fast,-Os -ffast-math -s)
+	CFLAGS += $(call ISTARGNT,/MD /O1 /fp:fast,-Os -ffast-math -s)
 else
 	err := $(error Unknown build configuration '$(BUILD)')
 endif
@@ -108,21 +108,15 @@ ifeq ($(CC)$(wildcard SDL2.dll),cl)
     UNUSED := $(shell COPY ext\lib_$(VSCMD_ARG_TGT_ARCH)\SDL2.dll SDL2.dll)
 endif
 
-# Add UI example application to target.
-TARGET += $(EXE)
-
 # Add UI test to target
-TEST_EXE := test/ui-test
-TARGET += $(TEST_EXE)
+TEST_EXE_PREF = test/ui-test
+TEST_EXE  := $(call ISTARGNT,$(TEST_EXE_PREF).exe,$(TEST_EXE_PREF))
 TEST_SRCS := $(wildcard test/*.c) src/ui.c src/font.c src/menu.c
 TEST_OBJS := $(TEST_SRCS:.c=.$(OBJEXT))
 
-# File extension ".exe" is automatically appended on MinGW and MSVC builds, even
-# if we don't ask for it.
-# Append ".exe" for all targets.
-ifeq ($(OS),Windows_NT)
-	TARGET := $(addsuffix .exe,$(TARGET))
-endif
+# Add UI example application to target.
+TARGET += $(EXE)
+TARGET += $(TEST_EXE)
 
 override CFLAGS += -Iinc $(EXTRA_CFLAGS)
 override LDFLAGS += $(EXTRA_LDFLAGS)
