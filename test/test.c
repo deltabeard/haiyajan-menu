@@ -1,3 +1,5 @@
+#include "SDL_log.h"
+#include "SDL_surface.h"
 #define LODEPNG_NO_COMPILE_ENCODER
 #define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
 #define LODEPNG_COMPILE_ERROR_TEXT
@@ -38,11 +40,11 @@ void test_main_menu_look(void)
 		},
 		{
 		"Open", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, NULL },
-		.priv = &ui_styles[0]
+		.priv = &ui_styles[1]
 		},
 		{
 		"Exit", NULL, MENU_SET_VAL, .param.set_val = {.set = &set_val_test, .val = 1 },
-		.priv = &ui_styles[0]
+		.priv = &ui_styles[2]
 		}
 	};
 	struct menu_ctx root_menu = {
@@ -73,12 +75,17 @@ void test_main_menu_look(void)
 	* Continue menu option should be selected. */
 	{
 		unsigned int w, h, ret;
+		int res;
 		unsigned char *expected;
 		ret = lodepng_decode24_file(&expected, &w, &h,
 			"test/img/main_menu_continue.png");
 		SDL_assert_always(ret == 0);
 
-		lok(memcmp(expected, surf->pixels, (size_t)w * h * 3) == 0);
+		res = memcmp(expected, surf->pixels, (size_t)w * h * 3);
+		lok(res == 0);
+		if(res != 0)
+			SDL_SaveBMP(surf, "main_menu_continue_res.bmp");
+
 		free(expected);
 	}
 
@@ -87,12 +94,18 @@ void test_main_menu_look(void)
 	ui_render_frame(ui);
 	{
 		unsigned int w, h, ret;
+		int res;
 		unsigned char *expected;
 		ret = lodepng_decode24_file(&expected, &w, &h,
 			"test/img/main_menu_open.png");
 		SDL_assert_always(ret == 0);
 
 		lok(memcmp(expected, surf->pixels, (size_t)w * h * 3) == 0);
+		res = memcmp(expected, surf->pixels, (size_t)w * h * 3);
+		lok(res == 0);
+		if(res != 0)
+			SDL_SaveBMP(surf, "main_menu_open_res.bmp");
+
 		free(expected);
 	}
 
@@ -101,23 +114,25 @@ void test_main_menu_look(void)
 	ui_render_frame(ui);
 	{
 		unsigned int w, h, ret;
+		int res;
 		unsigned char *expected;
 		ret = lodepng_decode24_file(&expected, &w, &h,
 			"test/img/main_menu_quit.png");
 		SDL_assert_always(ret == 0);
 
 		lok(memcmp(expected, surf->pixels, (size_t)w * h * 3) == 0);
-		free(expected);
 
 		/* Check that the cursor does not loop or go "missing" if there
 		* are no more items in the main menu. */
 		ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
 		ui_render_frame(ui);
-		ret = lodepng_decode24_file(&expected, &w, &h,
-			"test/img/main_menu_quit.png");
-		SDL_assert_always(ret == 0);
 
 		lok(memcmp(expected, surf->pixels, (size_t)w * h * 3) == 0);
+		res = memcmp(expected, surf->pixels, (size_t)w * h * 3);
+		lok(res == 0);
+		if(res != 0)
+			SDL_SaveBMP(surf, "main_menu_quit_res.bmp");
+
 		free(expected);
 	}
 
@@ -136,7 +151,7 @@ int main(void)
 	if(SDL_Init(SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_VIDEO) != 0)
 		goto err;
 
-	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
+	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_WARN);
 	surf = SDL_CreateRGBSurfaceWithFormat(0, TARGET_WIDTH, TARGET_HEIGHT, 32,
 		SDL_PIXELFORMAT_RGB24);
 	SDL_assert_always(surf != NULL);
