@@ -28,22 +28,22 @@ struct menu_ctx
 	/* The menu to show when the user wants to go up a level. NULL if this
 	 * is the root menu. */
 	struct menu_ctx *parent;
-	
+
 	/* Name of the menu option. */
 	const char *title;
-	
+
 	/* Help text to show for the menu option.
 	 * NULL if no help text is available. */
 	const char *help;
-	
+
 	enum
 	{
 		/* Small list using large icons. */
 		STYLE_MENU_LARGE_LIST,
-		
+
 		/* Long list. */
 		STYLE_MENU_LIST,
-		
+
 		/* Grid of options. */
 		STYLE_MENU_GRID
 	} style_menu;
@@ -52,12 +52,12 @@ struct menu_ctx
 	{
 		/* The items in this menu do not change from initilisation. */
 		LIST_TYPE_STATIC,
-		
+
 		/* The items in this menu will be created when entering the
 		 * menu. */
 		LIST_TYPE_DYNAMIC
 	} list_type;
-	
+
 	union
 	{
 		struct
@@ -69,27 +69,27 @@ struct menu_ctx
 		{
 			/* Private pointer passed to function. May be NULL. */
 			void *priv;
-			
+
 			/* Function to call when the dynamic menu is selected.
 			 *
 			 * \param priv	Private pointer.
 			 * \param items	Pointer to save menu items.
 			 * \return	Number of items saved. UINT32_MAX on error.
 			 */
-			unsigned long (*fill_items)(void *priv, struct menu_item **items);
+			unsigned (*fill_items)(void *priv, struct menu_item **items);
 		} dynamic_list;
 	} items;
-	
+
 	/* The currently highlighted item. Must be 0 on initialisation.
 	 * 0 is the first menu item. */
-	unsigned long item_selected;
+	unsigned item_selected;
 };
 
 struct menu_item
 {
 	char *name;
 	char *help;
-	
+
 	enum
 	{
 		/* Opens a sub menu. */

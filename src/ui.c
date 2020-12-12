@@ -233,7 +233,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 				ctx->redraw = SDL_TRUE;
 				ctx->current->item_selected = box;
 				SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
-					"Selected item %d using motion",
+					"Selected item %u using motion",
 					ctx->current->item_selected);
 			}
 

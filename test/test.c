@@ -72,7 +72,7 @@ void test_main_menu_look(void)
 	/* Test that the main menu UI is correctly rendered. In this test, the
 	* Continue menu option should be selected. */
 	{
-		int w, h, ret;
+		unsigned int w, h, ret;
 		unsigned char *expected;
 		ret = lodepng_decode24_file(&expected, &w, &h,
 			"test/img/main_menu_continue.png");
@@ -86,7 +86,7 @@ void test_main_menu_look(void)
 	ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
 	ui_render_frame(ui);
 	{
-		int w, h, ret;
+		unsigned int w, h, ret;
 		unsigned char *expected;
 		ret = lodepng_decode24_file(&expected, &w, &h,
 			"test/img/main_menu_open.png");
@@ -100,7 +100,7 @@ void test_main_menu_look(void)
 	ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
 	ui_render_frame(ui);
 	{
-		int w, h, ret;
+		unsigned int w, h, ret;
 		unsigned char *expected;
 		ret = lodepng_decode24_file(&expected, &w, &h,
 			"test/img/main_menu_quit.png");
