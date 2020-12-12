@@ -72,12 +72,6 @@ GIT_VER := $(shell git describe --dirty --always --tags --long)
 SRCS := $(wildcard src/*.c)
 OBJS := $(SRCS:.c=.$(OBJEXT))
 
-# File extension ".exe" is automatically appended on MinGW and MSVC builds, even
-# if we don't ask for it.
-ifeq ($(OS),Windows_NT)
-	EXE := $(NAME).exe
-endif
-
 # Use a fallback git version string if build system does not have git.
 ifeq ($(GIT_VER),)
 	GIT_VER := LOCAL
@@ -114,11 +108,31 @@ ifeq ($(CC)$(wildcard SDL2.dll),cl)
     UNUSED := $(shell COPY ext\lib_$(VSCMD_ARG_TGT_ARCH)\SDL2.dll SDL2.dll)
 endif
 
+# Add UI example application to target.
+TARGET += $(EXE)
+
+# Add UI test to target
+TEST_EXE := test/ui-test
+TARGET += $(TEST_EXE)
+TEST_SRCS := $(wildcard test/*.c)
+TEST_OBJS := $(TEST_SRCS:.c=.$(OBJEXT))
+
+# File extension ".exe" is automatically appended on MinGW and MSVC builds, even
+# if we don't ask for it.
+# Append ".exe" for all targets.
+ifeq ($(OS),Windows_NT)
+	TARGET := $(addsuffix .exe,$(TARGET))
+endif
+
 override CFLAGS += -Iinc $(EXTRA_CFLAGS)
 override LDFLAGS += $(EXTRA_LDFLAGS)
 
-all: $(EXE)
+all: $(TARGET)
 $(EXE): $(OBJS) $(RES)
+	$(info LINK $@)
+	$(CC) $(CFLAGS) $(EXEOUT)$@ $^ $(LDFLAGS)
+
+$(TEST_EXE): $(TEST_OBJS)
 	$(info LINK $@)
 	$(CC) $(CFLAGS) $(EXEOUT)$@ $^ $(LDFLAGS)
 
