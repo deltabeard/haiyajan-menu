@@ -114,7 +114,7 @@ TARGET += $(EXE)
 # Add UI test to target
 TEST_EXE := test/ui-test
 TARGET += $(TEST_EXE)
-TEST_SRCS := $(wildcard test/*.c)
+TEST_SRCS := $(wildcard test/*.c) src/ui.c src/font.c src/menu.c
 TEST_OBJS := $(TEST_SRCS:.c=.$(OBJEXT))
 
 # File extension ".exe" is automatically appended on MinGW and MSVC builds, even

@@ -27,3 +27,4 @@ void ui_input(ui_ctx_s *ctx, SDL_GameControllerButton btn);
 ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format, struct menu_ctx *root, font_ctx *font);
 ui_ctx_s *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font);
 SDL_bool ui_should_redraw(ui_ctx_s *ctx);
+void ui_exit(ui_ctx_s *ctx);

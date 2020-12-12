@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 
 	(void)argc;
 	(void)argv;
-	
+
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
 	ret = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
@@ -137,12 +137,12 @@ int main(int argc, char *argv[])
 
 	win = SDL_CreateWindow("Haiyajan UI",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240,
-		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | 
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE |
 		SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN |
 		((APP_ALWAYS_FULLSCREEN != 0) ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_MAXIMIZED));
 	if(win == NULL)
 		goto err;
-	
+
 	if(APP_ALWAYS_FULLSCREEN != 0)
 	{
 		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
 			"Starting in desktop mode");
 	}
-	
+
 	ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED |
 		SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
 	if(ren == NULL)
@@ -171,6 +171,8 @@ int main(int argc, char *argv[])
 
 	while(SDL_QuitRequested() == SDL_FALSE && quit == 0)
 		loop(ren, ui);
+
+	ui_exit(ui);
 
 out:
 	SDL_DestroyRenderer(ren);

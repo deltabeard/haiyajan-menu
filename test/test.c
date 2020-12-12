@@ -16,37 +16,42 @@
 static SDL_Renderer *rend = NULL;
 static SDL_Surface *surf = NULL;
 
+struct item_priv ui_styles[] = {
+	{ .bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
+		.fg = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE }},
+	{ .bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
+		.fg = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE }},
+	{ .bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
+		.fg = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE }}
+};
+
 void test_main_menu_look(void)
 {
-	ui_ctx *ui;
+	struct ui_ctx *ui;
 	font_ctx *font;
 	int set_val_test;
 
 	struct menu_item root_items[] = {
 		{
 		"Continue", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, NULL },
-		.style = {.bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
-		.selected_outline = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE}}
+		.priv = &ui_styles[0]
 		},
 		{
 		"Open", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, NULL },
-		.style = {.bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
-		.selected_outline = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE}}
+		.priv = &ui_styles[0]
 		},
 		{
 		"Exit", NULL, MENU_SET_VAL, .param.set_val = {.set = &set_val_test, .val = 1 },
-		.style = {.bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
-		.selected_outline = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE}}
+		.priv = &ui_styles[0]
 		}
 	};
 	struct menu_ctx root_menu = {
 		.parent = NULL, .title = "Main Menu", .help = NULL,
 		.item_selected = 0,
 		.list_type = LIST_TYPE_STATIC,
-		.items_u.static_list =
-		{
-		.items_nmemb = SDL_arraysize(root_items),
-		.items = root_items
+		.items.static_list = {
+			.items_nmemb = SDL_arraysize(root_items),
+			.items = root_items
 		}
 	};
 
