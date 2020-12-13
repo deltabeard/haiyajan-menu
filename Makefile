@@ -111,7 +111,7 @@ endif
 # Add UI test to target
 TEST_EXE_PREF = test/ui-test
 TEST_EXE  := $(call ISTARGNT,$(TEST_EXE_PREF).exe,$(TEST_EXE_PREF))
-TEST_SRCS := $(wildcard test/*.c) src/ui.c src/font.c src/menu.c
+TEST_SRCS := $(wildcard test/*.c) src/ui.c src/font.c
 TEST_OBJS := $(TEST_SRCS:.c=.$(OBJEXT))
 
 # Add UI example application to target.

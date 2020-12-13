@@ -185,6 +185,7 @@ int main(void)
 
 	SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
 
+	/* Begin tests. */
 	lrun("Test Main Menu UI Look", test_main_menu_look);
 	lresults();
 

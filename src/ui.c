@@ -44,19 +44,47 @@ struct ui_ctx {
 
 void ui_input(ui_ctx_s *ctx, SDL_GameControllerButton btn)
 {
+	unsigned *item_selected = &ctx->current->item_selected;
 	switch(btn)
 	{
 	case SDL_CONTROLLER_BUTTON_DPAD_UP:
-		ctx->current = menu_instruct(ctx->current, MENU_INSTR_PREV_ITEM);
+		if (ctx->current->item_selected > 0)
+			(*item_selected)--;
 		break;
 
 	case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-		ctx->current = menu_instruct(ctx->current, MENU_INSTR_NEXT_ITEM);
+		if (*item_selected < (ctx->current->items.static_list.items_nmemb - 1))
+			(*item_selected)++;
 		break;
 
 	case SDL_CONTROLLER_BUTTON_A:
-		ctx->current = menu_instruct(ctx->current, MENU_INSTR_EXEC_ITEM);
+	{
+		const struct menu_item *item =
+			ctx->current->items.static_list.items + ctx->current->item_selected;
+
+		switch (item->op)
+		{
+		case MENU_SUB_MENU:
+			ctx->current = item->param.sub_menu;
+			break;
+
+		case MENU_EXEC_FUNC:
+		{
+			void* p = item->param.exec_func.ctx;
+			item->param.exec_func.func(p);
+			break;
+		}
+
+		case MENU_SET_VAL:
+		{
+			int val = item->param.set_val.val;
+			*item->param.set_val.set = val;
+			break;
+		}
+		}
+
 		break;
+	}
 
 	case SDL_CONTROLLER_BUTTON_B:
 		ctx->current = menu_instruct(ctx->current, MENU_INSTR_PARENT_MENU);
@@ -378,4 +406,60 @@ void ui_exit(ui_ctx_s *ctx)
 	SDL_free(ctx->boxes_input);
 	SDL_free(ctx);
 	ctx = NULL;
+}
+
+struct menu_ctx *menu_instruct(struct menu_ctx* ctx, menu_instruction_e instr)
+{
+	struct menu_ctx *ret = ctx;
+
+	switch (instr)
+	{
+	case MENU_INSTR_PREV_ITEM:
+		if (ctx->item_selected > 0)
+			ctx->item_selected--;
+
+		break;
+
+	case MENU_INSTR_NEXT_ITEM:
+		if (ctx->item_selected < (ctx->items.static_list.items_nmemb - 1))
+			ctx->item_selected++;
+
+		break;
+
+	case MENU_INSTR_PARENT_MENU:
+		if (ctx->parent != NULL)
+			ret = ctx->parent;
+
+		break;
+
+	case MENU_INSTR_EXEC_ITEM:
+	{
+		const struct menu_item *item =
+			ctx->items.static_list.items + ctx->item_selected;
+
+		switch (item->op)
+		{
+		case MENU_SUB_MENU:
+			ret = item->param.sub_menu;
+			break;
+
+		case MENU_EXEC_FUNC:
+		{
+			void* p = item->param.exec_func.ctx;
+			item->param.exec_func.func(p);
+			break;
+		}
+
+		case MENU_SET_VAL:
+		{
+			int val = item->param.set_val.val;
+			*item->param.set_val.set = val;
+			break;
+		}
+		}
+		break;
+	}
+	}
+
+	return ret;
 }
