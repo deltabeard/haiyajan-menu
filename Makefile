@@ -129,6 +129,7 @@ $(EXE): $(OBJS) $(RES)
 $(TEST_EXE): $(TEST_OBJS)
 	$(info LINK $@)
 	$(CC) $(CFLAGS) $(EXEOUT)$@ $^ $(LDFLAGS)
+	$(TEST_EXE)
 
 %.o: %.c
 	$(info CC $@)

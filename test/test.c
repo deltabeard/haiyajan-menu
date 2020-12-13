@@ -1,4 +1,5 @@
 #include "SDL_log.h"
+#include "SDL_stdinc.h"
 #include "SDL_surface.h"
 #define LODEPNG_NO_COMPILE_ENCODER
 #define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
@@ -6,6 +7,7 @@
 
 #include "lodepng.h"
 #include "minctest.h"
+#include <stdlib.h>
 
 #include <font.h>
 #include <menu.h>
@@ -27,11 +29,37 @@ struct item_priv ui_styles[] = {
 		.fg = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE }}
 };
 
+struct ui_expected {
+	const char *png_filename;
+	unsigned char *pixels;
+} ui_exp[] = {
+	{ "test/img/main_menu_continue.png",	NULL },
+	{ "test/img/main_menu_open.png",	NULL },
+	{ "test/img/main_menu_quit.png",	NULL }
+};
+
+#define MAIN_MENU_CONTINUE_PNG 0
+#define MAIN_MENU_OPEN_PNG 1
+#define MAIN_MENU_QUIT_PNG 2
+
+static unsigned char *png_to_pixels(const char *png_filename)
+{
+	unsigned int w, h, ret;
+	unsigned char *expected;
+	ret = lodepng_decode24_file(&expected, &w, &h, png_filename);
+	SDL_assert_always(ret == 0);
+	SDL_assert_always(w == TARGET_WIDTH);
+	SDL_assert_always(h == TARGET_HEIGHT);
+	return expected;
+}
+
 void test_main_menu_look(void)
 {
 	struct ui_ctx *ui;
 	font_ctx *font;
 	int set_val_test;
+	unsigned w = TARGET_WIDTH;
+	unsigned h = TARGET_HEIGHT;
 
 	struct menu_item root_items[] = {
 		{
@@ -74,44 +102,35 @@ void test_main_menu_look(void)
 	/* Test that the main menu UI is correctly rendered. In this test, the
 	* Continue menu option should be selected. */
 	{
-		unsigned int w, h, ret;
 		int res;
-		unsigned char *expected;
-		ret = lodepng_decode24_file(&expected, &w, &h,
-			"test/img/main_menu_continue.png");
-		SDL_assert_always(ret == 0);
-
-		res = memcmp(expected, surf->pixels, (size_t)w * h * 3);
+		res = memcmp(ui_exp[MAIN_MENU_CONTINUE_PNG].pixels, surf->pixels, (size_t)w * h * 3);
 		lok(res == 0);
 		if(res != 0)
-			SDL_SaveBMP(surf, "main_menu_continue_res.bmp");
-
-		free(expected);
+			SDL_SaveBMP(surf, ui_exp[MAIN_MENU_CONTINUE_PNG].png_filename);
 	}
 
 	/* Select and check the "Open" menu option. */
 	ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
 	ui_render_frame(ui);
 	{
-		unsigned int w, h, ret;
 		int res;
-		unsigned char *expected;
-		ret = lodepng_decode24_file(&expected, &w, &h,
-			"test/img/main_menu_open.png");
-		SDL_assert_always(ret == 0);
-
-		lok(memcmp(expected, surf->pixels, (size_t)w * h * 3) == 0);
-		res = memcmp(expected, surf->pixels, (size_t)w * h * 3);
+		res = memcmp(ui_exp[MAIN_MENU_OPEN_PNG].pixels, surf->pixels, (size_t)w * h * 3);
 		lok(res == 0);
 		if(res != 0)
-			SDL_SaveBMP(surf, "main_menu_open_res.bmp");
-
-		free(expected);
+			SDL_SaveBMP(surf, ui_exp[MAIN_MENU_OPEN_PNG].png_filename);
 	}
 
 	/* Select and check the "Exit" menu option. */
 	ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
 	ui_render_frame(ui);
+	{
+		int res;
+		res = memcmp(ui_exp[MAIN_MENU_QUIT_PNG].pixels, surf->pixels, (size_t)w * h * 3);
+		lok(res == 0);
+		if(res != 0)
+			SDL_SaveBMP(surf, ui_exp[MAIN_MENU_QUIT_PNG].png_filename);
+	}
+
 	{
 		unsigned int w, h, ret;
 		int res;
@@ -142,6 +161,7 @@ void test_main_menu_look(void)
 	ui_input(ui, SDL_CONTROLLER_BUTTON_A);
 	lequal(set_val_test, 1);
 
+	FontExit(font);
 	ui_exit(ui);
 	return;
 }
@@ -150,6 +170,10 @@ int main(void)
 {
 	if(SDL_Init(SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_VIDEO) != 0)
 		goto err;
+
+	/* Prepare expected UI images. */
+	for(unsigned i = 0; i < SDL_arraysize(ui_exp); i++)
+		ui_exp[i].pixels = png_to_pixels(ui_exp[i].png_filename);
 
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_WARN);
 	surf = SDL_CreateRGBSurfaceWithFormat(0, TARGET_WIDTH, TARGET_HEIGHT, 32,
@@ -163,6 +187,10 @@ int main(void)
 
 	lrun("Test Main Menu UI Look", test_main_menu_look);
 	lresults();
+
+	/* Free UI images. */
+	for(unsigned i = 0; i < SDL_arraysize(ui_exp); i++)
+		free(ui_exp[i].pixels);
 
 	SDL_Quit();
 	return lfails != 0;
