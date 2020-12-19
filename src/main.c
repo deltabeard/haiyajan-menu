@@ -15,15 +15,6 @@
 # define APP_ALWAYS_FULLSCREEN 0
 #endif
 
-struct item_priv ui_styles[] = {
-	{ .bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
-		.fg = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE }},
-	{ .bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
-		.fg = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE }},
-	{ .bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
-		.fg = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE }}
-};
-
 static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 {
 	SDL_Event e;
@@ -36,33 +27,34 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 			{
 			case SDLK_w:
 			case SDLK_UP:
-				ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_UP);
+				ui_input(ui, MENU_INSTR_PREV_ITEM);
 				break;
 
 			case SDLK_s:
 			case SDLK_DOWN:
-				ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+				ui_input(ui, MENU_INSTR_NEXT_ITEM);
 				break;
 
 			case SDLK_a:
 			case SDLK_LEFT:
-				ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+				/* TODO: Add skip items forward and back. */
+				//ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
 				break;
 
 			case SDLK_d:
 			case SDLK_RIGHT:
-				ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+				//ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
 				break;
 
 			case SDLK_SPACE:
 			case SDLK_RETURN:
 			case SDLK_z:
-				ui_input(ui, SDL_CONTROLLER_BUTTON_A);
+				ui_input(ui, MENU_INSTR_EXEC_ITEM);
 				break;
 
 			case SDLK_x:
 			case SDLK_BACKSPACE:
-				ui_input(ui, SDL_CONTROLLER_BUTTON_B);
+				ui_input(ui, MENU_INSTR_PARENT_MENU);
 				break;
 			}
 		}
@@ -105,15 +97,18 @@ int main(int argc, char *argv[])
 	struct menu_item root_items[] = {
 		{
 		"Continue", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb },
-		.priv = &ui_styles[0]
+		.bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
+		.fg = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE}
 		},
 		{
 		"Open", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb },
-		.priv = &ui_styles[1]
+		.bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
+		.fg = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE}
 		},
 		{
 		"Exit", NULL, MENU_SET_VAL, .param.set_val = { 1, &quit },
-		.priv = &ui_styles[2]
+		.bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
+		.fg = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE}
 		}
 	};
 	struct menu_ctx root_menu = {

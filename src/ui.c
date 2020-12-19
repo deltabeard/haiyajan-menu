@@ -42,22 +42,28 @@ struct ui_ctx {
 	} *boxes_input;
 };
 
-void ui_input(ui_ctx_s *ctx, SDL_GameControllerButton btn)
+void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 {
 	unsigned *item_selected = &ctx->current->item_selected;
-	switch(btn)
+	switch(instr)
 	{
-	case SDL_CONTROLLER_BUTTON_DPAD_UP:
+	case MENU_INSTR_PREV_ITEM:
 		if (ctx->current->item_selected > 0)
 			(*item_selected)--;
 		break;
 
-	case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+	case MENU_INSTR_NEXT_ITEM:
 		if (*item_selected < (ctx->current->items.static_list.items_nmemb - 1))
 			(*item_selected)++;
 		break;
 
-	case SDL_CONTROLLER_BUTTON_A:
+	case MENU_INSTR_PARENT_MENU:
+		if (ctx->current->parent != NULL)
+			ctx->current = ctx->current->parent;
+
+		break;
+
+	case MENU_INSTR_EXEC_ITEM:
 	{
 		const struct menu_item *item =
 			ctx->current->items.static_list.items + ctx->current->item_selected;
@@ -69,29 +75,16 @@ void ui_input(ui_ctx_s *ctx, SDL_GameControllerButton btn)
 			break;
 
 		case MENU_EXEC_FUNC:
-		{
-			void* p = item->param.exec_func.ctx;
-			item->param.exec_func.func(p);
+			item->param.exec_func.func(item->param.exec_func.ctx);
 			break;
-		}
 
 		case MENU_SET_VAL:
-		{
-			int val = item->param.set_val.val;
-			*item->param.set_val.set = val;
+			*item->param.set_val.set = item->param.set_val.val;
 			break;
-		}
 		}
 
 		break;
 	}
-
-	case SDL_CONTROLLER_BUTTON_B:
-		ctx->current = menu_instruct(ctx->current, MENU_INSTR_PARENT_MENU);
-		break;
-
-	default:
-		return;
 	}
 
 	ctx->redraw = SDL_TRUE;
@@ -129,10 +122,9 @@ int ui_render_frame(ui_ctx_s *ctx)
 		item < ctx->current->items.static_list.items_nmemb;
 		item++)
 	{
-		struct menu_item *this_item = &ctx->current->items.static_list.items[item];
-		struct item_priv *style = this_item->priv;
-		const SDL_Colour ol = style->fg;
-		const SDL_Colour bg = style->bg;
+		struct menu_item *this = &ctx->current->items.static_list.items[item];
+		const SDL_Colour ol = this->fg;
+		const SDL_Colour bg = this->bg;
 		SDL_Rect text_loc = {
 			.x = main_menu_box.x + 6,
 			.y = main_menu_box.y + 80,
@@ -144,7 +136,7 @@ int ui_render_frame(ui_ctx_s *ctx)
 			SDL_SetRenderDrawColor(ctx->ren, ol.r, ol.g, ol.b, ol.a);
 			SDL_RenderFillRect(ctx->ren, &bg_box);
 			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Selected %s",
-				this_item->name);
+				this->name);
 		}
 
 		/* Draw item box. */
@@ -159,14 +151,14 @@ int ui_render_frame(ui_ctx_s *ctx)
 			ctx->boxes_input[item].hit_box.w = main_menu_box.w;
 			ctx->boxes_input[item].hit_box.h = main_menu_box.h;
 
-			ctx->boxes_input[item].item = this_item;
+			ctx->boxes_input[item].item = this;
 			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Hit box generated for (%d, %d)(%d, %d)",
 				main_menu_box.x, main_menu_box.y, main_menu_box.h, main_menu_box.w);
 		}
 
 		/* Draw item text. */
 		SDL_SetRenderDrawColor(ctx->ren, 0xFA, 0xFA, 0xFA, SDL_ALPHA_OPAQUE);
-		FontPrintToRenderer(ctx->font, this_item->name, &text_loc);
+		FontPrintToRenderer(ctx->font, this->name, &text_loc);
 		main_menu_box.y += MENU_BOX_SPACING;
 		bg_box.y += MENU_BOX_SPACING;
 	}
@@ -301,7 +293,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 					ctx->current->item_selected);
 			}
 
-			ui_input(ctx, SDL_CONTROLLER_BUTTON_A);
+			ui_input(ctx, MENU_INSTR_EXEC_ITEM);
 			SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
 				"Executed item %d using button",
 				ctx->current->item_selected);
@@ -406,60 +398,4 @@ void ui_exit(ui_ctx_s *ctx)
 	SDL_free(ctx->boxes_input);
 	SDL_free(ctx);
 	ctx = NULL;
-}
-
-struct menu_ctx *menu_instruct(struct menu_ctx* ctx, menu_instruction_e instr)
-{
-	struct menu_ctx *ret = ctx;
-
-	switch (instr)
-	{
-	case MENU_INSTR_PREV_ITEM:
-		if (ctx->item_selected > 0)
-			ctx->item_selected--;
-
-		break;
-
-	case MENU_INSTR_NEXT_ITEM:
-		if (ctx->item_selected < (ctx->items.static_list.items_nmemb - 1))
-			ctx->item_selected++;
-
-		break;
-
-	case MENU_INSTR_PARENT_MENU:
-		if (ctx->parent != NULL)
-			ret = ctx->parent;
-
-		break;
-
-	case MENU_INSTR_EXEC_ITEM:
-	{
-		const struct menu_item *item =
-			ctx->items.static_list.items + ctx->item_selected;
-
-		switch (item->op)
-		{
-		case MENU_SUB_MENU:
-			ret = item->param.sub_menu;
-			break;
-
-		case MENU_EXEC_FUNC:
-		{
-			void* p = item->param.exec_func.ctx;
-			item->param.exec_func.func(p);
-			break;
-		}
-
-		case MENU_SET_VAL:
-		{
-			int val = item->param.set_val.val;
-			*item->param.set_val.set = val;
-			break;
-		}
-		}
-		break;
-	}
-	}
-
-	return ret;
 }

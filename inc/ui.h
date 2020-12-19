@@ -9,12 +9,6 @@ typedef struct ui_ctx ui_ctx_s;
 
 #define UI_EVENT_MASK (SDL_WINDOWEVENT | SDL_MOUSEMOTION)
 
-/* UI configuration for item. Must be provided to menu entry priv pointer. */
-struct item_priv {
-	const SDL_Colour bg;
-	const SDL_Colour fg;
-};
-
 #define MENU_SELECT_ITEM(menu, sel)				\
 	do{							\
 		if((sel - 1) < menu->items_nmemb)		\
@@ -120,7 +114,8 @@ struct menu_item
 		} set_val;
 	} param;
 
-	void *priv;
+	SDL_Colour bg;
+	SDL_Colour fg;
 };
 
 typedef enum
@@ -142,18 +137,44 @@ typedef enum
 	MENU_INSTR_EXEC_ITEM
 } menu_instruction_e;
 
-struct menu_ctx *menu_instruct(struct menu_ctx *ctx, menu_instruction_e instr);
-
 /**
- * Render UI to texture.
+ * Render UI to window.
 *
-* \param c	UI Context.
+* \param ctx	UI Context.
 * \returns	SDL Texture with rendered UI.
 */
 int ui_render_frame(ui_ctx_s *ctx);
+
+/**
+ * Process input and window resize events.
+ *
+ * \param ctx	UI Context.
+ * \param e	SDL_Event that was triggered.
+ */
 void ui_process_event(ui_ctx_s *ctx, SDL_Event *e);
-void ui_input(ui_ctx_s *ctx, SDL_GameControllerButton btn);
-ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format, struct menu_ctx *root, font_ctx *font);
+
+/**
+ * Apply instruction to the user interface.
+ *
+ * \param ctx	UI Context.
+ * \param instr	Interaction with user interface to apply.
+ */
+void ui_input(ui_ctx_s *ctx, menu_instruction_e instr);
+
+/**
+ * Initialise user interface from an SDL Renderer.
+ *
+ * \param rend	SDL_Renderer to target.
+ * \param dpi	Initial DPI to target.
+ * \param format Renderer colour format.
+ * \param root	Pointer to root (or main) menu. Must remain valid until after
+ *		ui_exit is called.
+ * \param font	Initialised font context.
+ * \return	UI context. NULL on error.
+ */
+ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
+	struct menu_ctx *root, font_ctx *font);
+
 ui_ctx_s *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font);
 SDL_bool ui_should_redraw(ui_ctx_s *ctx);
 void ui_exit(ui_ctx_s *ctx);

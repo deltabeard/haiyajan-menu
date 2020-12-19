@@ -10,7 +10,6 @@
 #include <stdlib.h>
 
 #include <font.h>
-#include <menu.h>
 #include <SDL.h>
 #include <ui.h>
 
@@ -19,15 +18,6 @@
 
 static SDL_Renderer *rend = NULL;
 static SDL_Surface *surf = NULL;
-
-struct item_priv ui_styles[] = {
-	{ .bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
-		.fg = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE }},
-	{ .bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
-		.fg = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE }},
-	{ .bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
-		.fg = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE }}
-};
 
 struct ui_expected {
 	const char *png_filename;
@@ -64,15 +54,18 @@ void test_main_menu_look(void)
 	struct menu_item root_items[] = {
 		{
 		"Continue", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, NULL },
-		.priv = &ui_styles[0]
+		.bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
+		.fg = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE}
 		},
 		{
 		"Open", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, NULL },
-		.priv = &ui_styles[1]
+		.bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
+		.fg = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE}
 		},
 		{
 		"Exit", NULL, MENU_SET_VAL, .param.set_val = {.set = &set_val_test, .val = 1 },
-		.priv = &ui_styles[2]
+		.bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
+		.fg = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE}
 		}
 	};
 	struct menu_ctx root_menu = {
@@ -110,7 +103,7 @@ void test_main_menu_look(void)
 	}
 
 	/* Select and check the "Open" menu option. */
-	ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+	ui_input(ui, MENU_INSTR_NEXT_ITEM);
 	ui_render_frame(ui);
 	{
 		int res;
@@ -121,7 +114,7 @@ void test_main_menu_look(void)
 	}
 
 	/* Select and check the "Exit" menu option. */
-	ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+	ui_input(ui, MENU_INSTR_NEXT_ITEM);
 	ui_render_frame(ui);
 	{
 		int res;
@@ -143,7 +136,7 @@ void test_main_menu_look(void)
 
 		/* Check that the cursor does not loop or go "missing" if there
 		* are no more items in the main menu. */
-		ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+		ui_input(ui, MENU_INSTR_NEXT_ITEM);
 		ui_render_frame(ui);
 
 		lok(memcmp(expected, surf->pixels, (size_t)w * h * 3) == 0);
@@ -158,7 +151,7 @@ void test_main_menu_look(void)
 	/* Check that executing the "Exit" option works. This will change the
 	* value of the variable set_val_test to 1. This will not exit the
 	* application. */
-	ui_input(ui, SDL_CONTROLLER_BUTTON_A);
+	ui_input(ui, MENU_INSTR_EXEC_ITEM);
 	lequal(set_val_test, 1);
 
 	FontExit(font);
