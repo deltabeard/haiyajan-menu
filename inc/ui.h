@@ -1,7 +1,6 @@
 #pragma once
 
 #include <font.h>
-#include <menu.h>
 #include <SDL.h>
 
 /* Private UI Context. */

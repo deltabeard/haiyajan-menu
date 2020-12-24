@@ -4,7 +4,6 @@
  */
 
 #include <font.h>
-#include <menu.h>
 #include <SDL.h>
 #include <ui.h>
 //#include <win_dirent.h>
