@@ -1,0 +1,65 @@
+ifeq ($(strip $(DEVKITPRO)),)
+$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
+endif
+
+DEVKITPATH=$(shell echo "$(DEVKITPRO)" | sed -e 's/^\([a-zA-Z]\):/\/\1/')
+PATH	:=	$(DEVKITPATH)/tools/bin:$(DEVKITPATH)/devkitA64/bin:$(PATH)
+PORTLIBS_PATH	:=	$(DEVKITPATH)/portlibs
+PORTLIBS	:= $(PORTLIBS_PATH)/switch
+PATH		:= $(PORTLIBS)/bin:$(PATH)
+
+PREFIX	:= aarch64-none-elf-
+CC	:= $(PREFIX)gcc
+CXX	:= $(PREFIX)g++
+AS	:= $(PREFIX)as
+AR	:= $(PREFIX)gcc-ar
+OBJCOPY	:= $(PREFIX)objcopy
+STRIP	:= $(PREFIX)strip
+NM	:= $(PREFIX)gcc-nm
+RANLIB	:= $(PREFIX)gcc-ranlib
+LD	:= $(PREFIX)ld
+
+TARGET := $(notdir $(CURDIR))
+CFLAGS += -Iinc
+
+ARCH	:= -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -g3 -flto \
+	-fprofile-generate -fprofile-dir=/tmp/prof
+#-fprofile-dir=/tmp/prof -fprofile-use
+
+CFLAGS += -D__SWITCH__ -Wall -Ofast $(ARCH) $(DEFINES) \
+	  $(shell $(PORTLIBS)/bin/sdl2-config --cflags)
+
+LDFLAGS	= -specs=$(DEVKITPRO)/libnx/switch.specs $(ARCH) -Wl,-Map,$(notdir $*.map)
+
+LIBS := $(shell $(PORTLIBS)/bin/sdl2-config --static-libs)
+
+
+LIBNX		?= $(DEVKITPRO)/libnx
+
+APP_TITLE	:= $(notdir $(OUTPUT))
+APP_AUTHOR	:= Unspecified Author
+APP_VERSION	:= 1.0.0
+APP_ICON	:= $(LIBNX)/default_icon.jpg
+
+OUTPUT := $(CURDIR)/$(TARGET)
+
+CFILES := $(wildcard src/*.c)
+OFILES := $(CFILES:.c=.o)
+
+LIBDIRS := $(PORTLIBS) $(LIBNX)
+LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+
+all: $(OUTPUT).nro
+$(OUTPUT).nro: $(OUTPUT).elf $(OUTPUT).nacp
+	elf2nro $< $@ --icon=$(APP_ICON) --nacp=$(CURDIR)/$(TARGET).nacp
+
+$(OUTPUT).elf: $(OFILES)
+	$(CXX) $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
+	$(NM) -CSn $@ > $(notdir $*.lst)
+
+%.nacp:
+	nacptool --create "$(APP_TITLE)" "$(APP_AUTHOR)" "$(APP_VERSION)" $@
+
+clean:
+	$(RM) $(OFILES) $(TARGET).nro $(TARGET).nacp $(TARGET).elf
+
