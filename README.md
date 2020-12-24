@@ -14,4 +14,4 @@ Execute GNU Make in the root directory. On Windows, execute GNU Make within the
 ## License
 
 Copyright (c) 2020 Mahyar Koshkouei<br/>
-All Rights Reserved
+Licensed under the GNU LGPL Version 3.
