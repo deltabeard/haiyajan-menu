@@ -4,7 +4,7 @@ NAME		:= Haiyajan-UI
 DESCRIPTION	:= UI toolkit for Haiyajan
 COMPANY		:= Deltabeard
 AUTHOR		:= Mahyar Koshkouei
-LICENSE_SPDX	:= All Rights Reserved
+LICENSE_SPDX	:= LGPL-3.0
 
 # Default configurable build options
 BUILD	:= DEBUG
@@ -22,6 +22,15 @@ Available options and their descriptions when enabled:
       RELDEBUG: All debugging symbols; Optimised for speed.
       RELMINSIZE: No debugging symbols; Optimised for size.
 
+  PLATFORM=$(PLATFORM)
+    Manualy specify target platform. If unset, an attempt is made to
+    automatically determine this.
+    Supported platforms:
+      MSVC: For Windows NT platforms compiled with Visual Studio C++ Build Tools.
+            Must be compiled within the "Native Tools Command Prompt for VS" shell.
+      SWITCH: For Nintendo Switch homebrew platform. (Not automatically set).
+      UNIX: For all Unix-like platforms, including Linux, BSD, MacOS, and MSYS2.
+
   EXTRA_CFLAGS=$(EXTRA_CFLAGS)
     Extra CFLAGS to pass to C compiler.
 
@@ -34,26 +43,52 @@ $(LICENSE)
 endef
 
 ifdef VSCMD_VER
+	PLATFORM := MSVC
+else
+	PLATFORM := UNIX
+endif
+
+ifeq ($(PLATFORM),MSVC)
 	# Default compiler options for Microsoft Visual C++ (MSVC)
 	CC	:= cl
 	OBJEXT	:= obj
 	RM	:= del
-	EXEOUT	:= /Fe
 	CFLAGS	:= /nologo /analyze /diagnostics:caret /utf-8 /std:c11 /W1 /Iext\inc
 	LDFLAGS := /link /SUBSYSTEM:CONSOLE SDL2main.lib SDL2.lib shell32.lib /LIBPATH:ext\lib_$(VSCMD_ARG_TGT_ARCH)
 	ICON_FILE := icon.ico
 	RES	:= meta\winres.res
-else
+	EXE	:= $(NAME).exe
+
+else ifeq ($(PLATFORM),SWITCH)
+	PATH	:= $(DEVKITPRO)/tools/bin:$(DEVKITPRO)/devkitA64/bin:$(PATH)
+	PORTLIBS_PATH := $(DEVKITPRO)/portlibs
+	PORTLIBS := $(PORTLIBS_PATH)/switch
+	PATH	 := $(PORTLIBS)/bin:$(PATH)
+	PREFIX	:= aarch64-none-elf-
+	CC	:= $(PREFIX)gcc
+	CXX	:= $(PREFIX)g++
+	EXE	:= $(NAME).nro
+	OBJEXT	:= o
+	CFLAGS	:= -march=armv8-a+crc+crypto -mtune=cortex-a57 -fPIE -mtp=soft -D__SWITCH__ \
+		  $(shell $(PORTLIBS)/bin/sdl2-config --cflags)
+	LDFLAGS	= -specs=$(DEVKITPRO)/libnx/switch.specs \
+		  $(shell $(PORTLIBS)/bin/sdl2-config --static-libs)
+	APP_ICON := $(DEVKITPRO)/libnx/default_icon.jpg
+
+else ifeq ($(PLATFORM),UNIX)
 	# Default compiler options for GCC and Clang
 	CC	:= cc
 	OBJEXT	:= o
 	RM	:= rm -f
-	EXEOUT	:= -o
 	CFLAGS	:= -std=c99 -pedantic -Wall -Wextra $(shell sdl2-config --cflags)
 	LDFLAGS	:= $(shell sdl2-config --libs)
+	EXE	:= $(NAME)
+
+else
+	err := $(error Unsupported platform specified)
 endif
 
-# Options specific to 32-bit platforms
+# Options specific to Windows NT 32-bit platforms
 ifeq ($(VSCMD_ARG_TGT_ARCH),x32)
 	# Use SSE instructions (since Pentium III).
 	CFLAGS += /arch:SSE
@@ -65,7 +100,6 @@ endif
 #
 # No need to edit anything past this line.
 #
-EXE	 = $(call ISTARGNT,$(NAME).exe,$(NAME))
 LICENSE := (C) $(AUTHOR). $(LICENSE_SPDX).
 GIT_VER := $(shell git describe --dirty --always --tags --long)
 
@@ -98,7 +132,7 @@ else
 	err := $(error Unknown build configuration '$(BUILD)')
 endif
 
-# WHen compiling with MSVC, check if SDL2 has been expanded from prepared cab file.
+# When compiling with MSVC, check if SDL2 has been expanded from prepared cab file.
 ifeq ($(CC)$(wildcard SDL2.dll),cl)
     $(info Preparing SDL2 development libraries)
     EXPAND_CMD := expand ext/SDL2-2.0.12-VC.cab -F:* ext
@@ -108,43 +142,40 @@ ifeq ($(CC)$(wildcard SDL2.dll),cl)
     UNUSED := $(shell COPY ext\lib_$(VSCMD_ARG_TGT_ARCH)\SDL2.dll SDL2.dll)
 endif
 
-# Add UI test to target
-TEST_EXE_PREF = test/ui-test
-TEST_EXE  := $(call ISTARGNT,$(TEST_EXE_PREF).exe,$(TEST_EXE_PREF))
-TEST_SRCS := $(wildcard test/*.c) src/ui.c src/font.c
-TEST_OBJS := $(TEST_SRCS:.c=.$(OBJEXT))
-
 # Add UI example application to target.
 TARGET += $(EXE)
-TARGET += $(TEST_EXE)
 
 override CFLAGS += -Iinc $(EXTRA_CFLAGS)
 override LDFLAGS += $(EXTRA_LDFLAGS)
 
 all: $(TARGET)
-$(EXE): $(OBJS) $(RES)
-	$(info LINK $@)
-	$(CC) $(CFLAGS) $(EXEOUT)$@ $^ $(LDFLAGS)
-
-$(TEST_EXE): $(TEST_OBJS)
-	$(info LINK $@)
-	$(CC) $(CFLAGS) $(EXEOUT)$@ $^ $(LDFLAGS)
-	$(TEST_EXE)
+$(NAME): $(OBJS) $(RES)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c
-	$(info CC $@)
-	@$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
 
-# cl always prints the source file name, so we just add the CC suffix.
+# MSVC rules
+$(NAME).exe: $(OBJS) $(RES)
+	$(CC) $(CFLAGS) /Fe$@ $^ $(LDFLAGS)
+
 %.obj: %.c
-	$(info CC $<)
-	@$(CC) $(CFLAGS) /Fo$@ /c /TC $^
+	$(CC) $(CFLAGS) /Fo$@ /c /TC $^
 
 %.res: %.rc
-	$(info RC $@)
-	@rc /nologo /DCOMPANY="$(COMPANY)" /DDESCRIPTION="$(DESCRIPTION)" \
+	rc /nologo /DCOMPANY="$(COMPANY)" /DDESCRIPTION="$(DESCRIPTION)" \
 		/DLICENSE="$(LICENSE)" /DGIT_VER="$(GIT_VER)" \
 		/DNAME="$(NAME)" /DICON_FILE="$(ICON_FILE)" $^
+
+# Nintendo Switch rules for use with devkitA64
+$(NAME).nro: $(NAME).elf $(NAME).nacp
+	elf2nro $< $@ --icon=$(APP_ICON) --nacp=$(CURDIR)/$(NAME).nacp
+
+$(NAME).elf: $(OBJS)
+	$(CXX) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+
+%.nacp:
+	nacptool --create "$(DESCRIPTION)" "$(COMPANY)" "$(GIT_VER)" $@
 
 clean:
 	$(RM) $(EXE) $(RES)
