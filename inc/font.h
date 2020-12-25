@@ -1,6 +1,6 @@
 /**
  * Font rendering library for SDL2.
- * Copyright (C) 2020  Mahyar Koshkouei
+ * Copyright (C) 2020 Mahyar Koshkouei
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

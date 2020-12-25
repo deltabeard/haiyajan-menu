@@ -4,8 +4,10 @@
 # But not these files:
 !**/.gitignore
 !**/.editorconfig
-!**/Makefile
+!**/Makefile*
 !build_win.bat
+
+!LICENSE
 
 !src/**/*.c
 !inc/**/*.h
