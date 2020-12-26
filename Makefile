@@ -56,23 +56,21 @@ ifeq ($(PLATFORM),MSVC)
 	CFLAGS	:= /nologo /analyze /diagnostics:caret /utf-8 /std:c11 /W1 /Iext\inc
 	LDFLAGS := /link /SUBSYSTEM:CONSOLE SDL2main.lib SDL2.lib shell32.lib /LIBPATH:ext\lib_$(VSCMD_ARG_TGT_ARCH)
 	ICON_FILE := icon.ico
-	RES	:= meta\winres.res
+	OBJS	+= meta\winres.res
 	EXE	:= $(NAME).exe
 
 else ifeq ($(PLATFORM),SWITCH)
-	PATH	:= $(DEVKITPRO)/tools/bin:$(DEVKITPRO)/devkitA64/bin:$(PATH)
-	PORTLIBS_PATH := $(DEVKITPRO)/portlibs
-	PORTLIBS := $(PORTLIBS_PATH)/switch
-	PATH	 := $(PORTLIBS)/bin:$(PATH)
+	PORTLIBSBIN := $(DEVKITPRO)/portlibs/switch/bin
+	PATH	:= $(PORTLIBSBIN):$(DEVKITPRO)/tools/bin:$(DEVKITPRO)/devkitA64/bin:$(PATH)
 	PREFIX	:= aarch64-none-elf-
 	CC	:= $(PREFIX)gcc
 	CXX	:= $(PREFIX)g++
 	EXE	:= $(NAME).nro
 	OBJEXT	:= o
 	CFLAGS	:= -march=armv8-a+crc+crypto -mtune=cortex-a57 -fPIE -mtp=soft -D__SWITCH__ \
-		  $(shell $(PORTLIBS)/bin/sdl2-config --cflags)
+		  $(shell $(PORTLIBSBIN)/sdl2-config --cflags)
 	LDFLAGS	= -specs=$(DEVKITPRO)/libnx/switch.specs \
-		  $(shell $(PORTLIBS)/bin/sdl2-config --static-libs)
+		  $(shell $(PORTLIBSBIN)/sdl2-config --static-libs)
 	APP_ICON := $(DEVKITPRO)/libnx/default_icon.jpg
 
 else ifeq ($(PLATFORM),UNIX)
@@ -104,7 +102,7 @@ LICENSE := (C) $(AUTHOR). $(LICENSE_SPDX).
 GIT_VER := $(shell git describe --dirty --always --tags --long)
 
 SRCS := $(wildcard src/*.c)
-OBJS := $(SRCS:.c=.$(OBJEXT))
+OBJS += $(SRCS:.c=.$(OBJEXT))
 
 # Use a fallback git version string if build system does not have git.
 ifeq ($(GIT_VER),)
@@ -145,18 +143,20 @@ endif
 # Add UI example application to target.
 TARGET += $(EXE)
 
-override CFLAGS += -Iinc $(EXTRA_CFLAGS)
+override CFLAGS += -Iinc -DBUILD=$(BUILD) $(EXTRA_CFLAGS)
 override LDFLAGS += $(EXTRA_LDFLAGS)
 
 all: $(TARGET)
-$(NAME): $(OBJS) $(RES)
+
+# Unix rules
+$(NAME): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
+	$(CC) -c $(CFLAGS) -o $@ $<
 
 # MSVC rules
-$(NAME).exe: $(OBJS) $(RES)
+$(NAME).exe: $(OBJS)
 	$(CC) $(CFLAGS) /Fe$@ $^ $(LDFLAGS)
 
 %.obj: %.c
@@ -169,7 +169,7 @@ $(NAME).exe: $(OBJS) $(RES)
 
 # Nintendo Switch rules for use with devkitA64
 $(NAME).nro: $(NAME).elf $(NAME).nacp
-	elf2nro $< $@ --icon=$(APP_ICON) --nacp=$(CURDIR)/$(NAME).nacp
+	elf2nro $< $@ --icon=$(APP_ICON) --nacp=$(NAME).nacp
 
 $(NAME).elf: $(OBJS)
 	$(CXX) $(CFLAGS) $^ -o $@ $(LDFLAGS)
@@ -178,8 +178,7 @@ $(NAME).elf: $(OBJS)
 	nacptool --create "$(DESCRIPTION)" "$(COMPANY)" "$(GIT_VER)" $@
 
 clean:
-	$(RM) $(EXE) $(RES)
-	cd src && $(RM) *.$(OBJEXT)
+	$(RM) $(NAME) $(NAME).elf $(NAME).nacp $(NAME).exe $(RES) $(OBJS)
 
 help:
 	@exit

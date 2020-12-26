@@ -133,7 +133,6 @@ int main(int argc, char *argv[])
 
 #ifdef __SWITCH__
 	/* Redirect stdio to NXlink. */
-#warning "Compiling for Nintendo Switch"
 	socketInitializeDefault();
 	nxlinkStdio();
 #endif
