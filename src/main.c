@@ -12,6 +12,10 @@
 #include <ui.h>
 //#include <win_dirent.h>
 
+#ifdef __SWITCH__
+#include <switch.h>
+#endif
+
 #if defined(__ANDROID__) | defined(__TVOS__) | defined(__IPHONEOS__) | defined(__NACL__) | defined(__PNACL__) | defined(__DREAMCAST__) | defined(__PSP__)
 # define APP_ALWAYS_FULLSCREEN 1
 #else
@@ -127,17 +131,31 @@ int main(int argc, char *argv[])
 	(void)argc;
 	(void)argv;
 
+#ifdef __SWITCH__
+	/* Redirect stdio to NXlink. */
+#warning "Compiling for Nintendo Switch"
+	socketInitializeDefault();
+	nxlinkStdio();
+#endif
+
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
-	ret = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+	ret = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER |
+			SDL_INIT_EVENTS | SDL_INIT_TIMER);
 	if(ret != 0)
 		goto err;
 
+#ifdef __SWITCH__
+	win = SDL_CreateWindow("Haiyajan UI",
+		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1080,
+		SDL_WINDOW_OPENGL);
+#else
 	win = SDL_CreateWindow("Haiyajan UI",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE |
 		SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN |
 		((APP_ALWAYS_FULLSCREEN != 0) ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_MAXIMIZED));
+#endif
 	if(win == NULL)
 		goto err;
 
@@ -176,6 +194,11 @@ out:
 	SDL_DestroyRenderer(ren);
 	SDL_DestroyWindow(win);
 	SDL_Quit();
+
+#ifdef __SWITCH__
+	socketExit();
+#endif
+
 	return ret;
 
 err:
