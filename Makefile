@@ -1,7 +1,7 @@
 # This file is for use with GNU Make only.
 # Project details
-NAME		:= Haiyajan-UI
-DESCRIPTION	:= UI toolkit for Haiyajan
+NAME		:= haiyajan-menu
+DESCRIPTION	:= Custom UI for Haiyajan
 COMPANY		:= Deltabeard
 AUTHOR		:= Mahyar Koshkouei
 LICENSE_SPDX	:= LGPL-3.0
@@ -53,7 +53,7 @@ ifeq ($(PLATFORM),MSVC)
 	CC	:= cl
 	OBJEXT	:= obj
 	RM	:= del
-	CFLAGS	:= /nologo /analyze /diagnostics:caret /utf-8 /std:c11 /W1 /Iext\inc
+	CFLAGS	:= /nologo /utf-8 /W1 /Iinc /Iext\inc /FS /D_CRT_SECURE_NO_WARNINGS
 	LDFLAGS := /link /SUBSYSTEM:CONSOLE SDL2main.lib SDL2.lib shell32.lib /LIBPATH:ext\lib_$(VSCMD_ARG_TGT_ARCH)
 	ICON_FILE := icon.ico
 	OBJS	+= meta\winres.res
@@ -78,7 +78,7 @@ else ifeq ($(PLATFORM),UNIX)
 	CC	:= cc
 	OBJEXT	:= o
 	RM	:= rm -f
-	CFLAGS	:= -std=c99 -pedantic -Wall -Wextra $(shell sdl2-config --cflags)
+	CFLAGS	:= -Wall -Wextra -D_DEFAULT_SOURCE $(shell sdl2-config --cflags)
 	LDFLAGS	:= $(shell sdl2-config --libs)
 	EXE	:= $(NAME)
 
@@ -87,7 +87,7 @@ else
 endif
 
 # Options specific to Windows NT 32-bit platforms
-ifeq ($(VSCMD_ARG_TGT_ARCH),x32)
+ifeq ($(VSCMD_ARG_TGT_ARCH),x86)
 	# Use SSE instructions (since Pentium III).
 	CFLAGS += /arch:SSE
 
@@ -101,7 +101,14 @@ endif
 LICENSE := (C) $(AUTHOR). $(LICENSE_SPDX).
 GIT_VER := $(shell git describe --dirty --always --tags --long)
 
-SRCS := $(wildcard src/*.c)
+
+SRCS := $(wildcard src/*.c) $(wildcard inc/lvgl/src/**/*.c)
+
+# If using del, use Windows style folder separator.
+ifeq ($(RM),del)
+	SRCS := $(subst /,\,$(SRCS))
+endif
+
 OBJS += $(SRCS:.c=.$(OBJEXT))
 
 # Use a fallback git version string if build system does not have git.
@@ -120,12 +127,16 @@ endif
 # Apply build type settings
 ifeq ($(BUILD),DEBUG)
 	CFLAGS += $(call ISTARGNT,/Zi /MDd /RTC1 /sdl,-O0 -g3)
+	CFLAGS += -DSDL_ASSERT_LEVEL=2
 else ifeq ($(BUILD),RELEASE)
-	CFLAGS += $(call ISTARGNT,/MD /O2 /fp:fast,-Ofast -s)
+	CFLAGS += $(call ISTARGNT,/MD /O2 /fp:fast /GL /GT /Ot /O2,-Ofast -flto)
+	LDFLAGS += $(call ISTARGNT,/LTCG,)
 else ifeq ($(BUILD),RELDEBUG)
-	CFLAGS += $(call ISTARGNT,/MDd /O2 /fp:fast,-Ofast -g3)
+	CFLAGS += $(call ISTARGNT,/MDd /O2 /fp:fast,-Ofast -g3 -flto)
 else ifeq ($(BUILD),RELMINSIZE)
-	CFLAGS += $(call ISTARGNT,/MD /O1 /fp:fast,-Os -ffast-math -s)
+	CFLAGS += $(call ISTARGNT,/MD /O1 /fp:fast /GL /GT /Os,-Os -ffast-math -s -flto)
+else ifeq ($(BUILD),BASIC)
+	CFLAGS += $(call ISTARGNT,,)
 else
 	err := $(error Unknown build configuration '$(BUILD)')
 endif
@@ -133,7 +144,7 @@ endif
 # When compiling with MSVC, check if SDL2 has been expanded from prepared cab file.
 ifeq ($(CC)$(wildcard SDL2.dll),cl)
     $(info Preparing SDL2 development libraries)
-    EXPAND_CMD := expand ext/SDL2-2.0.12-VC.cab -F:* ext
+    EXPAND_CMD := ext\SDL2-2.0.12-VC.exe -o"ext" -y
     UNUSED := $(shell $(EXPAND_CMD))
 
     # Copy SDL2.DLL to output EXE directory.
@@ -178,7 +189,7 @@ $(NAME).elf: $(OBJS)
 	nacptool --create "$(DESCRIPTION)" "$(COMPANY)" "$(GIT_VER)" $@
 
 clean:
-	$(RM) $(NAME) $(NAME).elf $(NAME).nacp $(NAME).exe $(RES) $(OBJS)
+	$(RM) $(NAME) $(NAME).elf $(NAME).nacp $(NAME).exe $(RES) $(OBJS) $(SRCS:.c=.d) $(SRCS:.c=.gcda)
 
 help:
 	@exit
