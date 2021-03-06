@@ -161,7 +161,10 @@ int ui_render_frame(ui_ctx_s *ctx)
 
 		/* Draw item text. */
 		SDL_SetRenderDrawColor(ctx->ren, 0xFA, 0xFA, 0xFA, SDL_ALPHA_OPAQUE);
+
+		/* TODO: Replace with user defined macro. */
 		FontPrintToRenderer(ctx->font, this->name, &text_loc);
+
 		main_menu_box.y += MENU_BOX_SPACING;
 		bg_box.y += MENU_BOX_SPACING;
 	}

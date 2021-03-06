@@ -12,16 +12,6 @@
 #include <ui.h>
 //#include <win_dirent.h>
 
-#ifdef __SWITCH__
-#include <switch.h>
-#endif
-
-#if defined(__ANDROID__) | defined(__TVOS__) | defined(__IPHONEOS__) | defined(__NACL__) | defined(__PNACL__) | defined(__DREAMCAST__) | defined(__PSP__)
-# define APP_ALWAYS_FULLSCREEN 1
-#else
-# define APP_ALWAYS_FULLSCREEN 0
-#endif
-
 static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 {
 	SDL_Event e;
@@ -92,6 +82,9 @@ static void ui_nop_cb(void *ctx)
 	return;
 }
 
+/**
+ * Process input arguments and initialise libraries.
+*/
 int main(int argc, char *argv[])
 {
 	SDL_Window *win = NULL;
@@ -128,14 +121,9 @@ int main(int argc, char *argv[])
 		}
 	};
 
+	/* Input arguments are currently unused. */
 	(void)argc;
 	(void)argv;
-
-#ifdef __SWITCH__
-	/* Redirect stdio to NXlink. */
-	socketInitializeDefault();
-	nxlinkStdio();
-#endif
 
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -144,42 +132,29 @@ int main(int argc, char *argv[])
 	if(ret != 0)
 		goto err;
 
-#ifdef __SWITCH__
-	win = SDL_CreateWindow("Haiyajan UI",
-		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1080,
-		SDL_WINDOW_OPENGL);
-#else
 	win = SDL_CreateWindow("Haiyajan UI",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240,
-		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE |
-		SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN |
-		((APP_ALWAYS_FULLSCREEN != 0) ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_MAXIMIZED));
-#endif
+		SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI |
+		SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED);
 	if(win == NULL)
 		goto err;
-
-	if(APP_ALWAYS_FULLSCREEN != 0)
-	{
-		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
-			"Starting in fullscreen mode");
-	}
-	else
-	{
-		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
-			"Starting in desktop mode");
-	}
 
 	ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED |
 		SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
 	if(ren == NULL)
 		goto err;
 
+
+	/* TODO: Allow even smaller screens. */
 	SDL_SetWindowMinimumSize(win, 320, 240);
 	SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
+
+	/* Initialise simple bitmap font. */
 	font = FontStartup(ren);
 	if(font == NULL)
 		goto err;
 
+	/* Initialise user interface context. */
 	ui = ui_init(win, &root_menu, font);
 	if(ui == NULL)
 		goto err;
@@ -193,10 +168,6 @@ out:
 	SDL_DestroyRenderer(ren);
 	SDL_DestroyWindow(win);
 	SDL_Quit();
-
-#ifdef __SWITCH__
-	socketExit();
-#endif
 
 	return ret;
 
