@@ -14,6 +14,79 @@
 #define MENU_BOX_DIM 100
 #define MENU_BOX_SPACING 120
 
+typedef enum {
+	UI_OBJECT_TYPE_TILE,
+	UI_OBJECT_TYPE_PUSH_BUTTON,
+	UI_OBJECT_TYPE_TOGGLE_SWITCH,
+	UI_OBJECT_TYPE_DROPDOWN_LIST,
+	UI_OBJECT_TYPE_SPINNER,
+	UI_OBJECT_TYPE_SLIDER,
+	UI_OBJECT_TYPE_HEADER
+} ui_object_type_e;
+
+struct ui_object {
+	ui_object_type_e object_type;
+
+	/* Every object has a label that is shown with the object.
+	 * This string is allocated on the heap. */
+	const char *label;
+
+	union {
+		struct {
+			/* Menu to change to on pressing the tile. */
+			const struct menu_ctx *on_press;
+
+			const SDL_Colour *bg;
+
+			/* Icon to show within the tile. */
+			/* TODO: Set to correct type. */
+			const Uint32 *icon;
+
+			/* Location and alignment of tile label. */
+			enum { INSIDE, OUTSIDE } label_location;
+			enum { LEFT, MIDDLE, RIGHT } label_align;
+		} tile;
+
+		struct {
+			/* Menu to change to on pressing the button. */
+			struct menu_ctx *on_press;
+		} push_button;
+
+		struct {
+			/* Variable that is modified with the switch. */
+			SDL_bool *val;
+		} toggle_switch;
+
+		struct {
+			/* Array of strings to show within the dropdown list. */
+			const char **items;
+
+			/* The string selected by the user. Index 0 is the first
+			 * string. */
+			Uint8 selected_item;
+		} dropdown_list;
+
+		struct {
+			/* Obtains progress and the progress message for the
+			 * spinner.
+			 * If progress is NULL, then the spinner varies with an
+			 * animation.
+			 * If text is NULL, then no progress text is displayed
+			 * with the spinner. */
+			void (*spinner_progress)(Uint32 *progress, char **text);
+		} spinner;
+
+		struct {
+			const Uint32 min, step, max;
+			Uint32 *val;
+		} slider;
+
+		struct {
+			/* There are no extra options for a header object. */
+		} header;
+	} object_parameters;
+};
+
 struct ui_ctx {
 	/* Required to recreate texture on resizing. */
 	SDL_Renderer *ren;
