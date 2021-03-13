@@ -15,13 +15,7 @@
 /* Private UI Context. */
 typedef struct ui_ctx ui_ctx_s;
 
-#define UI_EVENT_MASK (SDL_WINDOWEVENT | SDL_MOUSEMOTION)
-
-#define MENU_SELECT_ITEM(menu, sel)				\
-	do{							\
-		if((sel - 1) < menu->items_nmemb)		\
-			menu->item_selected = sel;		\
-	}while(0)
+#define UI_EVENT_MASK (SDL_WINDOWEVENT | SDL_MOUSEMOTION | SDL_KEYDOWN | SDL_JOYAXISMOTION)
 
 struct menu_ctx
 {
@@ -126,25 +120,6 @@ struct menu_item
 	SDL_Colour fg;
 };
 
-typedef enum
-{
-	/* Go back to the previous item.
-	 * Could be used when user presses UP. */
-	MENU_INSTR_PREV_ITEM,
-
-	/* Go to next item in menu.
-	 * Could be used when user presses DOWN. */
-	MENU_INSTR_NEXT_ITEM,
-
-	/* Go to parent menu if one exists.
-	 * Could be used when user presses BACKSPACE. */
-	MENU_INSTR_PARENT_MENU,
-
-	/* Execute item operation.
-	 * Could be used when user presses ENTER. */
-	MENU_INSTR_EXEC_ITEM
-} menu_instruction_e;
-
 /**
  * Render UI to window.
 *
@@ -162,27 +137,15 @@ int ui_render_frame(ui_ctx_s *ctx);
 void ui_process_event(ui_ctx_s *ctx, SDL_Event *e);
 
 /**
- * Apply instruction to the user interface.
- *
- * \param ctx	UI Context.
- * \param instr	Interaction with user interface to apply.
- */
-void ui_input(ui_ctx_s *ctx, menu_instruction_e instr);
-
-/**
  * Initialise user interface from an SDL Renderer.
  *
- * \param rend	SDL_Renderer to target.
- * \param dpi	Initial DPI to target.
- * \param format Renderer colour format.
+ * \param win	SDL_Window to target.
  * \param root	Pointer to root (or main) menu. Must remain valid until after
  *		ui_exit is called.
- * \param font	Initialised font context.
  * \return	UI context. NULL on error.
  */
-ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
-	struct menu_ctx *root, font_ctx *font);
+ui_ctx_s *ui_init(SDL_Window *win, struct menu_ctx *root);
 
-ui_ctx_s *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font);
 SDL_bool ui_should_redraw(ui_ctx_s *ctx);
+
 void ui_exit(ui_ctx_s *ctx);

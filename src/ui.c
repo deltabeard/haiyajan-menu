@@ -14,89 +14,11 @@
 #define MENU_BOX_DIM 100
 #define MENU_BOX_SPACING 120
 
-typedef enum {
-	UI_OBJECT_TYPE_TILE,
-	UI_OBJECT_TYPE_PUSH_BUTTON,
-	UI_OBJECT_TYPE_TOGGLE_SWITCH,
-	UI_OBJECT_TYPE_DROPDOWN_LIST,
-	UI_OBJECT_TYPE_SPINNER,
-	UI_OBJECT_TYPE_SLIDER,
-	UI_OBJECT_TYPE_HEADER
-} ui_object_type_e;
-
-struct ui_object {
-	ui_object_type_e object_type;
-
-	/* Every object has a label that is shown with the object.
-	 * This string is allocated on the heap. */
-	const char *label;
-
-	union _object_parameters {
-		struct _tile_parameters {
-			/* Menu to change to on pressing the tile. */
-			const struct menu_ctx *on_press;
-
-			/* Background colour of the tile. */
-			const SDL_Colour *bg_colour;
-
-			/* Icon colour. */
-			const SDL_Colour *icon_colour;
-
-			/* Text colour. */
-			const SDL_Colour *label_colour;
-
-			/* Icon to show within the tile. */
-			/* TODO: Set to correct type. */
-			const Uint32 *icon;
-
-			/* Size of icon. Proportional to the rest of the UI. */
-			enum { SMALL, MEDIUM, LARGE } size;
-
-			/* Location and alignment of tile label. */
-			enum { INSIDE, OUTSIDE } label_location;
-			enum { LEFT, MIDDLE, RIGHT } label_align;
-		} tile;
-
-		struct _push_button_parameters {
-			/* Menu to change to on pressing the button. */
-			struct menu_ctx *on_press;
-		} push_button;
-
-		struct _toggle_switch_parameters {
-			/* Variable that is modified with the switch. */
-			SDL_bool *val;
-		} toggle_switch;
-
-		struct _dropdown_list_parameters {
-			/* Array of strings to show within the dropdown list. */
-			const char **items;
-
-			/* The string selected by the user. Index 0 is the first
-			 * string. */
-			Uint8 selected_item;
-		} dropdown_list;
-
-		struct _spinner_parameters {
-			/* Obtains progress and the progress message for the
-			 * spinner.
-			 * If progress is NULL, then the spinner varies with an
-			 * animation.
-			 * If text is NULL, then no progress text is displayed
-			 * with the spinner. */
-			void (*spinner_progress)(Uint32 *progress, char **text);
-		} spinner;
-
-		struct _slider_parameters {
-			const Uint32 min, step, max;
-			Uint32 *val;
-		} slider;
-
-		struct _header_parameters {
-			/* There are no extra options for a header object. */
-			int unused;
-		} header;
-	} object_parameters;
-};
+#define MENU_SELECT_ITEM(menu, sel)				\
+	do{							\
+		if((sel - 1) < menu->items_nmemb)		\
+			menu->item_selected = sel;		\
+	}while(0)
 
 struct ui_ctx {
 	/* Required to recreate texture on resizing. */
@@ -129,7 +51,118 @@ struct ui_ctx {
 	SDL_bool redraw;
 };
 
-void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
+typedef enum {
+	UI_OBJECT_TYPE_TILE,
+	UI_OBJECT_TYPE_PUSH_BUTTON,
+	UI_OBJECT_TYPE_TOGGLE_SWITCH,
+	UI_OBJECT_TYPE_DROPDOWN_LIST,
+	UI_OBJECT_TYPE_SPINNER,
+	UI_OBJECT_TYPE_SLIDER,
+	UI_OBJECT_TYPE_HEADER
+} ui_object_type_e;
+
+struct ui_object {
+	ui_object_type_e object_type;
+
+	/* Every object has a label that is shown with the object. */
+	struct _label {
+		SDL_bool heap;
+		union _label_string {
+			char* str_heap;
+			const char* str_stack;
+		} label_string;
+	} label;
+
+	/* Stack allocated help text. NULL if not required. */
+	const char* help;
+
+	union _object_parameters {
+		struct _tile_parameters {
+			/* Menu to change to on pressing the tile. */
+			const struct menu_ctx* on_press;
+
+			/* Background colour of the tile. */
+			const SDL_Colour* bg_colour;
+
+			/* Icon colour. */
+			const SDL_Colour* icon_colour;
+
+			/* Text colour. */
+			const SDL_Colour* label_colour;
+
+			/* Icon to show within the tile. */
+			/* TODO: Set to correct type. */
+			const Uint32* icon;
+
+			/* Size of icon. Proportional to the rest of the UI. */
+			enum { SMALL, MEDIUM, LARGE } size;
+
+			/* Location and alignment of tile label. */
+			enum { INSIDE, OUTSIDE } label_location;
+			enum { LEFT, MIDDLE, RIGHT } label_align;
+		} tile;
+
+		struct _push_button_parameters {
+			/* Menu to change to on pressing the button. */
+			struct menu_ctx* on_press;
+		} push_button;
+
+		struct _toggle_switch_parameters {
+			/* Variable that is modified with the switch. */
+			SDL_bool* val;
+		} toggle_switch;
+
+		struct _dropdown_list_parameters {
+			/* Array of strings to show within the dropdown list. */
+			const char** items;
+
+			/* The string selected by the user. Index 0 is the first
+			 * string. */
+			Uint8 selected_item;
+		} dropdown_list;
+
+		struct _spinner_parameters {
+			/* Obtains progress and the progress message for the
+			 * spinner.
+			 * If progress is NULL, then the spinner varies with an
+			 * animation.
+			 * If text is NULL, then no progress text is displayed
+			 * with the spinner. */
+			void (*spinner_progress)(Uint32* progress, char** text);
+		} spinner;
+
+		struct _slider_parameters {
+			const Uint32 min, step, max;
+			Uint32* val;
+		} slider;
+
+		struct _header_parameters {
+			/* There are no extra options for a header object. */
+			int unused;
+		} header;
+	} object_parameters;
+};
+
+typedef enum
+{
+	/* Go back to the previous item.
+	 * Could be used when user presses UP. */
+	MENU_INSTR_PREV_ITEM,
+
+	/* Go to next item in menu.
+	 * Could be used when user presses DOWN. */
+	MENU_INSTR_NEXT_ITEM,
+
+	/* Go to parent menu if one exists.
+	 * Could be used when user presses BACKSPACE. */
+	MENU_INSTR_PARENT_MENU,
+
+	/* Execute item operation.
+	 * Could be used when user presses ENTER. */
+	MENU_INSTR_EXEC_ITEM
+} menu_instruction_e;
+
+static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 {
 	unsigned *item_selected = &ctx->current->item_selected;
 	switch(instr)
@@ -276,7 +309,44 @@ out:
 void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 {
 	/* Recalculate begin_actual coordinates on resolution and DPI change. */
-	if(e->type == SDL_WINDOWEVENT && e->window.event == SDL_WINDOWEVENT_RESIZED)
+	if (e->type == SDL_KEYDOWN)
+	{
+		switch (e->key.keysym.sym)
+		{
+		case SDLK_w:
+		case SDLK_UP:
+			ui_input(ctx, MENU_INSTR_PREV_ITEM);
+			break;
+
+		case SDLK_s:
+		case SDLK_DOWN:
+			ui_input(ctx, MENU_INSTR_NEXT_ITEM);
+			break;
+
+		case SDLK_a:
+		case SDLK_LEFT:
+			/* TODO: Add skip items forward and back. */
+			//ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+			break;
+
+		case SDLK_d:
+		case SDLK_RIGHT:
+			//ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+			break;
+
+		case SDLK_SPACE:
+		case SDLK_RETURN:
+		case SDLK_z:
+			ui_input(ctx, MENU_INSTR_EXEC_ITEM);
+			break;
+
+		case SDLK_x:
+		case SDLK_BACKSPACE:
+			ui_input(ctx, MENU_INSTR_PARENT_MENU);
+			break;
+		}
+	}
+	else if(e->type == SDL_WINDOWEVENT && e->window.event == SDL_WINDOWEVENT_RESIZED)
 	{
 		SDL_Texture *new_tex;
 		SDL_Window *win;
@@ -400,7 +470,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 	return;
 }
 
-ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
+static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 	struct menu_ctx *root, font_ctx *font)
 {
 	int w, h;
@@ -447,13 +517,14 @@ err:
 	goto out;
 }
 
-ui_ctx_s *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font)
+ui_ctx_s *ui_init(SDL_Window *win, struct menu_ctx *root)
 {
 	ui_ctx_s *ctx = NULL;
 	Uint32 format;
 	int display_id;
 	SDL_Renderer *rend;
 	float dpi;
+	font_ctx* font;
 
 	SDL_assert_paranoid(win != NULL);
 
@@ -465,6 +536,10 @@ ui_ctx_s *ui_init(SDL_Window *win, struct menu_ctx *root, font_ctx *font)
 			SDL_GetError());
 		goto err;
 	}
+
+	font = FontStartup(rend);
+	if(font == NULL)
+		goto err;
 
 	display_id = SDL_GetWindowDisplayIndex(win);
 	if(display_id < 0)
@@ -489,6 +564,7 @@ err:
 
 void ui_exit(ui_ctx_s *ctx)
 {
+	FontExit(ctx->font);
 	SDL_DestroyTexture(ctx->tex);
 	SDL_free(ctx->boxes_input);
 	SDL_free(ctx);

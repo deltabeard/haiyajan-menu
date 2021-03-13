@@ -7,7 +7,6 @@
  * as published by the Free Software Foundation.
  */
 
-#include <font.h>
 #include <SDL.h>
 #include <ui.h>
 //#include <win_dirent.h>
@@ -18,44 +17,7 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 
 	while(SDL_PollEvent(&e))
 	{
-		if(e.type == SDL_KEYDOWN)
-		{
-			switch(e.key.keysym.sym)
-			{
-			case SDLK_w:
-			case SDLK_UP:
-				ui_input(ui, MENU_INSTR_PREV_ITEM);
-				break;
-
-			case SDLK_s:
-			case SDLK_DOWN:
-				ui_input(ui, MENU_INSTR_NEXT_ITEM);
-				break;
-
-			case SDLK_a:
-			case SDLK_LEFT:
-				/* TODO: Add skip items forward and back. */
-				//ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
-				break;
-
-			case SDLK_d:
-			case SDLK_RIGHT:
-				//ui_input(ui, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
-				break;
-
-			case SDLK_SPACE:
-			case SDLK_RETURN:
-			case SDLK_z:
-				ui_input(ui, MENU_INSTR_EXEC_ITEM);
-				break;
-
-			case SDLK_x:
-			case SDLK_BACKSPACE:
-				ui_input(ui, MENU_INSTR_PARENT_MENU);
-				break;
-			}
-		}
-		else if(e.type & UI_EVENT_MASK)
+		if(e.type & UI_EVENT_MASK)
 		{
 			ui_process_event(ui, &e);
 		}
@@ -92,7 +54,6 @@ int main(int argc, char *argv[])
 	int ret;
 	static int quit = SDL_FALSE;
 	ui_ctx_s *ui;
-	font_ctx *font;
 
 	struct menu_item root_items[] = {
 		{
@@ -149,13 +110,8 @@ int main(int argc, char *argv[])
 	SDL_SetWindowMinimumSize(win, 320, 240);
 	SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
-	/* Initialise simple bitmap font. */
-	font = FontStartup(ren);
-	if(font == NULL)
-		goto err;
-
 	/* Initialise user interface context. */
-	ui = ui_init(win, &root_menu, font);
+	ui = ui_init(win, &root_menu);
 	if(ui == NULL)
 		goto err;
 

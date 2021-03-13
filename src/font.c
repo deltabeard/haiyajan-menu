@@ -16,7 +16,6 @@
  */
 
 #include <SDL.h>
-
 #include <font.h>
 
 struct font_ctx_s {
@@ -208,7 +207,6 @@ font_ctx *FontStartup(SDL_Renderer *renderer)
 	}
 
 	ctx->tex = SDL_CreateTextureFromSurface(renderer, bmp_surf);
-
 	if(ctx->tex == NULL)
 	{
 		SDL_FreeSurface(bmp_surf);
