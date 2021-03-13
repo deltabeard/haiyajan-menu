@@ -24,11 +24,11 @@ struct font_ctx_s {
 	SDL_Renderer *rend;
 };
 
-#define FONT_BITMAP_WIDTH 144
-#define FONT_BITMAP_HEIGHT 90
-#define FONT_BITMAP_SIZE ((FONT_BITMAP_HEIGHT * FONT_BITMAP_WIDTH) / 8)
-#define FONT_COLUMNS 16
-#define FONT_PITCH (FONT_BITMAP_WIDTH / 8)
+#define FONT_BITMAP_WIDTH	144
+#define FONT_BITMAP_HEIGHT	90
+#define FONT_BITMAP_SIZE	((FONT_BITMAP_HEIGHT * FONT_BITMAP_WIDTH) / 8)
+#define FONT_COLUMNS		16
+#define FONT_PITCH		(FONT_BITMAP_WIDTH / 8)
 
 static const unsigned char bitmap_font[FONT_BITMAP_SIZE] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x18, 0x00,
@@ -230,8 +230,8 @@ err:
 
 void FontDrawSize(const unsigned text_len, unsigned *w, unsigned *h)
 {
-	*w = text_len * FONT_CHAR_WIDTH;
-	*h = FONT_CHAR_HEIGHT;
+	*w = text_len * (unsigned)FONT_CHAR_WIDTH;
+	*h = (unsigned)FONT_CHAR_HEIGHT;
 }
 
 int FontPrintToRenderer(font_ctx *const ctx, const char *text,
@@ -271,7 +271,7 @@ int FontPrintToRenderer(font_ctx *const ctx, const char *text,
 
 	do
 	{
-		Uint8 pos;
+		int pos;
 		int ret;
 
 		if(*text >= ' ' && *text <= '~')

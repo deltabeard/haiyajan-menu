@@ -31,33 +31,43 @@ struct ui_object {
 	 * This string is allocated on the heap. */
 	const char *label;
 
-	union {
-		struct {
+	union _object_parameters {
+		struct _tile_parameters {
 			/* Menu to change to on pressing the tile. */
 			const struct menu_ctx *on_press;
 
-			const SDL_Colour *bg;
+			/* Background colour of the tile. */
+			const SDL_Colour *bg_colour;
+
+			/* Icon colour. */
+			const SDL_Colour *icon_colour;
+
+			/* Text colour. */
+			const SDL_Colour *label_colour;
 
 			/* Icon to show within the tile. */
 			/* TODO: Set to correct type. */
 			const Uint32 *icon;
+
+			/* Size of icon. Proportional to the rest of the UI. */
+			enum { SMALL, MEDIUM, LARGE } size;
 
 			/* Location and alignment of tile label. */
 			enum { INSIDE, OUTSIDE } label_location;
 			enum { LEFT, MIDDLE, RIGHT } label_align;
 		} tile;
 
-		struct {
+		struct _push_button_parameters {
 			/* Menu to change to on pressing the button. */
 			struct menu_ctx *on_press;
 		} push_button;
 
-		struct {
+		struct _toggle_switch_parameters {
 			/* Variable that is modified with the switch. */
 			SDL_bool *val;
 		} toggle_switch;
 
-		struct {
+		struct _dropdown_list_parameters {
 			/* Array of strings to show within the dropdown list. */
 			const char **items;
 
@@ -66,7 +76,7 @@ struct ui_object {
 			Uint8 selected_item;
 		} dropdown_list;
 
-		struct {
+		struct _spinner_parameters {
 			/* Obtains progress and the progress message for the
 			 * spinner.
 			 * If progress is NULL, then the spinner varies with an
@@ -76,13 +86,14 @@ struct ui_object {
 			void (*spinner_progress)(Uint32 *progress, char **text);
 		} spinner;
 
-		struct {
+		struct _slider_parameters {
 			const Uint32 min, step, max;
 			Uint32 *val;
 		} slider;
 
-		struct {
+		struct _header_parameters {
 			/* There are no extra options for a header object. */
+			int unused;
 		} header;
 	} object_parameters;
 };
@@ -94,16 +105,10 @@ struct ui_ctx {
 	/* Texture to render on. */
 	SDL_Texture *tex;
 
-	/* Whether the front-end must call ui_render_frame(). */
-	SDL_bool redraw;
-
 	/* Root Menu. */
 	struct menu_ctx *root;
 	/* Currently rendered menu. */
 	struct menu_ctx *current;
-
-	/* DPI that tex texture is rendered for. */
-	float dpi;
 
 	/* Font context used to draw text on UI elements. */
 	font_ctx *font;
@@ -116,6 +121,12 @@ struct ui_ctx {
 		/* Menu item associated with hit-box. */
 		struct menu_item *item;
 	} *boxes_input;
+
+	/* DPI that tex texture is rendered for. */
+	float dpi;
+
+	/* Whether the front-end must call ui_render_frame(). */
+	SDL_bool redraw;
 };
 
 void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
@@ -186,6 +197,8 @@ int ui_render_frame(ui_ctx_s *ctx)
 		goto out;
 
 	ret = SDL_SetRenderTarget(ctx->ren, ctx->tex);
+	if (ret != 0)
+		goto out;
 
 	SDL_SetRenderDrawColor(ctx->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(ctx->ren);
@@ -243,6 +256,9 @@ int ui_render_frame(ui_ctx_s *ctx)
 	}
 
 	ret = SDL_SetRenderTarget(ctx->ren, NULL);
+	if(ret != 0)
+		goto out;
+
 	SDL_SetRenderDrawColor(ctx->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(ctx->ren);
 
@@ -476,5 +492,4 @@ void ui_exit(ui_ctx_s *ctx)
 	SDL_DestroyTexture(ctx->tex);
 	SDL_free(ctx->boxes_input);
 	SDL_free(ctx);
-	ctx = NULL;
 }
