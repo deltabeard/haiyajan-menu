@@ -103,6 +103,12 @@
       <Message>Copying SDL2 DLL</Message>
       <Command>copy $(ProjectDir)..\..\ext\lib_$(PlatformTargetAsMSBuildArchitecture)\SDL2.dll $(OutDir)</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>$(ProjectDir)..\..\ext\SDL2-2.0.12-VC.exe -o$(ProjectDir)..\..\ext -y</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Extracting SDL2 libraries</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -133,6 +139,12 @@
       <Message>Copying SDL2 DLL</Message>
       <Command>copy $(ProjectDir)..\..\ext\lib_$(PlatformTargetAsMSBuildArchitecture)\SDL2.dll $(OutDir)</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>$(ProjectDir)..\..\ext\SDL2-2.0.12-VC.exe -o$(ProjectDir)..\..\ext -y</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Extracting SDL2 libraries</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -155,6 +167,12 @@
       <Message>Copying SDL2 DLL</Message>
       <Command>copy $(ProjectDir)..\..\ext\lib_$(PlatformTargetAsMSBuildArchitecture)\SDL2.dll $(OutDir)</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>$(ProjectDir)..\..\ext\SDL2-2.0.12-VC.exe -o$(ProjectDir)..\..\ext -y</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Extracting SDL2 libraries</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -178,6 +196,12 @@
       <Message>Copying SDL2 DLL</Message>
       <Command>copy $(ProjectDir)..\..\ext\lib_$(PlatformTargetAsMSBuildArchitecture)\SDL2.dll $(OutDir)</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>$(ProjectDir)..\..\ext\SDL2-2.0.12-VC.exe -o$(ProjectDir)..\..\ext -y</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Extracting SDL2 libraries</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\font.c" />

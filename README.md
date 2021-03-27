@@ -14,10 +14,15 @@ Simple to implement, simple to use.
 
 ## Building
 
-Unix: Execute GNU Make in the directory.
+### Unix
 
-Windows: Execute GNU Make within the *Native Tools Command Prompt for VS*
-environment to compile with Visual Studio.
+Execute GNU Make in the directory.
+
+
+### Windows
+
+Execute GNU Make within the *Native Tools Command Prompt for VS* environment to compile with Visual Studio.
+Or, you may open the solution file found within `./ext/MSVC` in Visual Studio 2019.
 
 ## License
 
