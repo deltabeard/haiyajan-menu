@@ -19,7 +19,7 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 	{
 		if(e.type & UI_EVENT_MASK)
 		{
-			ui_process_event(ui, &e);
+			//ui_process_event(ui, &e);
 		}
 	}
 
@@ -38,10 +38,9 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 	return;
 }
 
-static void ui_nop_cb(void *ctx)
+void onclick_function_debug(ui_e *element)
 {
-	(void)ctx;
-	return;
+	SDL_Log("Element %p clicked", element);
 }
 
 /**
@@ -52,33 +51,66 @@ int main(int argc, char *argv[])
 	SDL_Window *win = NULL;
 	SDL_Renderer *ren = NULL;
 	int ret;
-	static int quit = SDL_FALSE;
+	static Sint32 quit = SDL_FALSE;
 	ui_ctx_s *ui;
 
-	struct menu_item root_items[] = {
+	ui_e ui_elements[] = {
 		{
-		"Continue", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb },
-		.bg = {.r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE},
-		.fg = {.r = 0x45, .g = 0xB3, .b = 0x32, .a = SDL_ALPHA_OPAQUE}
+			.type = UI_ELEM_TYPE_TILE,
+			.tile = {
+				.label = "Continue",
+				.label_placement = LABEL_PLACEMENT_INSIDE,
+				.label_alignment = LABEL_ALIGNMENT_RIGHT,
+				.tile_shape = TILE_SHAPE_SQUARE,
+				.tile_size = TILE_SIZE_LARGE,
+				.icon = 0xE768,
+				.help = NULL,
+				.bg = { .r = 0x1C, .g = 0x4D, .b = 0x16, .a = SDL_ALPHA_OPAQUE },
+				.fg = { 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE },
+				.disabled = SDL_FALSE,
+				.onclick = ONCLICK_EXECUTE_FUNCTION,
+				.onclick_event = { .execute_function = onclick_function_debug },
+				.user = NULL
+			}
 		},
 		{
-		"Open", NULL, MENU_EXEC_FUNC, .param.exec_func = { NULL, ui_nop_cb },
-		.bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
-		.fg = {.r = 0xA2, .g = 0x80, .b = 0xFF, .a = SDL_ALPHA_OPAQUE}
+			.type = UI_ELEM_TYPE_TILE,
+			.tile = {
+				.label = "Open",
+				.label_placement = LABEL_PLACEMENT_INSIDE,
+				.label_alignment = LABEL_ALIGNMENT_CENTER,
+				.tile_shape = TILE_SHAPE_SQUARE,
+				.tile_size = TILE_SIZE_LARGE,
+				.icon = 0xE8B7,
+				.help = NULL,
+				.bg = {.r = 0x40, .g = 0x30, .b = 0x59, .a = SDL_ALPHA_OPAQUE},
+				.fg = { 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE },
+				.disabled = SDL_FALSE,
+				.onclick = ONCLICK_EXECUTE_FUNCTION,
+				.onclick_event = {.execute_function = onclick_function_debug },
+				.user = NULL
+			}
 		},
 		{
-		"Exit", NULL, MENU_SET_VAL, .param.set_val = { 1, &quit },
-		.bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
-		.fg = {.r = 0xD9, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE}
-		}
-	};
-	struct menu_ctx root_menu = {
-		.parent = NULL, .title = "Main Menu", .help = NULL,
-		.item_selected = 0,
-		.list_type = LIST_TYPE_STATIC,
-		.items.static_list = {
-			.items_nmemb = SDL_arraysize(root_items),
-			.items = root_items
+			.type = UI_ELEM_TYPE_TILE,
+			.tile = {
+				.label = "Exit",
+				.label_placement = LABEL_PLACEMENT_INSIDE,
+				.label_alignment = LABEL_ALIGNMENT_LEFT,
+				.tile_shape = TILE_SHAPE_SQUARE,
+				.tile_size = TILE_SIZE_LARGE,
+				.icon = 0xE7E8,
+				.help = NULL,
+				.bg = {.r = 0x59, .g = 0x00, .b = 0x00, .a = SDL_ALPHA_OPAQUE},
+				.fg = { 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE },
+				.disabled = SDL_FALSE,
+				.onclick = ONCLICK_SET_SIGNED_VARIABLE,
+				.onclick_event = {.signed_variable = { &quit, SDL_TRUE }},
+				.user = NULL
+			}
+		},
+		{
+			.type = UI_ELEM_TYPE_END,
 		}
 	};
 
@@ -105,13 +137,12 @@ int main(int argc, char *argv[])
 	if(ren == NULL)
 		goto err;
 
-
 	/* TODO: Allow even smaller screens. */
 	SDL_SetWindowMinimumSize(win, 320, 240);
 	SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
 	/* Initialise user interface context. */
-	ui = ui_init(win, &root_menu);
+	ui = ui_init(win, ui_elements);
 	if(ui == NULL)
 		goto err;
 

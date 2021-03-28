@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <font.h>
 #include <SDL.h>
 
 /* Private UI Context. */
@@ -17,107 +16,85 @@ typedef struct ui_ctx ui_ctx_s;
 
 #define UI_EVENT_MASK (SDL_WINDOWEVENT | SDL_MOUSEMOTION | SDL_KEYDOWN | SDL_JOYAXISMOTION)
 
-struct menu_ctx
-{
-	/* The menu to show when the user wants to go up a level. NULL if this
-	 * is the root menu. */
-	struct menu_ctx *parent;
+/* Forward decleration. */
+typedef struct ui_element ui_e;
+struct ui_element;
 
-	/* Name of the menu option. */
-	const char *title;
+struct ui_tile {
+	const char *label;
+	enum {
+		LABEL_PLACEMENT_INSIDE = 0,
+		LABEL_PLACEMENT_OUTSIDE
+	} label_placement;
+	enum {
+		LABEL_ALIGNMENT_LEFT = 0,
+		LABEL_ALIGNMENT_CENTER,
+		LABEL_ALIGNMENT_RIGHT
+	} label_alignment;
+	enum {
+		TILE_SHAPE_SQUARE = 0,
+		TILE_SHAPE_CIRCLE
+	} tile_shape;
+	enum {
+		TILE_SIZE_SMALL = 0,
+		TILE_SIZE_MEDIUM,
+		TILE_SIZE_LARGE
+	} tile_size;
+	const Uint16 icon;
 
-	/* Help text to show for the menu option.
-	 * NULL if no help text is available. */
 	const char *help;
 
-	enum
-	{
-		/* Small list using large icons. */
-		STYLE_MENU_LARGE_LIST,
+	/* Background colour of tile. */
+	SDL_Colour bg;
 
-		/* Long list. */
-		STYLE_MENU_LIST,
+	/* Foreground colour of tile. The label and icon will be in this colour
+	 * if they are within the tile. */
+	SDL_Colour fg;
 
-		/* Grid of options. */
-		STYLE_MENU_GRID
-	} style_menu;
+	/* If disabled, onlick events are not triggered, and the tile is
+	 * faded to a dull colour. */
+	SDL_bool disabled;
 
-	enum
-	{
-		/* The items in this menu do not change from initilisation. */
-		LIST_TYPE_STATIC,
+	enum {
+		ONCLICK_GOTO_ELEMENT,
+		ONCLICK_EXECUTE_FUNCTION,
+		ONCLICK_SET_SIGNED_VARIABLE,
+		ONCLICK_SET_UNSIGNED_VARIABLE,
+	} onclick;
 
-		/* The items in this menu will be created when entering the
-		 * menu. */
-		LIST_TYPE_DYNAMIC
-	} list_type;
+	union {
+		struct {
+			ui_e *element;
+		} goto_element;
 
-	union
-	{
-		struct
-		{
-			Uint32 items_nmemb;
-			struct menu_item *items;
-		} static_list;
-		struct
-		{
-			/* Private pointer passed to function. May be NULL. */
-			void *priv;
+		struct {
+			void (*function)(ui_e *element);
+		} execute_function;
 
-			/* Function to call when the dynamic menu is selected.
-			 *
-			 * \param priv	Private pointer.
-			 * \param items	Pointer to save menu items.
-			 * \return	Number of items saved. UINT32_MAX on error.
-			 */
-			unsigned (*fill_items)(void *priv, struct menu_item **items);
-		} dynamic_list;
-	} items;
+		struct {
+			Sint32 *variable;
+			Sint32 val;
+		} signed_variable;
 
-	/* The currently highlighted item. Must be 0 on initialisation.
-	 * 0 is the first menu item. */
-	unsigned item_selected;
+		struct {
+			Uint32 *variable;
+			Uint32 val;
+		} unsigned_variable;
+
+	} onclick_event;
+
+	/* Pointer can be set by the user application. */
+	void *user;
 };
 
-struct menu_item
-{
-	char *name;
-	char *help;
-
-	enum
-	{
-		/* Opens a sub menu. */
-		MENU_SUB_MENU,
-
-		/* Executes a function. */
-		MENU_EXEC_FUNC,
-
-		/* Sets the value of an integer. */
-		MENU_SET_VAL
-	} op;
-
-	union
-	{
-		/* Pointer to sub menu. */
-		struct menu_ctx *sub_menu;
-
-		/* Pointer to function to execute if item selected. */
-		struct
-		{
-			void *ctx;
-			void (*func)(void *ctx);
-		} exec_func;
-
-		/* Pointer to integer to set. */
-		struct
-		{
-			int val;
-			int *set;
-		} set_val;
-	} param;
-
-	SDL_Colour bg;
-	SDL_Colour fg;
+struct ui_element {
+	enum {
+		UI_ELEM_TYPE_END,
+		UI_ELEM_TYPE_TILE
+	} type;
+	union {
+		struct ui_tile tile;
+	};
 };
 
 /**
@@ -140,11 +117,11 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e);
  * Initialise user interface from an SDL Renderer.
  *
  * \param win	SDL_Window to target.
- * \param root	Pointer to root (or main) menu. Must remain valid until after
+ * \param ui	Pointer to root (or main) menu. Must remain valid until after
  *		ui_exit is called.
  * \return	UI context. NULL on error.
  */
-ui_ctx_s *ui_init(SDL_Window *win, struct menu_ctx *root);
+ui_ctx_s *ui_init(SDL_Window *win, ui_e *ui_elements);
 
 SDL_bool ui_should_redraw(ui_ctx_s *ctx);
 
