@@ -9,7 +9,6 @@
 
 #include <SDL.h>
 #include <SDL_ttf.h>
-#include <tinf.h>
 #include <ui.h>
 
 #include <fonts/NotoSansDisplay-Regular-Latin.ttf.h>
@@ -17,6 +16,7 @@
 #include <fonts/fabric-icons.ttf.h>
 
 static const float dpi_reference = 96.0f;
+static const SDL_Colour text_colour_light = { 0xFF, 0xFF, 0xFF, SDL_ALPHA_TRANSPARENT };
 
 struct ui_element_cache
 {
@@ -546,7 +546,7 @@ int ui_render_frame(ui_ctx_s *ctx)
 		SDL_Surface *text_surf, *icon_surf;
 		SDL_Texture *text_tex, *icon_tex;
 		SDL_Rect text_dim, icon_dim;
-		const SDL_Point tile_padding = { .x = 8, .y = 4 };
+		const SDL_Point tile_padding = { .x = 8, .y = 16 };
 
 		/* Draw tile background. */
 		SDL_SetRenderDrawColor(ctx->ren,
@@ -572,34 +572,66 @@ int ui_render_frame(ui_ctx_s *ctx)
 
 		/* Render text on tile. */
 		text_surf = TTF_RenderText_Blended(ctx->fonts.title,
-			u->tile.label, u->tile.fg);
+			u->tile.label, text_colour_light);
 		SDL_assert(text_surf != NULL);
 
+		/* Render icon text. */
 		text_tex = SDL_CreateTextureFromSurface(ctx->ren, text_surf);
 		SDL_assert(text_tex != NULL);
 
 		text_dim.w = text_surf->w;
 		text_dim.h = text_surf->h;
-		switch(u->tile.label_alignment)
+		switch(u->tile.label_placement)
 		{
-			case LABEL_ALIGNMENT_RIGHT:
+			case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
+				text_dim.x = vert.x + tile_padding.x;
+				text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
+				break;
+
+			case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
+				text_dim.x = vert.x + ((len - text_surf->w) / 2);
+				text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
+				break;
+
+			case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
 				text_dim.x = vert.x + len - text_surf->w - tile_padding.x;
 				text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
 				break;
 
-			case LABEL_ALIGNMENT_CENTER:
-				text_dim.x = vert.x + ((len - text_surf->w)/2);
-				text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
+			case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
+				text_dim.x = vert.x + len + tile_padding.x;
+				text_dim.y = vert.y;
 				break;
 
-			case LABEL_ALIGNMENT_LEFT:
-				text_dim.x = vert.x + tile_padding.x;
-				text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
+			case LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE:
+				text_dim.x = vert.x + len + tile_padding.x;
+				text_dim.y = vert.y + (len / 2) - (text_surf->h / 2);
+				break;
+
+			case LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM:
+				text_dim.x = vert.x + len + tile_padding.x;
+				text_dim.y = vert.y + len - text_surf->h;
 				break;
 		}
 
-		SDL_SetTextureColorMod(text_tex,
-			u->tile.fg.r, u->tile.fg.g, u->tile.fg.b);
+		/* Colour of elements within tile. */
+		switch(u->tile.label_placement)
+		{
+		case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
+		case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
+		case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
+			SDL_SetTextureColorMod(text_tex,
+				u->tile.fg.r, u->tile.fg.g, u->tile.fg.b);
+
+			break;
+
+		default:
+			SDL_SetTextureColorMod(text_tex,
+				text_colour_light.r, text_colour_light.g, text_colour_light.b);
+
+			break;
+		}
+
 		SDL_RenderCopy(ctx->ren, text_tex, NULL, &text_dim);
 		SDL_DestroyTexture(text_tex);
 		SDL_FreeSurface(text_surf);

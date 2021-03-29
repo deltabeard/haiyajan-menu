@@ -109,8 +109,7 @@
     </Manifest>
     <PostBuildEvent>
       <Message>Copying SDL2 DLL</Message>
-      <Command>copy $(ProjectDir)..\..\ext\lib_$(PlatformTargetAsMSBuildArchitecture)\*.dll $(OutDir)
-copy $(ProjectDir)..\..\ext\fonts\*.ttf $(OutDir)</Command>
+      <Command>copy $(ProjectDir)..\..\ext\lib_$(PlatformTargetAsMSBuildArchitecture)\*.dll $(OutDir)</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>$(ProjectDir)..\..\ext\MSVC_DEPS.exe -o$(ProjectDir)..\..\ext -y</Command>
@@ -146,8 +145,7 @@ copy $(ProjectDir)..\..\ext\fonts\*.ttf $(OutDir)</Command>
     </Manifest>
     <PostBuildEvent>
       <Message>Copying SDL2 DLL</Message>
-      <Command>copy $(ProjectDir)..\..\ext\lib_$(PlatformTargetAsMSBuildArchitecture)\*.dll $(OutDir)
-copy $(ProjectDir)..\..\ext\fonts\*.ttf $(OutDir)</Command>
+      <Command>copy $(ProjectDir)..\..\ext\lib_$(PlatformTargetAsMSBuildArchitecture)\*.dll $(OutDir)</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>$(ProjectDir)..\..\ext\MSVC_DEPS.exe -o$(ProjectDir)..\..\ext -y</Command>
@@ -175,8 +173,7 @@ copy $(ProjectDir)..\..\ext\fonts\*.ttf $(OutDir)</Command>
     </Manifest>
     <PostBuildEvent>
       <Message>Copying SDL2 DLL</Message>
-      <Command>copy $(ProjectDir)..\..\ext\lib_$(PlatformTargetAsMSBuildArchitecture)\*.dll $(OutDir)
-copy $(ProjectDir)..\..\ext\fonts\*.ttf $(OutDir)</Command>
+      <Command>copy $(ProjectDir)..\..\ext\lib_$(PlatformTargetAsMSBuildArchitecture)\*.dll $(OutDir)</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>$(ProjectDir)..\..\ext\MSVC_DEPS.exe -o$(ProjectDir)..\..\ext -y</Command>
@@ -205,8 +202,7 @@ copy $(ProjectDir)..\..\ext\fonts\*.ttf $(OutDir)</Command>
     </Manifest>
     <PostBuildEvent>
       <Message>Copying SDL2 DLL</Message>
-      <Command>copy $(ProjectDir)..\..\ext\lib_$(PlatformTargetAsMSBuildArchitecture)\*.dll $(OutDir)
-copy $(ProjectDir)..\..\ext\fonts\*.ttf $(OutDir)</Command>
+      <Command>copy $(ProjectDir)..\..\ext\lib_$(PlatformTargetAsMSBuildArchitecture)\*.dll $(OutDir)</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>$(ProjectDir)..\..\ext\MSVC_DEPS.exe -o$(ProjectDir)..\..\ext -y</Command>
@@ -217,12 +213,10 @@ copy $(ProjectDir)..\..\ext\fonts\*.ttf $(OutDir)</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.c" />
-    <ClCompile Include="..\..\src\tinflate.c" />
     <ClCompile Include="..\..\src\ui.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\inc\stretchy_buffer.h" />
-    <ClInclude Include="..\..\inc\tinf.h" />
     <ClInclude Include="..\..\inc\ui.h" />
     <ClInclude Include="..\..\inc\win_dirent.h" />
   </ItemGroup>

@@ -54,7 +54,7 @@ ifeq ($(PLATFORM),MSVC)
 	OBJEXT	:= obj
 	RM	:= del
 	CFLAGS	:= /nologo /utf-8 /W1 /Iinc /Iext\inc /FS /D_CRT_SECURE_NO_WARNINGS
-	LDFLAGS := /link /SUBSYSTEM:CONSOLE SDL2main.lib SDL2.lib shell32.lib /LIBPATH:ext\lib_$(VSCMD_ARG_TGT_ARCH)
+	LDFLAGS := /link /SUBSYSTEM:CONSOLE SDL2main.lib SDL2.lib SDL2_ttf.lib shell32.lib /LIBPATH:ext\lib_$(VSCMD_ARG_TGT_ARCH)
 	ICON_FILE := icon.ico
 	OBJS	+= meta\winres.res
 	EXE	:= $(NAME).exe
@@ -148,7 +148,7 @@ ifeq ($(CC)$(wildcard SDL2.dll),cl)
     UNUSED := $(shell $(EXPAND_CMD))
 
     # Copy SDL2.DLL to output EXE directory.
-    UNUSED := $(shell COPY ext\lib_$(VSCMD_ARG_TGT_ARCH)\SDL2.dll SDL2.dll)
+    UNUSED := $(shell COPY ext\lib_$(VSCMD_ARG_TGT_ARCH)\*.dll .\)
 endif
 
 # Add UI example application to target.
