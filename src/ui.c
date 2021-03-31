@@ -9,8 +9,8 @@
 
 #define DONT_HAVE_FRIBIDI_CONFIG_H
 #define FRIBIDI_NO_DEPRECATED
+
 #include <fribidi.h>
-#include <lv_bidi.h>
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <ui.h>

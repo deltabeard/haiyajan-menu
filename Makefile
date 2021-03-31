@@ -54,7 +54,7 @@ ifeq ($(PLATFORM),MSVC)
 	OBJEXT	:= obj
 	RM	:= del
 	CFLAGS	:= /nologo /utf-8 /W1 /Iinc /Iext\inc /FS /D_CRT_SECURE_NO_WARNINGS
-	LDFLAGS := /link /SUBSYSTEM:CONSOLE SDL2main.lib SDL2.lib SDL2_ttf.lib harfbuzz.lib freetype.lib shell32.lib /LIBPATH:ext\lib_$(VSCMD_ARG_TGT_ARCH)
+	LDFLAGS := /link /SUBSYSTEM:CONSOLE SDL2main.lib SDL2.lib SDL2_ttf.lib fribidi.lib shell32.lib /LIBPATH:ext\lib_$(VSCMD_ARG_TGT_ARCH)
 	ICON_FILE := icon.ico
 	OBJS	+= meta\winres.res
 	EXE	:= $(NAME).exe
