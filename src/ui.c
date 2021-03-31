@@ -517,16 +517,6 @@ SDL_bool ui_should_redraw(ui_ctx_s *ctx)
 	return ctx->redraw;
 }
 
-static Uint32 strUTF32len(Uint32 *str)
-{
-	Uint32 ret = 0;
-
-	while(*(str + ret) != '\0')
-		ret++;
-
-	return ret;
-}
-
 int ui_render_frame(ui_ctx_s *ctx)
 {
 	int ret = 0;
@@ -584,38 +574,30 @@ int ui_render_frame(ui_ctx_s *ctx)
 		SDL_DestroyTexture(icon_tex);
 		SDL_FreeSurface(icon_surf);
 
-		#if 1
 		{
-		/* Render text on tile. */
-		size_t instrlen = SDL_strlen(u->tile.label);
-		FriBidiChar *instr = SDL_malloc(instrlen * sizeof(FriBidiChar));
-		FriBidiChar *outstr = SDL_malloc(instrlen * sizeof(FriBidiChar));
-		FriBidiParType biditype = FRIBIDI_PAR_ON;
-		FriBidiStrIndex strinlen = fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8, u->tile.label, instrlen, instr);
+			/* Render text on tile. */
+			size_t instrlen = SDL_strlen(u->tile.label);
+			FriBidiChar *instr, *outstr;
+			FriBidiParType biditype = FRIBIDI_PAR_ON;
+			FriBidiStrIndex strinlen;
+			char *strutf8_out;
 
-		fribidi_log2vis(instr, strinlen, &biditype, outstr, NULL, NULL, NULL);
-		SDL_free(instr);
+			instr = SDL_malloc(instrlen * sizeof(FriBidiChar));
+			outstr = SDL_malloc(instrlen * sizeof(FriBidiChar));
+			strinlen = fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8, u->tile.label, instrlen, instr);
 
-		char *strutf8_out = SDL_malloc(instrlen);
-		fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8, outstr, strinlen, strutf8_out);
-		SDL_free(outstr);
+			fribidi_log2vis(instr, strinlen, &biditype, outstr, NULL, NULL, NULL);
+			SDL_free(instr);
 
-		text_surf = TTF_RenderUTF8_Blended(ctx->fonts.title,
-			strutf8_out, text_colour_light);
-		SDL_assert(text_surf != NULL);
-		SDL_free(strutf8_out);
+			strutf8_out = SDL_malloc(instrlen);
+			fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8, outstr, strinlen, strutf8_out);
+			SDL_free(outstr);
+
+			text_surf = TTF_RenderUTF8_Blended(ctx->fonts.title,
+				strutf8_out, text_colour_light);
+			SDL_assert(text_surf != NULL);
+			SDL_free(strutf8_out);
 		}
-		#else
-		{
-		size_t in_strlen = SDL_strlen(u->tile.label);
-		char *str_out = SDL_malloc(in_strlen);
-		_lv_bidi_process(u->tile.label, str_out, LV_BIDI_DIR_AUTO);
-		text_surf = TTF_RenderUTF8_Blended(ctx->fonts.title,
-			str_out, text_colour_light);
-		SDL_free(str_out);
-		SDL_assert(text_surf != NULL);
-		}
-		#endif
 
 		/* Render icon text. */
 		text_tex = SDL_CreateTextureFromSurface(ctx->ren, text_surf);
@@ -625,35 +607,35 @@ int ui_render_frame(ui_ctx_s *ctx)
 		text_dim.h = text_surf->h;
 		switch(u->tile.label_placement)
 		{
-			case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
-				text_dim.x = vert.x + tile_padding.x;
-				text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
-				break;
+		case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
+			text_dim.x = vert.x + tile_padding.x;
+			text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
+			break;
 
-			case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
-				text_dim.x = vert.x + ((len - text_surf->w) / 2);
-				text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
-				break;
+		case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
+			text_dim.x = vert.x + ((len - text_surf->w) / 2);
+			text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
+			break;
 
-			case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
-				text_dim.x = vert.x + len - text_surf->w - tile_padding.x;
-				text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
-				break;
+		case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
+			text_dim.x = vert.x + len - text_surf->w - tile_padding.x;
+			text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
+			break;
 
-			case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
-				text_dim.x = vert.x + len + tile_padding.x;
-				text_dim.y = vert.y;
-				break;
+		case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
+			text_dim.x = vert.x + len + tile_padding.x;
+			text_dim.y = vert.y;
+			break;
 
-			case LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE:
-				text_dim.x = vert.x + len + tile_padding.x;
-				text_dim.y = vert.y + (len / 2) - (text_surf->h / 2);
-				break;
+		case LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE:
+			text_dim.x = vert.x + len + tile_padding.x;
+			text_dim.y = vert.y + (len / 2) - (text_surf->h / 2);
+			break;
 
-			case LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM:
-				text_dim.x = vert.x + len + tile_padding.x;
-				text_dim.y = vert.y + len - text_surf->h;
-				break;
+		case LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM:
+			text_dim.x = vert.x + len + tile_padding.x;
+			text_dim.y = vert.y + len - text_surf->h;
+			break;
 		}
 
 		/* Colour of elements within tile. */
@@ -926,6 +908,7 @@ void ui_exit(ui_ctx_s *ctx)
 {
 	TTF_CloseFont(ctx->fonts.title);
 	TTF_CloseFont(ctx->fonts.normal);
+	TTF_CloseFont(ctx->fonts.large_icons);
 	TTF_Quit();
 
 	SDL_DestroyTexture(ctx->tex);
