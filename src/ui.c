@@ -7,6 +7,10 @@
  * the Free Software Foundation.
  */
 
+#define DONT_HAVE_FRIBIDI_CONFIG_H
+#define FRIBIDI_NO_DEPRECATED
+#include <fribidi.h>
+#include <lv_bidi.h>
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <ui.h>
@@ -513,6 +517,16 @@ SDL_bool ui_should_redraw(ui_ctx_s *ctx)
 	return ctx->redraw;
 }
 
+static Uint32 strUTF32len(Uint32 *str)
+{
+	Uint32 ret = 0;
+
+	while(*(str + ret) != '\0')
+		ret++;
+
+	return ret;
+}
+
 int ui_render_frame(ui_ctx_s *ctx)
 {
 	int ret = 0;
@@ -570,10 +584,38 @@ int ui_render_frame(ui_ctx_s *ctx)
 		SDL_DestroyTexture(icon_tex);
 		SDL_FreeSurface(icon_surf);
 
+		#if 1
+		{
 		/* Render text on tile. */
-		text_surf = TTF_RenderText_Blended(ctx->fonts.title,
-			u->tile.label, text_colour_light);
+		size_t instrlen = SDL_strlen(u->tile.label);
+		FriBidiChar *instr = SDL_malloc(instrlen * sizeof(FriBidiChar));
+		FriBidiChar *outstr = SDL_malloc(instrlen * sizeof(FriBidiChar));
+		FriBidiParType biditype = FRIBIDI_PAR_ON;
+		FriBidiStrIndex strinlen = fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8, u->tile.label, instrlen, instr);
+
+		fribidi_log2vis(instr, strinlen, &biditype, outstr, NULL, NULL, NULL);
+		SDL_free(instr);
+
+		char *strutf8_out = SDL_malloc(instrlen);
+		fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8, outstr, strinlen, strutf8_out);
+		SDL_free(outstr);
+
+		text_surf = TTF_RenderUTF8_Blended(ctx->fonts.title,
+			strutf8_out, text_colour_light);
 		SDL_assert(text_surf != NULL);
+		SDL_free(strutf8_out);
+		}
+		#else
+		{
+		size_t in_strlen = SDL_strlen(u->tile.label);
+		char *str_out = SDL_malloc(in_strlen);
+		_lv_bidi_process(u->tile.label, str_out, LV_BIDI_DIR_AUTO);
+		text_surf = TTF_RenderUTF8_Blended(ctx->fonts.title,
+			str_out, text_colour_light);
+		SDL_free(str_out);
+		SDL_assert(text_surf != NULL);
+		}
+		#endif
 
 		/* Render icon text. */
 		text_tex = SDL_CreateTextureFromSurface(ctx->ren, text_surf);
@@ -711,6 +753,11 @@ static int ui_init_fonts(ui_ctx_s *ctx, float dpi)
 {
 	const int title_pt_ref = 28, normal_pt_ref = 22;
 	int ret = 1;
+	size_t datasize;
+	void *ui_ttf;
+	ui_ttf = SDL_LoadFile("C:\\Windows\\Fonts\\arial.ttf", &datasize);
+	//ui_ttf = SDL_LoadFile("C:\\Windows\\Fonts\\YuGothR.ttc", &datasize);
+	//ui_ttf = SDL_LoadFile("C:\\Windows\\Fonts\\segoeuil.ttf", &datasize);
 
 	struct font_info
 	{
@@ -721,8 +768,8 @@ static int ui_init_fonts(ui_ctx_s *ctx, float dpi)
 	} const font_infos[] = {
 		{
 			38, &ctx->fonts.title,
-			NotoSansDisplay_SemiCondensedLight_Latin_ttf,
-			NotoSansDisplay_SemiCondensedLight_Latin_ttf_len
+			ui_ttf,
+			datasize
 		},
 		{
 			24, &ctx->fonts.normal,

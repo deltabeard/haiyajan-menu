@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 		{
 			.type = UI_ELEM_TYPE_TILE,
 			.tile = {
-				.label = "Open",
+				.label = "経営に関する情報",
 				.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 				.tile_shape = TILE_SHAPE_SQUARE,
 				.tile_size = TILE_SIZE_LARGE,
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 		{
 			.type = UI_ELEM_TYPE_TILE,
 			.tile = {
-				.label = "Exit",
+				.label = "بنی آدم",
 				.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 				.tile_shape = TILE_SHAPE_SQUARE,
 				.tile_size = TILE_SIZE_LARGE,
