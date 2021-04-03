@@ -1,5 +1,5 @@
 /**
- * Renders UI for Haiyajan.
+ * UI toolkit for SDL2.
  * Copyright (c) 2020 Mahyar Koshkouei
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -10,22 +10,13 @@
 #define DONT_HAVE_FRIBIDI_CONFIG_H
 #define FRIBIDI_NO_DEPRECATED
 
-#include <fribidi.h>
+#include <font.h>
 #include <SDL.h>
-#include <SDL_ttf.h>
 #include <ui.h>
 
-#include <fonts/NotoSansDisplay-Regular-Latin.ttf.h>
-#include <fonts/NotoSansDisplay-SemiCondensedLight-Latin.ttf.h>
-#include <fonts/fabric-icons.ttf.h>
-
 static const float dpi_reference = 96.0f;
-static const SDL_Colour text_colour_light = { 0xFF, 0xFF, 0xFF, SDL_ALPHA_TRANSPARENT };
-
-struct ui_element_cache
-{
-	SDL_Texture *label;
-	SDL_Texture *icon;
+static const SDL_Colour text_colour_light = {
+	0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE
 };
 
 struct ui_ctx
@@ -43,12 +34,7 @@ struct ui_ctx
 	ui_e *current;
 
 	/* Font context used to draw text on UI elements. */
-	struct
-	{
-		TTF_Font *title;
-		TTF_Font *normal;
-		TTF_Font *large_icons;
-	} fonts;
+	font_ctx_s *font;
 
 	/* Rendered input boxes for touch and mouse input. */
 	struct boxes_input
@@ -547,7 +533,6 @@ int ui_render_frame(ui_ctx_s *ctx)
 		const SDL_Rect dim = {
 			.h = len, .w = len, .x = vert.x, .y = vert.y
 		};
-		SDL_Surface *text_surf, *icon_surf;
 		SDL_Texture *text_tex, *icon_tex;
 		SDL_Rect text_dim, icon_dim;
 		const SDL_Point tile_padding = { .x = 8, .y = 16 };
@@ -558,13 +543,8 @@ int ui_render_frame(ui_ctx_s *ctx)
 		SDL_RenderFillRect(ctx->ren, &dim);
 
 		/* Render icon on tile. */
-		icon_surf = TTF_RenderGlyph_Blended(ctx->fonts.large_icons,
-			u->tile.icon, u->tile.fg);
-		SDL_assert(icon_surf != NULL);
-		icon_tex = SDL_CreateTextureFromSurface(ctx->ren, icon_surf);
-		SDL_assert(icon_tex != NULL);
-		icon_dim.w = icon_surf->w;
-		icon_dim.h = icon_surf->h;
+		icon_tex = font_render_icon(ctx->font, u->tile.icon, u->tile.fg);
+		SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
 		icon_dim.x = vert.x + (len / 2) - (icon_dim.w / 2);
 		icon_dim.y = vert.y + (len / 2) - (icon_dim.h / 2);
 
@@ -572,54 +552,28 @@ int ui_render_frame(ui_ctx_s *ctx)
 			u->tile.fg.r, u->tile.fg.g, u->tile.fg.b);
 		SDL_RenderCopy(ctx->ren, icon_tex, NULL, &icon_dim);
 		SDL_DestroyTexture(icon_tex);
-		SDL_FreeSurface(icon_surf);
 
-		{
-			/* Render text on tile. */
-			size_t instrlen = SDL_strlen(u->tile.label);
-			FriBidiChar *instr, *outstr;
-			FriBidiParType biditype = FRIBIDI_PAR_ON;
-			FriBidiStrIndex strinlen;
-			char *strutf8_out;
+		/* Render tile label. */
+		text_tex = font_render_text(ctx->font, u->tile.label,
+			FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
+			text_colour_light);
+		SDL_QueryTexture(text_tex, NULL, NULL, &text_dim.w, &text_dim.h);
 
-			instr = SDL_malloc(instrlen * sizeof(FriBidiChar));
-			outstr = SDL_malloc(instrlen * sizeof(FriBidiChar));
-			strinlen = fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8, u->tile.label, instrlen, instr);
-
-			fribidi_log2vis(instr, strinlen, &biditype, outstr, NULL, NULL, NULL);
-			SDL_free(instr);
-
-			strutf8_out = SDL_malloc(instrlen);
-			fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8, outstr, strinlen, strutf8_out);
-			SDL_free(outstr);
-
-			text_surf = TTF_RenderUTF8_Blended(ctx->fonts.title,
-				strutf8_out, text_colour_light);
-			SDL_assert(text_surf != NULL);
-			SDL_free(strutf8_out);
-		}
-
-		/* Render icon text. */
-		text_tex = SDL_CreateTextureFromSurface(ctx->ren, text_surf);
-		SDL_assert(text_tex != NULL);
-
-		text_dim.w = text_surf->w;
-		text_dim.h = text_surf->h;
 		switch(u->tile.label_placement)
 		{
 		case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
 			text_dim.x = vert.x + tile_padding.x;
-			text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
+			text_dim.y = vert.y + len - text_dim.h - tile_padding.y;
 			break;
 
 		case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
-			text_dim.x = vert.x + ((len - text_surf->w) / 2);
-			text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
+			text_dim.x = vert.x + ((len - text_dim.w) / 2);
+			text_dim.y = vert.y + len - text_dim.h - tile_padding.y;
 			break;
 
 		case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
-			text_dim.x = vert.x + len - text_surf->w - tile_padding.x;
-			text_dim.y = vert.y + len - text_surf->h - tile_padding.y;
+			text_dim.x = vert.x + len - text_dim.w - tile_padding.x;
+			text_dim.y = vert.y + len - text_dim.h - tile_padding.y;
 			break;
 
 		case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
@@ -629,12 +583,12 @@ int ui_render_frame(ui_ctx_s *ctx)
 
 		case LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE:
 			text_dim.x = vert.x + len + tile_padding.x;
-			text_dim.y = vert.y + (len / 2) - (text_surf->h / 2);
+			text_dim.y = vert.y + (len / 2) - (text_dim.h / 2);
 			break;
 
 		case LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM:
 			text_dim.x = vert.x + len + tile_padding.x;
-			text_dim.y = vert.y + len - text_surf->h;
+			text_dim.y = vert.y + len - text_dim.h;
 			break;
 		}
 
@@ -658,7 +612,6 @@ int ui_render_frame(ui_ctx_s *ctx)
 
 		SDL_RenderCopy(ctx->ren, text_tex, NULL, &text_dim);
 		SDL_DestroyTexture(text_tex);
-		SDL_FreeSurface(text_surf);
 
 		/* Increment coordinates to next element. */
 		vert.y += len + tile_padding.y;
@@ -731,64 +684,6 @@ out:
 	return ret;
 }
 
-static int ui_init_fonts(ui_ctx_s *ctx, float dpi)
-{
-	const int title_pt_ref = 28, normal_pt_ref = 22;
-	int ret = 1;
-	size_t datasize;
-	void *ui_ttf;
-	ui_ttf = SDL_LoadFile("C:\\Windows\\Fonts\\arial.ttf", &datasize);
-	//ui_ttf = SDL_LoadFile("C:\\Windows\\Fonts\\YuGothR.ttc", &datasize);
-	//ui_ttf = SDL_LoadFile("C:\\Windows\\Fonts\\segoeuil.ttf", &datasize);
-
-	struct font_info
-	{
-		int pt_ref;
-		TTF_Font **ttf;
-		const unsigned char *font_mem;
-		const int font_len;
-	} const font_infos[] = {
-		{
-			38, &ctx->fonts.title,
-			ui_ttf,
-			datasize
-		},
-		{
-			24, &ctx->fonts.normal,
-			NotoSansDisplay_Regular_Latin_ttf,
-			NotoSansDisplay_Regular_Latin_ttf_len
-		},
-		{
-			72, &ctx->fonts.large_icons,
-			fabric_icons_ttf,
-			fabric_icons_ttf_len
-		}
-	};
-
-	for(unsigned i = 0; i < SDL_arraysize(font_infos); i++)
-	{
-		const struct font_info *f = &(font_infos[i]);
-		TTF_Font **ttf = f->ttf;
-		SDL_RWops *font_mem;
-		float pt;
-
-		font_mem = SDL_RWFromConstMem(f->font_mem, f->font_len);
-		if(font_mem == NULL)
-			goto err;
-
-		if(*ttf != NULL)
-			TTF_CloseFont(*ttf);
-
-		pt = f->pt_ref * ctx->dpi_multiply;
-		*ttf = TTF_OpenFontRW(font_mem, 1, pt);
-	}
-
-	ret = 0;
-
-err:
-	return ret;
-}
-
 static void ui_recalculate_element_sizes(ui_ctx_s *ctx)
 {
 	const float ref_tile_sizes[] = {
@@ -831,7 +726,8 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 	ctx->dpi = dpi;
 	ctx->dpi_multiply = dpi / dpi_reference;
 
-	if(ui_init_fonts(ctx, ctx->dpi) != 0)
+	ctx->font = font_init(rend, dpi);
+	if(ctx->font == NULL)
 	{
 		SDL_DestroyTexture(ctx->tex);
 		goto err;
@@ -862,13 +758,7 @@ ui_ctx_s *ui_init(SDL_Window *win, ui_e *ui_elements)
 	SDL_Renderer *rend;
 	float dpi;
 
-	if(!TTF_WasInit() && TTF_Init() == -1)
-	{
-		SDL_SetError("TTF_Init: %s", TTF_GetError());
-		goto err;
-	}
-
-	SDL_assert_paranoid(win != NULL);
+	SDL_assert(win != NULL);
 
 	rend = SDL_GetRenderer(win);
 	if(rend == NULL)
@@ -906,10 +796,7 @@ err:
 */
 void ui_exit(ui_ctx_s *ctx)
 {
-	TTF_CloseFont(ctx->fonts.title);
-	TTF_CloseFont(ctx->fonts.normal);
-	TTF_CloseFont(ctx->fonts.large_icons);
-	TTF_Quit();
+	font_exit(ctx->font);
 
 	SDL_DestroyTexture(ctx->tex);
 	SDL_free(ctx->boxes_input);

@@ -102,7 +102,7 @@ LICENSE := (C) $(AUTHOR). $(LICENSE_SPDX).
 GIT_VER := $(shell git describe --dirty --always --tags --long)
 
 
-SRCS := $(wildcard src/*.c) $(wildcard inc/lvgl/src/**/*.c)
+SRCS := $(wildcard src/*.c) $(wildcard src/**/*.c)
 
 # If using del, use Windows style folder separator.
 ifeq ($(RM),del)
@@ -154,7 +154,11 @@ endif
 # Add UI example application to target.
 TARGET += $(EXE)
 
-override CFLAGS += -Iinc -DBUILD=$(BUILD) $(EXTRA_CFLAGS)
+# Set t1ha flages
+T1HA_CFLAGS := -DT1HA0_RUNTIME_SELECT=1 -DT1HA1_DISABLED=1 \
+	-DT1HA2_DISABLED=1
+
+override CFLAGS += -Iinc -DBUILD=$(BUILD) $(T1HA_CFLAGS) $(EXTRA_CFLAGS)
 override LDFLAGS += $(EXTRA_LDFLAGS)
 
 all: $(TARGET)

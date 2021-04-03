@@ -163,6 +163,7 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <PreprocessorDefinitions>T1HA0_RUNTIME_SELECT;T1HA1_DISABLED;T1HA2_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;fribidi.lib;Shell32.lib</AdditionalDependencies>
@@ -191,7 +192,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>T1HA0_RUNTIME_SELECT;T1HA1_DISABLED;T1HA2_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;fribidi.lib;Shell32.lib</AdditionalDependencies>
@@ -216,13 +217,31 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\font.c" />
     <ClCompile Include="..\..\src\main.c" />
+    <ClCompile Include="..\..\src\t1ha\t1ha0.c" />
+    <ClCompile Include="..\..\src\t1ha\t1ha0_ia32aes_avx.c" />
+    <ClCompile Include="..\..\src\t1ha\t1ha0_ia32aes_avx2.c" />
+    <ClCompile Include="..\..\src\t1ha\t1ha0_ia32aes_noavx.c" />
+    <ClCompile Include="..\..\src\t1ha\t1ha0_selfcheck.c" />
+    <ClCompile Include="..\..\src\t1ha\t1ha1.c" />
+    <ClCompile Include="..\..\src\t1ha\t1ha1_selfcheck.c" />
+    <ClCompile Include="..\..\src\t1ha\t1ha2.c" />
+    <ClCompile Include="..\..\src\t1ha\t1ha2_selfcheck.c" />
+    <ClCompile Include="..\..\src\t1ha\t1ha_selfcheck.c" />
+    <ClCompile Include="..\..\src\t1ha\t1ha_selfcheck_all.c" />
     <ClCompile Include="..\..\src\ui.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\inc\font.h" />
     <ClInclude Include="..\..\inc\stretchy_buffer.h" />
+    <ClInclude Include="..\..\inc\t1ha.h" />
     <ClInclude Include="..\..\inc\ui.h" />
     <ClInclude Include="..\..\inc\win_dirent.h" />
+    <ClInclude Include="..\..\src\t1ha\t1ha0_ia32aes_a.h" />
+    <ClInclude Include="..\..\src\t1ha\t1ha0_ia32aes_b.h" />
+    <ClInclude Include="..\..\src\t1ha\t1ha_bits.h" />
+    <ClInclude Include="..\..\src\t1ha\t1ha_selfcheck.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\DESIGN.md" />

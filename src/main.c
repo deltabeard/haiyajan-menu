@@ -76,15 +76,15 @@ int main(int argc, char *argv[])
 		{
 			.type = UI_ELEM_TYPE_TILE,
 			.tile = {
-				.label = "経営に関する情報",
+				.label = "Open",
 				.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 				.tile_shape = TILE_SHAPE_SQUARE,
 				.tile_size = TILE_SIZE_LARGE,
 				.icon = 0xE8B7,
 				.help = NULL,
-				/* Pale Spring Bud */
-				.bg = {.r = 0xEB, .g = 0xF8, .b = 0xB8, .a = SDL_ALPHA_OPAQUE},
-				.fg = { 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE },
+				/* Persian Blue */
+				.bg = {.r = 0x1C, .g = 0x39, .b = 0xBB, .a = SDL_ALPHA_OPAQUE},
+				.fg = { 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE },
 				.disabled = SDL_FALSE,
 				.onclick = ONCLICK_EXECUTE_FUNCTION,
 				.onclick_event = {.execute_function = onclick_function_debug },
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 		{
 			.type = UI_ELEM_TYPE_TILE,
 			.tile = {
-				.label = "بنی آدم",
+				.label = "Exit",
 				.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 				.tile_shape = TILE_SHAPE_SQUARE,
 				.tile_size = TILE_SIZE_LARGE,

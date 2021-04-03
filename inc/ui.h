@@ -11,6 +11,12 @@
 
 #include <SDL.h>
 
+enum
+{
+	HAIYAJAN_LOG_CATEGORY_MAIN = SDL_LOG_CATEGORY_CUSTOM,
+	HAIYAJAN_LOG_CATEGORY_UI
+};
+
 /* Private UI Context. */
 typedef struct ui_ctx ui_ctx_s;
 

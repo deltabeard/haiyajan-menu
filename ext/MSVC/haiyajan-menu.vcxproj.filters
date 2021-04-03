@@ -16,6 +16,9 @@
     <Filter Include="Documents">
       <UniqueIdentifier>{72a67333-238c-4399-a5a7-c9c92af0e0ef}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\t1ha">
+      <UniqueIdentifier>{33c32c11-6000-432c-9722-f473f337e2cb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.c">
@@ -23,6 +26,42 @@
     </ClCompile>
     <ClCompile Include="..\..\src\ui.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\font.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\t1ha\t1ha_selfcheck.c">
+      <Filter>Source Files\t1ha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\t1ha\t1ha_selfcheck_all.c">
+      <Filter>Source Files\t1ha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\t1ha\t1ha0.c">
+      <Filter>Source Files\t1ha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\t1ha\t1ha0_ia32aes_avx.c">
+      <Filter>Source Files\t1ha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\t1ha\t1ha0_ia32aes_avx2.c">
+      <Filter>Source Files\t1ha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\t1ha\t1ha0_ia32aes_noavx.c">
+      <Filter>Source Files\t1ha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\t1ha\t1ha0_selfcheck.c">
+      <Filter>Source Files\t1ha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\t1ha\t1ha1.c">
+      <Filter>Source Files\t1ha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\t1ha\t1ha1_selfcheck.c">
+      <Filter>Source Files\t1ha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\t1ha\t1ha2.c">
+      <Filter>Source Files\t1ha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\t1ha\t1ha2_selfcheck.c">
+      <Filter>Source Files\t1ha</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -33,6 +72,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\inc\stretchy_buffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\font.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\t1ha\t1ha_bits.h">
+      <Filter>Source Files\t1ha</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\t1ha\t1ha_selfcheck.h">
+      <Filter>Source Files\t1ha</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\t1ha\t1ha0_ia32aes_a.h">
+      <Filter>Source Files\t1ha</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\t1ha\t1ha0_ia32aes_b.h">
+      <Filter>Source Files\t1ha</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\inc\t1ha.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
