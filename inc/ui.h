@@ -23,7 +23,7 @@ typedef struct ui_ctx ui_ctx_s;
 #define UI_EVENT_MASK (SDL_WINDOWEVENT | SDL_MOUSEMOTION | SDL_KEYDOWN | SDL_JOYAXISMOTION)
 
 /* Forward decleration. */
-typedef struct ui_element ui_e;
+typedef struct ui_element ui_el_s;
 struct ui_element;
 
 struct ui_tile {
@@ -69,11 +69,11 @@ struct ui_tile {
 
 	union {
 		struct {
-			ui_e *element;
+			ui_el_s *element;
 		} goto_element;
 
 		struct {
-			void (*function)(ui_e *element);
+			void (*function)(ui_el_s *element);
 		} execute_function;
 
 		struct {
@@ -126,7 +126,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e);
  *		ui_exit is called.
  * \return	UI context. NULL on error.
  */
-ui_ctx_s *ui_init(SDL_Window *win, ui_e *ui_elements);
+ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *ui_elements);
 
 SDL_bool ui_should_redraw(ui_ctx_s *ctx);
 

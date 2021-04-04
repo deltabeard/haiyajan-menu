@@ -12,6 +12,7 @@
 
 #include <font.h>
 #include <SDL.h>
+#include <stretchy_buffer.h>
 #include <ui.h>
 
 static const float dpi_reference = 96.0f;
@@ -28,23 +29,23 @@ struct ui_ctx
 	SDL_Texture *tex;
 
 	/* Root Menu. */
-	ui_e *root;
+	ui_el_s *root;
 
 	/* Currently rendered menu. */
-	ui_e *current;
+	ui_el_s *current;
 
 	/* Font context used to draw text on UI elements. */
 	font_ctx_s *font;
 
 	/* Rendered input boxes for touch and mouse input. */
-	struct boxes_input
+	struct hit_box
 	{
 		/* Dimensions of hit-box on screen. */
 		SDL_Rect hit_box;
 
 		/* UI element associated with hit-box. */
-		ui_e *ui_element;
-	} *boxes_input;
+		ui_el_s *ui_element;
+	} *hit_boxes;
 
 	unsigned tile_sizes[3];
 
@@ -55,6 +56,26 @@ struct ui_ctx
 	/* Whether the front-end must call ui_render_frame(). */
 	SDL_bool redraw;
 };
+
+
+typedef enum
+{
+	/* Go back to the previous item.
+	 * Could be used when user presses UP. */
+	MENU_INSTR_PREV_ITEM,
+
+	/* Go to next item in menu.
+	 * Could be used when user presses DOWN. */
+	 MENU_INSTR_NEXT_ITEM,
+
+	 /* Go to parent menu if one exists.
+	  * Could be used when user presses BACKSPACE. */
+	  MENU_INSTR_PARENT_MENU,
+
+	  /* Execute item operation.
+	   * Could be used when user presses ENTER. */
+	   MENU_INSTR_EXEC_ITEM
+} menu_instruction_e;
 
 #if 0
 typedef enum
@@ -169,25 +190,6 @@ struct ui_object
 		} header;
 	} object_parameters;
 };
-
-typedef enum
-{
-	/* Go back to the previous item.
-	 * Could be used when user presses UP. */
-	MENU_INSTR_PREV_ITEM,
-
-	/* Go to next item in menu.
-	 * Could be used when user presses DOWN. */
-	 MENU_INSTR_NEXT_ITEM,
-
-	 /* Go to parent menu if one exists.
-	  * Could be used when user presses BACKSPACE. */
-	  MENU_INSTR_PARENT_MENU,
-
-	  /* Execute item operation.
-	   * Could be used when user presses ENTER. */
-	   MENU_INSTR_EXEC_ITEM
-} menu_instruction_e;
 
 static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 {
@@ -332,6 +334,58 @@ int ui_render_frame(ui_ctx_s *ctx)
 out:
 	return ret;
 }
+#endif
+
+static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
+{
+	switch(instr)
+	{
+	case MENU_INSTR_PREV_ITEM:
+		if(ctx->current > ctx->root)
+			ctx->current--;
+		break;
+
+	case MENU_INSTR_NEXT_ITEM:
+		if((ctx->current + 1)->type != UI_ELEM_TYPE_END)
+			ctx->current++;
+		break;
+
+#if 0
+	case MENU_INSTR_PARENT_MENU:
+		if(ctx->current->parent != NULL)
+			ctx->current = ctx->current->parent;
+
+		break;
+#endif
+
+	case MENU_INSTR_EXEC_ITEM:
+	{
+		switch(ctx->current->tile.onclick)
+		{
+		case ONCLICK_GOTO_ELEMENT:
+			ctx->current = ctx->current->tile.onclick_event.goto_element.element;
+			break;
+
+		case ONCLICK_EXECUTE_FUNCTION:
+			ctx->current->tile.onclick_event.execute_function.function(ctx->current);
+			break;
+
+		case ONCLICK_SET_SIGNED_VARIABLE:
+			*ctx->current->tile.onclick_event.signed_variable.variable = ctx->current->tile.onclick_event.signed_variable.val;
+			break;
+
+		case ONCLICK_SET_UNSIGNED_VARIABLE:
+			*ctx->current->tile.onclick_event.unsigned_variable.variable = ctx->current->tile.onclick_event.unsigned_variable.val;
+			break;
+		}
+
+		break;
+	}
+	}
+
+	ctx->redraw = SDL_TRUE;
+	return;
+}
 
 void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 {
@@ -422,42 +476,43 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 
 		ctx->redraw = SDL_TRUE;
 	}
-	else if(e->type == SDL_MOUSEMOTION && ctx->boxes_input != NULL)
+	else if(e->type == SDL_MOUSEMOTION && ctx->hit_boxes != NULL)
 	{
 		SDL_Point p = {
 			.x = e->motion.x,
 			.y = e->motion.y
 		};
+		int boxes_n = sb_count(ctx->hit_boxes);
 
-		for(Uint32 box = 0;
-			box < ctx->current->items.static_list.items_nmemb;
-			box++)
+		for(int box = 0; box < boxes_n; box++)
 		{
-			struct boxes_input *this_box = &ctx->boxes_input[box];
+			struct hit_box *this_box = &ctx->hit_boxes[box];
 			const SDL_Rect *r = &this_box->hit_box;
 			SDL_bool intersects = SDL_PointInRect(&p, r);
 
 			if(intersects == SDL_FALSE)
 				continue;
 
-			if(ctx->current->item_selected != box)
+			if(ctx->current != this_box->ui_element)
 			{
 				ctx->redraw = SDL_TRUE;
-				ctx->current->item_selected = box;
+				ctx->current = this_box->ui_element;
 				SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
-					"Selected item %u using motion",
-					ctx->current->item_selected);
+					"Selected item %p using motion",
+					ctx->current);
 			}
 
 			break;
 		}
 	}
-	else if(e->type == SDL_MOUSEBUTTONUP && ctx->boxes_input != NULL)
+	else if(e->type == SDL_MOUSEBUTTONUP && ctx->hit_boxes != NULL)
 	{
 		SDL_Point p = {
 			.x = e->button.x,
 			.y = e->button.y
 		};
+
+		int boxes_n = sb_count(ctx->hit_boxes);
 
 		if(e->button.button != SDL_BUTTON_LEFT)
 			return;
@@ -465,30 +520,28 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 		if(e->button.clicks == 0)
 			return;
 
-		for(Uint32 box = 0;
-			box < ctx->current->items.static_list.items_nmemb;
-			box++)
+		for(Uint32 box = 0; box < boxes_n; box++)
 		{
-			struct boxes_input *this_box = &ctx->boxes_input[box];
+			struct hit_box *this_box = &ctx->hit_boxes[box];
 			const SDL_Rect *r = &this_box->hit_box;
 			SDL_bool intersects = SDL_PointInRect(&p, r);
 
 			if(intersects == SDL_FALSE)
 				continue;
 
-			if(ctx->current->item_selected != box)
+			if(ctx->current != this_box->ui_element)
 			{
 				ctx->redraw = SDL_TRUE;
-				ctx->current->item_selected = box;
+				ctx->current = this_box->ui_element;
 				SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
-					"Selected item %d using button",
-					ctx->current->item_selected);
+					"Selected item %p using button",
+					ctx->current);
 			}
 
 			ui_input(ctx, MENU_INSTR_EXEC_ITEM);
 			SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
-				"Executed item %d using button",
-				ctx->current->item_selected);
+				"Executed item %p using button",
+				ctx->current);
 
 			break;
 		}
@@ -496,11 +549,138 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 
 	return;
 }
-#endif
 
 SDL_bool ui_should_redraw(ui_ctx_s *ctx)
 {
 	return ctx->redraw;
+}
+
+/**
+ * Draw tile element 'el' at point 'p'.
+ *
+ * \param ctx	UI context.
+ * \param el	UI element parameters. 
+ * \param p	The top left point of the UI element to draw.
+*/
+static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
+{
+	/* Assuming elements are always tiles. */
+	const unsigned len = ctx->tile_sizes[el->tile.tile_size];
+	const SDL_Rect dim = {
+		.h = len, .w = len, .x = p->x, .y = p->y
+	};
+	SDL_Texture *text_tex, *icon_tex;
+	SDL_Rect text_dim, icon_dim;
+	const SDL_Point tile_padding = { .x = 8, .y = 16 };
+
+	/* Draw tile background. */
+	SDL_SetRenderDrawColor(ctx->ren,
+		el->tile.bg.r, el->tile.bg.g, el->tile.bg.b, el->tile.bg.a);
+
+	/* Make the tile larger if it is selected. */
+	if(ctx->current == el)
+	{
+		SDL_Rect dim_outline = dim;
+
+		dim_outline.h += 10;
+		dim_outline.w += 10;
+		dim_outline.x -= 5;
+		dim_outline.y -= 5;
+
+		SDL_RenderFillRect(ctx->ren, &dim_outline);
+	}
+	else
+		SDL_RenderFillRect(ctx->ren, &dim);
+	
+	/* Render icon on tile. */
+	icon_tex = font_render_icon(ctx->font, el->tile.icon, el->tile.fg);
+	SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
+	icon_dim.x = p->x + (len / 2) - (icon_dim.w / 2);
+	icon_dim.y = p->y + (len / 2) - (icon_dim.h / 2);
+
+	SDL_SetTextureColorMod(icon_tex,
+		el->tile.fg.r, el->tile.fg.g, el->tile.fg.b);
+	SDL_RenderCopy(ctx->ren, icon_tex, NULL, &icon_dim);
+	SDL_DestroyTexture(icon_tex);
+
+	/* Render tile label. */
+	text_tex = font_render_text(ctx->font, el->tile.label,
+		FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
+		text_colour_light);
+	SDL_QueryTexture(text_tex, NULL, NULL, &text_dim.w, &text_dim.h);
+
+	switch(el->tile.label_placement)
+	{
+	case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
+		text_dim.x = p->x + tile_padding.x;
+		text_dim.y = p->y + len - text_dim.h - tile_padding.y;
+		break;
+
+	case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
+		text_dim.x = p->x + ((len - text_dim.w) / 2);
+		text_dim.y = p->y + len - text_dim.h - tile_padding.y;
+		break;
+
+	case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
+		text_dim.x = p->x + len - text_dim.w - tile_padding.x;
+		text_dim.y = p->y + len - text_dim.h - tile_padding.y;
+		break;
+
+	case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
+		text_dim.x = p->x + len + tile_padding.x;
+		text_dim.y = p->y;
+		break;
+
+	case LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE:
+		text_dim.x = p->x + len + tile_padding.x;
+		text_dim.y = p->y + (len / 2) - (text_dim.h / 2);
+		break;
+
+	case LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM:
+		text_dim.x = p->x + len + tile_padding.x;
+		text_dim.y = p->y + len - text_dim.h;
+		break;
+	}
+
+	/* Colour of elements within tile. */
+	switch(el->tile.label_placement)
+	{
+	case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
+	case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
+	case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
+		SDL_SetTextureColorMod(text_tex,
+			el->tile.fg.r, el->tile.fg.g, el->tile.fg.b);
+
+		break;
+
+	/* Alternate colour for text located outside of tile. */
+	case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
+	case LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE:
+	case LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM:
+	default:
+		SDL_SetTextureColorMod(text_tex,
+			text_colour_light.r, text_colour_light.g, text_colour_light.b);
+
+		break;
+	}
+
+	SDL_RenderCopy(ctx->ren, text_tex, NULL, &text_dim);
+	SDL_DestroyTexture(text_tex);
+
+	/* Add hitbox for mouse and touch input. */
+	{
+		struct hit_box i;
+		i.hit_box = dim;
+		i.ui_element = el;
+		sb_push(ctx->hit_boxes, i);
+
+		SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+			"Hit box generated for tile at (%d, %d)(%d, %d)",
+			dim.x, dim.y, dim.h, dim.w);
+	}
+
+	/* Increment coordinates to next element. */
+	p->y += len + tile_padding.y;
 }
 
 int ui_render_frame(ui_ctx_s *ctx)
@@ -514,6 +694,13 @@ int ui_render_frame(ui_ctx_s *ctx)
 	if(ctx->redraw == SDL_FALSE)
 		goto out;
 
+	/* Initialise a new hitbox array. */
+	if(ctx->hit_boxes != NULL)
+	{
+		sb_free(ctx->hit_boxes);
+		ctx->hit_boxes = NULL;
+	}
+
 	ret = SDL_SetRenderTarget(ctx->ren, ctx->tex);
 	if(ret != 0)
 		goto out;
@@ -526,146 +713,22 @@ int ui_render_frame(ui_ctx_s *ctx)
 	SDL_SetRenderDrawColor(ctx->ren, 20, 20, 20, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(ctx->ren);
 
-	for(ui_e *u = ctx->root; u->type != UI_ELEM_TYPE_END; u++)
+	for(ui_el_s *el = ctx->root; el->type != UI_ELEM_TYPE_END; el++)
 	{
-		/* Assuming elements are always tiles. */
-		const unsigned len = ctx->tile_sizes[u->tile.tile_size];
-		const SDL_Rect dim = {
-			.h = len, .w = len, .x = vert.x, .y = vert.y
-		};
-		SDL_Texture *text_tex, *icon_tex;
-		SDL_Rect text_dim, icon_dim;
-		const SDL_Point tile_padding = { .x = 8, .y = 16 };
-
-		/* Draw tile background. */
-		SDL_SetRenderDrawColor(ctx->ren,
-			u->tile.bg.r, u->tile.bg.g, u->tile.bg.b, u->tile.bg.a);
-		SDL_RenderFillRect(ctx->ren, &dim);
-
-		/* Render icon on tile. */
-		icon_tex = font_render_icon(ctx->font, u->tile.icon, u->tile.fg);
-		SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
-		icon_dim.x = vert.x + (len / 2) - (icon_dim.w / 2);
-		icon_dim.y = vert.y + (len / 2) - (icon_dim.h / 2);
-
-		SDL_SetTextureColorMod(icon_tex,
-			u->tile.fg.r, u->tile.fg.g, u->tile.fg.b);
-		SDL_RenderCopy(ctx->ren, icon_tex, NULL, &icon_dim);
-		SDL_DestroyTexture(icon_tex);
-
-		/* Render tile label. */
-		text_tex = font_render_text(ctx->font, u->tile.label,
-			FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
-			text_colour_light);
-		SDL_QueryTexture(text_tex, NULL, NULL, &text_dim.w, &text_dim.h);
-
-		switch(u->tile.label_placement)
+		switch(el->type)
 		{
-		case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
-			text_dim.x = vert.x + tile_padding.x;
-			text_dim.y = vert.y + len - text_dim.h - tile_padding.y;
-			break;
+			case UI_ELEM_TYPE_TILE:
+				ui_draw_tile(ctx, el, &vert);
+				break;
 
-		case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
-			text_dim.x = vert.x + ((len - text_dim.w) / 2);
-			text_dim.y = vert.y + len - text_dim.h - tile_padding.y;
-			break;
-
-		case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
-			text_dim.x = vert.x + len - text_dim.w - tile_padding.x;
-			text_dim.y = vert.y + len - text_dim.h - tile_padding.y;
-			break;
-
-		case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
-			text_dim.x = vert.x + len + tile_padding.x;
-			text_dim.y = vert.y;
-			break;
-
-		case LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE:
-			text_dim.x = vert.x + len + tile_padding.x;
-			text_dim.y = vert.y + (len / 2) - (text_dim.h / 2);
-			break;
-
-		case LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM:
-			text_dim.x = vert.x + len + tile_padding.x;
-			text_dim.y = vert.y + len - text_dim.h;
-			break;
+			default:
+				SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+					"The requested UI element %d is not implemented.",
+					el->type);
+				break;
 		}
 
-		/* Colour of elements within tile. */
-		switch(u->tile.label_placement)
-		{
-		case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
-		case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
-		case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
-			SDL_SetTextureColorMod(text_tex,
-				u->tile.fg.r, u->tile.fg.g, u->tile.fg.b);
-
-			break;
-
-		default:
-			SDL_SetTextureColorMod(text_tex,
-				text_colour_light.r, text_colour_light.g, text_colour_light.b);
-
-			break;
-		}
-
-		SDL_RenderCopy(ctx->ren, text_tex, NULL, &text_dim);
-		SDL_DestroyTexture(text_tex);
-
-		/* Increment coordinates to next element. */
-		vert.y += len + tile_padding.y;
 	}
-
-#if 0
-	for(unsigned item = 0;
-		item < ctx->current->items.static_list.items_nmemb;
-		item++)
-	{
-		struct menu_item *this = &ctx->current->items.static_list.items[item];
-		const SDL_Colour ol = this->fg;
-		const SDL_Colour bg = this->bg;
-		SDL_Rect text_loc = {
-			.x = main_menu_box.x + 6,
-			.y = main_menu_box.y + 80,
-			.h = 1, .w = 1
-		};
-
-		if(item == ctx->current->item_selected)
-		{
-			SDL_SetRenderDrawColor(ctx->ren, ol.r, ol.g, ol.b, ol.a);
-			SDL_RenderFillRect(ctx->ren, &bg_box);
-			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Selected %s",
-				this->name);
-		}
-
-		/* Draw item box. */
-		SDL_SetRenderDrawColor(ctx->ren, bg.r, bg.g, bg.b, bg.a);
-		SDL_RenderFillRect(ctx->ren, &main_menu_box);
-
-		/* Record hit-box information. */
-		if(ctx->boxes_input != NULL)
-		{
-			ctx->boxes_input[item].hit_box.x = main_menu_box.x;
-			ctx->boxes_input[item].hit_box.y = main_menu_box.y;
-			ctx->boxes_input[item].hit_box.w = main_menu_box.w;
-			ctx->boxes_input[item].hit_box.h = main_menu_box.h;
-
-			ctx->boxes_input[item].item = this;
-			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Hit box generated for (%d, %d)(%d, %d)",
-				main_menu_box.x, main_menu_box.y, main_menu_box.h, main_menu_box.w);
-		}
-
-		/* Draw item text. */
-		SDL_SetRenderDrawColor(ctx->ren, 0xFA, 0xFA, 0xFA, SDL_ALPHA_OPAQUE);
-
-		/* TODO: Replace with user defined macro. */
-		FontPrintToRenderer(ctx->font, this->name, &text_loc);
-
-		main_menu_box.y += MENU_BOX_SPACING;
-		bg_box.y += MENU_BOX_SPACING;
-	}
-#endif
 
 	ret = SDL_SetRenderTarget(ctx->ren, NULL);
 	if(ret != 0)
@@ -699,7 +762,7 @@ static void ui_recalculate_element_sizes(ui_ctx_s *ctx)
  * Initialise user interface (UI) context when given an SDL Renderer.
 */
 static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
-	ui_e *ui_elements)
+	ui_el_s *ui_elements)
 {
 	int w, h;
 	ui_ctx_s *ctx;
@@ -722,7 +785,7 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 	ctx->root = ui_elements;
 	ctx->current = ui_elements;
 	ctx->redraw = SDL_TRUE;
-	ctx->boxes_input = NULL;
+	ctx->hit_boxes = NULL;
 	ctx->dpi = dpi;
 	ctx->dpi_multiply = dpi / dpi_reference;
 
@@ -750,7 +813,7 @@ err:
 /**
  * Initialise user interface (UI) context when given an SDL Window.
 */
-ui_ctx_s *ui_init(SDL_Window *win, ui_e *ui_elements)
+ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *ui_elements)
 {
 	ui_ctx_s *ctx = NULL;
 	Uint32 format;
@@ -799,6 +862,6 @@ void ui_exit(ui_ctx_s *ctx)
 	font_exit(ctx->font);
 
 	SDL_DestroyTexture(ctx->tex);
-	SDL_free(ctx->boxes_input);
+	sb_free(ctx->hit_boxes);
 	SDL_free(ctx);
 }

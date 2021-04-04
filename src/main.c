@@ -7,6 +7,7 @@
  * as published by the Free Software Foundation.
  */
 
+#include <signal.h>
 #include <SDL.h>
 #include <ui.h>
 //#include <win_dirent.h>
@@ -19,7 +20,7 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 	{
 		if(e.type & UI_EVENT_MASK)
 		{
-			//ui_process_event(ui, &e);
+			ui_process_event(ui, &e);
 		}
 	}
 
@@ -38,9 +39,24 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 	return;
 }
 
-void onclick_function_debug(ui_e *element)
+void onclick_function_debug(ui_el_s *element)
 {
 	SDL_Log("Element %p clicked", element);
+}
+
+void onclick_quit(ui_el_s *element)
+{
+	//SDL_Event e;
+
+	(void) element;
+
+#if 0
+	e.type = SDL_QUIT;
+	//e.quit.timestamp = SDL_GetTicks();
+
+	SDL_PushEvent(&e);
+#endif
+	raise(SIGINT);
 }
 
 /**
@@ -51,10 +67,9 @@ int main(int argc, char *argv[])
 	SDL_Window *win = NULL;
 	SDL_Renderer *ren = NULL;
 	int ret;
-	static Sint32 quit = SDL_FALSE;
 	ui_ctx_s *ui;
 
-	ui_e ui_elements[] = {
+	ui_el_s ui_elements[] = {
 		{
 			.type = UI_ELEM_TYPE_TILE,
 			.tile = {
@@ -104,8 +119,8 @@ int main(int argc, char *argv[])
 				.bg = {.r = 0x9E, .g = 0x2A, .b = 0x2B, .a = SDL_ALPHA_OPAQUE},
 				.fg = { 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE },
 				.disabled = SDL_FALSE,
-				.onclick = ONCLICK_SET_SIGNED_VARIABLE,
-				.onclick_event = {.signed_variable = { &quit, SDL_TRUE }},
+				.onclick = ONCLICK_EXECUTE_FUNCTION,
+				.onclick_event = {.execute_function = onclick_quit },
 				.user = NULL
 			}
 		},
@@ -146,7 +161,7 @@ int main(int argc, char *argv[])
 	if(ui == NULL)
 		goto err;
 
-	while(SDL_QuitRequested() == SDL_FALSE && quit == 0)
+	while(SDL_QuitRequested() == SDL_FALSE)
 		loop(ren, ui);
 
 	ui_exit(ui);
