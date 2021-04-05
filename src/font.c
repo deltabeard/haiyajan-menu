@@ -163,7 +163,7 @@ void font_change_pt(font_ctx_s *ctx, float dpi)
 	char win[MAX_PATH];
 	unsigned sz;
 	char loc[2048];
-	const char *ui_header_loc = "SEGOEUIL.TTF";
+	const char *ui_header_loc = "SEGOEUISL.TTF";
 	const char *ui_regular_locs[MAX_FONTS] = {
 		"SEGOEUI.TTF",	/* Latin */
 		"ARIAL.TTF",	/* Latin (Fallback) */

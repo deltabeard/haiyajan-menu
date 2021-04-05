@@ -555,6 +555,24 @@ SDL_bool ui_should_redraw(ui_ctx_s *ctx)
 	return ctx->redraw;
 }
 
+static void ui_draw_selection_bg(ui_ctx_s *ctx, const SDL_Rect *r)
+{
+	SDL_Rect outline = { .x = r->x, .y = r->y, .h = r->h, .w = r->w };
+
+	SDL_SetRenderDrawColor(ctx->ren, 0xFF, 0xFF, 0xFF, 128);
+
+	for(unsigned i = 0; i < 5; i++)
+	{
+		SDL_RenderDrawRect(ctx->ren, &outline);
+		outline.x++;
+		outline.y++;
+		outline.h -= 2;
+		outline.w -= 2;
+	}
+
+	return;
+}
+
 /**
  * Draw tile element 'el' at point 'p'.
  *
@@ -576,22 +594,8 @@ static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 	/* Draw tile background. */
 	SDL_SetRenderDrawColor(ctx->ren,
 		el->tile.bg.r, el->tile.bg.g, el->tile.bg.b, el->tile.bg.a);
+	SDL_RenderFillRect(ctx->ren, &dim);
 
-	/* Make the tile larger if it is selected. */
-	if(ctx->current == el)
-	{
-		SDL_Rect dim_outline = dim;
-
-		dim_outline.h += 10;
-		dim_outline.w += 10;
-		dim_outline.x -= 5;
-		dim_outline.y -= 5;
-
-		SDL_RenderFillRect(ctx->ren, &dim_outline);
-	}
-	else
-		SDL_RenderFillRect(ctx->ren, &dim);
-	
 	/* Render icon on tile. */
 	icon_tex = font_render_icon(ctx->font, el->tile.icon, el->tile.fg);
 	SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
@@ -677,6 +681,12 @@ static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 		SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
 			"Hit box generated for tile at (%d, %d)(%d, %d)",
 			dim.x, dim.y, dim.h, dim.w);
+	}
+
+	/* Draw outline and translucent box if tile is selected. */
+	if(ctx->current == el)
+	{
+		ui_draw_selection_bg(ctx, &dim);
 	}
 
 	/* Increment coordinates to next element. */
