@@ -47,8 +47,6 @@ struct ui_ctx
 		ui_el_s *ui_element;
 	} *hit_boxes;
 
-	unsigned tile_sizes[3];
-
 	/* DPI that tex texture is rendered for. */
 	float dpi;
 	float dpi_multiply;
@@ -56,7 +54,6 @@ struct ui_ctx
 	/* Whether the front-end must call ui_render_frame(). */
 	SDL_bool redraw;
 };
-
 
 typedef enum
 {
@@ -66,15 +63,15 @@ typedef enum
 
 	/* Go to next item in menu.
 	 * Could be used when user presses DOWN. */
-	 MENU_INSTR_NEXT_ITEM,
+	MENU_INSTR_NEXT_ITEM,
 
-	 /* Go to parent menu if one exists.
-	  * Could be used when user presses BACKSPACE. */
-	  MENU_INSTR_PARENT_MENU,
+	/* Go to parent menu if one exists.
+	 * Could be used when user presses BACKSPACE. */
+	MENU_INSTR_PARENT_MENU,
 
-	  /* Execute item operation.
-	   * Could be used when user presses ENTER. */
-	   MENU_INSTR_EXEC_ITEM
+	/* Execute item operation.
+	 * Could be used when user presses ENTER. */
+	MENU_INSTR_EXEC_ITEM
 } menu_instruction_e;
 
 #if 0
@@ -582,8 +579,10 @@ static void ui_draw_selection_bg(ui_ctx_s *ctx, const SDL_Rect *r)
 */
 static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 {
-	/* Assuming elements are always tiles. */
-	const unsigned len = ctx->tile_sizes[el->tile.tile_size];
+	const float ref_tile_sizes[TILE_SIZE_MAX] = {
+		60.0f, 100.0f, 160.0f
+	};
+	const unsigned len = ref_tile_sizes[el->tile.tile_size] * ctx->dpi_multiply;
 	const SDL_Rect dim = {
 		.h = len, .w = len, .x = p->x, .y = p->y
 	};
@@ -757,17 +756,6 @@ out:
 	return ret;
 }
 
-static void ui_recalculate_element_sizes(ui_ctx_s *ctx)
-{
-	const float ref_tile_sizes[] = {
-		60.0f, 100.0f, 160.0f
-	};
-	ctx->tile_sizes[TILE_SIZE_SMALL] = ref_tile_sizes[TILE_SIZE_SMALL] * ctx->dpi_multiply;
-	ctx->tile_sizes[TILE_SIZE_MEDIUM] = ref_tile_sizes[TILE_SIZE_MEDIUM] * ctx->dpi_multiply;
-	ctx->tile_sizes[TILE_SIZE_LARGE] = ref_tile_sizes[TILE_SIZE_LARGE] * ctx->dpi_multiply;
-	return;
-}
-
 /**
  * Initialise user interface (UI) context when given an SDL Renderer.
 */
@@ -805,8 +793,6 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 		SDL_DestroyTexture(ctx->tex);
 		goto err;
 	}
-
-	ui_recalculate_element_sizes(ctx);
 
 	/* Draw the first frame. */
 	ctx->redraw = SDL_TRUE;

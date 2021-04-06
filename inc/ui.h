@@ -43,7 +43,9 @@ struct ui_tile {
 	enum {
 		TILE_SIZE_SMALL = 0,
 		TILE_SIZE_MEDIUM,
-		TILE_SIZE_LARGE
+		TILE_SIZE_LARGE,
+
+		TILE_SIZE_MAX
 	} tile_size;
 	const Uint16 icon;
 
