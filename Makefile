@@ -74,12 +74,23 @@ else ifeq ($(PLATFORM),SWITCH)
 	APP_ICON := $(DEVKITPRO)/libnx/default_icon.jpg
 
 else ifeq ($(PLATFORM),UNIX)
+	# Check that pkg-config is available
+	CHECK	:= $(shell which which)
+ifneq ($(.SHELLSTATUS),0)
+	err	:= $(error Unable to execute 'which' application)
+endif
+
+	CHECK	:= $(shell which pkg-config)
+ifneq ($(.SHELLSTATUS),0)
+	err	:= $(error Unable to locate 'pkg-config' application)
+endif
+
 	# Default compiler options for GCC and Clang
 	CC	:= cc
 	OBJEXT	:= o
 	RM	:= rm -f
-	CFLAGS	:= -Wall -Wextra -D_DEFAULT_SOURCE $(shell sdl2-config --cflags)
-	LDFLAGS	:= $(shell sdl2-config --libs)
+	CFLAGS	:= -Wall -Wextra -D_DEFAULT_SOURCE $(shell pkg-config sdl2 fribidi SDL2_ttf --cflags)
+	LDFLAGS	:= $(shell pkg-config sdl2 fribidi SDL2_ttf --libs)
 	EXE	:= $(NAME)
 
 else
