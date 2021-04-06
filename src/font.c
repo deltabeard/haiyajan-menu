@@ -8,6 +8,9 @@
  */
 
 #include <fonts/fabric-icons.h>
+#include <fonts/NotoSansDisplay-Regular-Latin.h>
+#include <fonts/NotoSansDisplay-SemiCondensedLight-Latin.h>
+
 #include <font.h>
 #include <fribidi.h>
 #include <SDL.h>
@@ -152,6 +155,13 @@ out:
 	return ret;
 }
 
+/**
+ * Initialise fonts given a DPI. This function always succeeds; a backup font is
+ * used if a font cannot be found on the running platform.
+ * 
+ * \param ctx Font context.
+ * \param dpi Requested DPI to scale fonts to.
+*/
 void font_change_pt(font_ctx_s *ctx, float dpi)
 {
 	float dpi_multiply = dpi / 96.0f;
@@ -159,43 +169,64 @@ void font_change_pt(font_ctx_s *ctx, float dpi)
 	int header_size_ref = 40.0f * dpi_multiply;
 	int regular_size_ref = 24.0f * dpi_multiply;
 
+	/* Load built-in header font. */
+	{
+		SDL_RWops *hdr_font_mem;
+		hdr_font_mem = SDL_RWFromConstMem(NotoSansDisplay_SemiCondensedLight_Latin_ttf,
+			NotoSansDisplay_SemiCondensedLight_Latin_ttf_len);
+		ctx->ui_header = TTF_OpenFontRW(hdr_font_mem, 1, header_size_ref);
+	}
+
+	/* Load built-in icon font. */
+	{
+		SDL_RWops *icon_font_mem;
+		icon_font_mem = SDL_RWFromConstMem(fabric_icons_ttf,
+			fabric_icons_ttf_len);
+		ctx->ui_icons = TTF_OpenFontRW(icon_font_mem, 1, icon_size_ref);
+	}
+
+	/* Load built-in regular font in-case platform dependant fonts cannot
+	 * be loaded below. */
+	{
+		SDL_RWops *font_mem;
+		font_mem = SDL_RWFromConstMem(NotoSansDisplay_Regular_Latin_ttf,
+			NotoSansDisplay_Regular_Latin_ttf_len);
+		ctx->ui_regular[0] = TTF_OpenFontRW(font_mem, 1, regular_size_ref);
+	}
+
 #if defined(__WIN32__)
 	char win[MAX_PATH];
 	unsigned sz;
 	char loc[2048];
-	const char *ui_header_loc = "SEGOEUISL.TTF";
-	const char *ui_regular_locs[MAX_FONTS] = {
-		"SEGOEUI.TTF",	/* Latin */
-		"ARIAL.TTF",	/* Latin (Fallback) */
-		"MSYH.TTC",	/* Chinese (Sim.) */
-		"MSGOTHIC.TTC",	/* Japanese */
-		"MALGUN.TTF",	/* Korean */
-		"NIRMALA.TTF",	/* Devanagari */
-		"MSJH.TTF",	/* Chinese (Trad.) */
-		"TAHOMA.TTF"	/* Historic */
-	};
-	SDL_RWops *icon_font_mem;
 
 	sz = GetWindowsDirectoryA(win, MAX_PATH);
 	if(sz == 0)
 		goto out;
 
-	sz = SDL_snprintf(loc, sizeof(loc), "%s\\FONTS\\%s", win,
-		ui_header_loc);
-	ctx->ui_header = TTF_OpenFont(loc, header_size_ref);
-
-	icon_font_mem = SDL_RWFromConstMem(fabric_icons_ttf,
-		fabric_icons_ttf_len);
-	ctx->ui_icons = TTF_OpenFontRW(icon_font_mem, 1, icon_size_ref);
-
 	/* Initialise fonts from the given locations. */
-	for(unsigned i = 0; i < SDL_arraysize(ctx->ui_regular); i++)
+	for(unsigned i = 0, s = 0; i < SDL_arraysize(ctx->ui_regular); i++)
 	{
+		const char *ui_regular_locs[MAX_FONTS] = {
+			"SEGOEUI.TTF",	/* Latin */
+			"ARIAL.TTF",	/* Latin (Fallback) */
+			"MSYH.TTC",	/* Chinese (Sim.) */
+			"MSGOTHIC.TTC",	/* Japanese */
+			"MALGUN.TTF",	/* Korean */
+			"NIRMALA.TTF",	/* Devanagari */
+			"MSJH.TTF",	/* Chinese (Trad.) */
+			"SEGUIEMJ.TTF"	/* Emoji */
+		};
+
 		sz = SDL_snprintf(loc, sizeof(loc), "%s\\FONTS\\%s", win,
 			ui_regular_locs[i]);
 
 		/* Errors are ignored. */
-		ctx->ui_regular[i] = TTF_OpenFont(loc, regular_size_ref);
+		ctx->ui_regular[s] = TTF_OpenFont(loc, regular_size_ref);
+		if(ctx->ui_regular[s] == NULL)
+			continue;
+
+		/* If a font if successfully opened, move to next pointer. */
+		s++;
 	}
 
 #elif defined(__LINUX__)
