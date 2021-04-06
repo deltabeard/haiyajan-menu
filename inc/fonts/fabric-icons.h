@@ -1,3 +1,20 @@
+/**
+ * Generated from fabric-icons.ttf
+ * Font generated from https://uifabricicons.azurewebsites.net/
+ *
+ * © 2017 Microsoft Corporation. All Rights Reserved.
+ * Microsoft supplied font. You may use this font to create, display, and print
+ * content as permitted by the license terms or terms of use, of the Microsoft
+ * product, service, or content in which this font was included. You may only:
+ * (i) embed this font in content as permitted by the embedding restrictions
+ * included in this font;
+ * (ii) temporarily download this font to a printer or other output device to
+ * help print content.
+ * Any other use is prohibited.
+ *
+ * The full license may be found at https://aka.ms/fabric-assets-license
+ */
+
 static const unsigned char fabric_icons_ttf[] = {
   0x00, 0x01, 0x00, 0x00, 0x00, 0x10, 0x01, 0x00, 0x00, 0x04, 0x00, 0x00,
   0x46, 0x46, 0x54, 0x4d, 0x74, 0xb0, 0xe0, 0x8c, 0x00, 0x00, 0x11, 0xd0,
@@ -383,4 +400,4 @@ static const unsigned char fabric_icons_ttf[] = {
   0x00, 0x00, 0x00, 0x00, 0xbf, 0xfd, 0xc1, 0x80, 0x00, 0x00, 0x00, 0x00,
   0xdc, 0x79, 0x6f, 0x0f
 };
-const unsigned int fabric_icons_ttf_len = 4588;
+static const unsigned int fabric_icons_ttf_len = 4588;

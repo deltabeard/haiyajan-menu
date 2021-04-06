@@ -7,7 +7,7 @@
  * the Free Software Foundation.
  */
 
-#include <fonts/fabric-icons.ttf.h>
+#include <fonts/fabric-icons.h>
 #include <font.h>
 #include <fribidi.h>
 #include <SDL.h>
