@@ -1,0 +1,13 @@
+extraction:
+  cpp:
+    prepare:
+      packages:
+      - "pkg-config"
+      - "gcc"
+      - "libfribidi-dev"
+      - "libsdl2-dev"
+      - "libsdl2-ttf-dev"
+      - "make"
+    index:
+      build_command: "make -j$(nproc) EXTRA_CFLAGS='-march=native -DT1HA0_DISABLED=1'\
+        \ BUILD=RELEASE"
