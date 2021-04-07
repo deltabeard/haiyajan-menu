@@ -133,7 +133,8 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 
 		instr = SDL_malloc(instrlen * sizeof(FriBidiChar));
 		outstr = SDL_malloc(instrlen * sizeof(FriBidiChar));
-		strinlen = fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8, str, instrlen, instr);
+		strinlen = fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8, str,
+				(FriBidiStrIndex)instrlen, instr);
 
 		fribidi_log2vis(instr, strinlen, &biditype, outstr, NULL, NULL, NULL);
 		SDL_free(instr);
@@ -182,9 +183,9 @@ static void font_close_ttf(font_ctx_s *ctx)
 */
 void font_change_pt(font_ctx_s *ctx, float dpi_multiply)
 {
-	int icon_size_ref = 72.0f * dpi_multiply;
-	int header_size_ref = 40.0f * dpi_multiply;
-	int regular_size_ref = 24.0f * dpi_multiply;
+	int icon_size_ref = (int)(72.0f * dpi_multiply);
+	int header_size_ref = (int)(40.0f * dpi_multiply);
+	int regular_size_ref = (int)(24.0f * dpi_multiply);
 
 	font_close_ttf(ctx);
 

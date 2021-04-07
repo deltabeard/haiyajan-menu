@@ -537,7 +537,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 			.y = e->button.y
 		};
 
-		int boxes_n = sb_count(ctx->hit_boxes);
+		Uint32 boxes_n = sb_count(ctx->hit_boxes);
 
 		if(e->button.button != SDL_BUTTON_LEFT)
 			return;
@@ -610,7 +610,7 @@ static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 	const float ref_tile_sizes[TILE_SIZE_MAX] = {
 		60.0f, 100.0f, 160.0f
 	};
-	const unsigned len = ref_tile_sizes[el->tile.tile_size] * ctx->dpi_multiply;
+	const unsigned len = (unsigned)(ref_tile_sizes[el->tile.tile_size] * ctx->dpi_multiply);
 	const SDL_Rect dim = {
 		.h = len, .w = len, .x = p->x, .y = p->y
 	};
