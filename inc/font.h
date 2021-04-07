@@ -33,5 +33,7 @@ SDL_Texture *font_render_icon(font_ctx_s *ctx, Uint16 icon, SDL_Colour fg);
 SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 	font_style_e s, font_quality_e q, SDL_Colour fg);
 
-font_ctx_s *font_init(SDL_Renderer *rend, float dpi);
+void font_change_pt(font_ctx_s *ctx, float dpi_multiply);
+
+font_ctx_s *font_init(SDL_Renderer *rend, float dpi_multiply);
 void font_exit(font_ctx_s *ctx);

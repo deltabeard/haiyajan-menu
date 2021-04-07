@@ -7,6 +7,9 @@
  * the Free Software Foundation.
  */
 
+#define DONT_HAVE_FRIBIDI_CONFIG_H
+#define FRIBIDI_NO_DEPRECATED
+
 #include <fonts/fabric-icons.h>
 #include <fonts/NotoSansDisplay-Regular-Latin.h>
 #include <fonts/NotoSansDisplay-SemiCondensedLight-Latin.h>
@@ -155,6 +158,21 @@ out:
 	return ret;
 }
 
+static void font_close_ttf(font_ctx_s *ctx)
+{
+	TTF_CloseFont(ctx->ui_header);
+	TTF_CloseFont(ctx->ui_icons);
+
+	ctx->ui_header = NULL;
+	ctx->ui_icons = NULL;
+
+	for(unsigned i = 0; i < MAX_FONTS; i++)
+	{
+		TTF_CloseFont(ctx->ui_regular[i]);
+		ctx->ui_regular[i] = NULL;
+	}
+}
+
 /**
  * Initialise fonts given a DPI. This function always succeeds; a backup font is
  * used if a font cannot be found on the running platform.
@@ -162,12 +180,13 @@ out:
  * \param ctx Font context.
  * \param dpi Requested DPI to scale fonts to.
 */
-void font_change_pt(font_ctx_s *ctx, float dpi)
+void font_change_pt(font_ctx_s *ctx, float dpi_multiply)
 {
-	float dpi_multiply = dpi / 96.0f;
 	int icon_size_ref = 72.0f * dpi_multiply;
 	int header_size_ref = 40.0f * dpi_multiply;
 	int regular_size_ref = 24.0f * dpi_multiply;
+
+	font_close_ttf(ctx);
 
 	/* Load built-in header font. */
 	{
@@ -194,7 +213,7 @@ void font_change_pt(font_ctx_s *ctx, float dpi)
 		ctx->ui_regular[0] = TTF_OpenFontRW(font_mem, 1, regular_size_ref);
 	}
 
-#if defined(__WIN32__)
+#if defined(__WINDOWS__)
 	char win[MAX_PATH];
 	unsigned sz;
 	char loc[2048];
@@ -239,12 +258,12 @@ out:
 	return;
 }
 
-font_ctx_s *font_init(SDL_Renderer *rend, float dpi)
+font_ctx_s *font_init(SDL_Renderer *rend, float dpi_multiply)
 {
 	font_ctx_s *ctx = NULL;
 
 	SDL_assert(rend != NULL);
-	SDL_assert(dpi > 0.0f);
+	SDL_assert(dpi_multiply > 0.0f);
 
 	if(!TTF_WasInit() && TTF_Init() == -1)
 		goto out;
@@ -253,7 +272,7 @@ font_ctx_s *font_init(SDL_Renderer *rend, float dpi)
 	if(ctx == NULL)
 		goto out;
 
-	font_change_pt(ctx, dpi);
+	font_change_pt(ctx, dpi_multiply);
 	ctx->rend = rend;
 
 out:
@@ -262,10 +281,6 @@ out:
 
 void font_exit(font_ctx_s *ctx)
 {
-	TTF_CloseFont(ctx->ui_header);
-	TTF_CloseFont(ctx->ui_icons);
-	for(unsigned i = 0; i < MAX_FONTS; i++)
-		TTF_CloseFont(ctx->ui_regular[i]);
-
+	font_close_ttf(ctx);
 	SDL_free(ctx);
 }

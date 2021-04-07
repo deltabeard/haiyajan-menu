@@ -7,9 +7,6 @@
  * the Free Software Foundation.
  */
 
-#define DONT_HAVE_FRIBIDI_CONFIG_H
-#define FRIBIDI_NO_DEPRECATED
-
 #include <font.h>
 #include <SDL.h>
 #include <stretchy_buffer.h>
@@ -424,13 +421,9 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 			break;
 		}
 	}
-	else if(e->type == SDL_WINDOWEVENT && e->window.event == SDL_WINDOWEVENT_RESIZED)
+	else if(e->type == SDL_WINDOWEVENT)
 	{
-		SDL_Texture *new_tex;
 		SDL_Window *win;
-		SDL_Renderer *ren;
-		Uint32 texture_format;
-		Sint32 new_w, new_h;
 
 		win = SDL_GetWindowFromID(e->window.windowID);
 		if(win == NULL)
@@ -441,35 +434,65 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 			return;
 		}
 
-		ren = SDL_GetRenderer(win);
-		if(ren == NULL)
+		switch(e->window.event)
 		{
-			SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
-				"Unable to obtain renderer from window: %s",
-				SDL_GetError());
-			return;
+			case SDL_WINDOWEVENT_MOVED:
+			{
+				int display_id = SDL_GetWindowDisplayIndex(win);
+				SDL_GetDisplayDPI(display_id, &ctx->dpi, NULL, NULL);
+				ctx->dpi_multiply = ctx->dpi / dpi_reference;
+
+				font_change_pt(ctx->font, ctx->dpi_multiply);
+
+				SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
+					"Successfully resized interface elements by x%f",
+					ctx->dpi_multiply);
+			}
+			break;
+
+			case SDL_WINDOWEVENT_RESIZED:
+			{
+				SDL_Renderer *ren;
+				SDL_Texture *new_tex;
+				Uint32 texture_format;
+				Sint32 new_w, new_h;
+
+				ren = SDL_GetRenderer(win);
+				if(ren == NULL)
+				{
+					SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
+						"Unable to obtain renderer from window: %s",
+						SDL_GetError());
+					return;
+				}
+
+				texture_format = SDL_GetWindowPixelFormat(win);
+				new_w = e->window.data1;
+				new_h = e->window.data2;
+
+				new_tex = SDL_CreateTexture(ren, texture_format,
+					SDL_TEXTUREACCESS_TARGET, new_w, new_h);
+				if(new_tex == NULL)
+				{
+					SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+						"Unable to create new texture: %s",
+						SDL_GetError());
+					return;
+				}
+
+				SDL_DestroyTexture(ctx->tex);
+				ctx->tex = new_tex;
+
+				SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
+					"Successfully resized texture size to %dW %dH",
+					new_w, new_h);
+			}
+
+			break;
+
+			default:
+				return;
 		}
-
-		texture_format = SDL_GetWindowPixelFormat(win);
-		new_w = e->window.data1;
-		new_h = e->window.data2;
-
-		new_tex = SDL_CreateTexture(ren, texture_format,
-			SDL_TEXTUREACCESS_TARGET, new_w, new_h);
-		if(new_tex == NULL)
-		{
-			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
-				"Unable to create new texture: %s",
-				SDL_GetError());
-			return;
-		}
-
-		SDL_DestroyTexture(ctx->tex);
-		ctx->tex = new_tex;
-
-		SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
-			"Successfully resized texture size to %dW %dH",
-			new_w, new_h);
 
 		ctx->redraw = SDL_TRUE;
 	}
@@ -787,7 +810,7 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 	ctx->dpi = dpi;
 	ctx->dpi_multiply = dpi / dpi_reference;
 
-	ctx->font = font_init(rend, dpi);
+	ctx->font = font_init(rend, ctx->dpi_multiply);
 	if(ctx->font == NULL)
 	{
 		SDL_DestroyTexture(ctx->tex);
