@@ -44,21 +44,6 @@ void onclick_function_debug(ui_el_s *element)
 	SDL_Log("Element %p clicked", element);
 }
 
-void onclick_quit(ui_el_s *element)
-{
-	//SDL_Event e;
-
-	(void) element;
-
-#if 0
-	e.type = SDL_QUIT;
-	//e.quit.timestamp = SDL_GetTicks();
-
-	SDL_PushEvent(&e);
-#endif
-	raise(SIGINT);
-}
-
 /**
  * Process input arguments and initialise libraries.
 */
@@ -68,6 +53,7 @@ int main(int argc, char *argv[])
 	SDL_Renderer *ren = NULL;
 	int ret;
 	ui_ctx_s *ui;
+	Uint32 quit = 0;
 
 	ui_el_s ui_elements[] = {
 		{
@@ -119,8 +105,8 @@ int main(int argc, char *argv[])
 				.bg = {.r = 0x9E, .g = 0x2A, .b = 0x2B, .a = SDL_ALPHA_OPAQUE},
 				.fg = { 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE },
 				.disabled = SDL_FALSE,
-				.onclick = ONCLICK_EXECUTE_FUNCTION,
-				.onclick_event = {.execute_function = onclick_quit },
+				.onclick = ONCLICK_SET_UNSIGNED_VARIABLE,
+				.onclick_event = {.unsigned_variable = { .variable = &quit, .val = 1 }},
 				.user = NULL
 			}
 		},
@@ -161,7 +147,7 @@ int main(int argc, char *argv[])
 	if(ui == NULL)
 		goto err;
 
-	while(SDL_QuitRequested() == SDL_FALSE)
+	while(SDL_QuitRequested() == SDL_FALSE && quit == 0)
 		loop(ren, ui);
 
 	ui_exit(ui);
