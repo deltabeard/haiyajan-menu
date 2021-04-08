@@ -439,9 +439,14 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 			case SDL_WINDOWEVENT_MOVED:
 			{
 				int display_id = SDL_GetWindowDisplayIndex(win);
-				SDL_GetDisplayDPI(display_id, &ctx->dpi, NULL, NULL);
-				ctx->dpi_multiply = ctx->dpi / dpi_reference;
+				float new_dpi;
 
+				SDL_GetDisplayDPI(display_id, &new_dpi, NULL, NULL);
+
+				if(new_dpi == ctx->dpi)
+					break;
+
+				ctx->dpi_multiply = ctx->dpi / dpi_reference;
 				font_change_pt(ctx->font, ctx->dpi_multiply);
 
 				SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
