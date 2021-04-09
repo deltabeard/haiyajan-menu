@@ -44,11 +44,6 @@ struct ui_tile {
 	} label_placement;
 
 	enum {
-		TILE_SHAPE_SQUARE = 0,
-		TILE_SHAPE_CIRCLE
-	} tile_shape;
-
-	enum {
 		TILE_SIZE_SMALL = 0,
 		TILE_SIZE_MEDIUM,
 		TILE_SIZE_LARGE,
