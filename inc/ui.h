@@ -26,8 +26,14 @@ typedef struct ui_ctx ui_ctx_s;
 typedef struct ui_element ui_el_s;
 struct ui_element;
 
+/**
+ * A tile element.
+ */
 struct ui_tile {
+	/* Label ascociated with the element. */
 	const char *label;
+
+	/* Placement of label on the tile. This may affect the font colour. */
 	enum {
 		LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT = 0,
 		LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE,
@@ -36,10 +42,7 @@ struct ui_tile {
 		LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE,
 		LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM
 	} label_placement;
-	enum {
-		TILE_SHAPE_SQUARE = 0,
-		TILE_SHAPE_CIRCLE
-	} tile_shape;
+
 	enum {
 		TILE_SIZE_SMALL = 0,
 		TILE_SIZE_MEDIUM,
@@ -47,8 +50,11 @@ struct ui_tile {
 
 		TILE_SIZE_MAX
 	} tile_size;
+
 	const Uint16 icon;
 
+	/* Help text to display when the element is highlighted.
+	 * May be set to NULL if no help is available. */
 	const char *help;
 
 	/* Background colour of tile. */
@@ -101,7 +107,7 @@ struct ui_element {
 	} type;
 	union {
 		struct ui_tile tile;
-	};
+	} elem;
 };
 
 /**
@@ -128,7 +134,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e);
  *		ui_exit is called.
  * \return	UI context. NULL on error.
  */
-ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *ui_elements);
+ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *restrict ui_elements);
 
 SDL_bool ui_should_redraw(ui_ctx_s *ctx);
 

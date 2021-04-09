@@ -354,22 +354,22 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 
 	case MENU_INSTR_EXEC_ITEM:
 	{
-		switch(ctx->current->tile.onclick)
+		switch(ctx->current->elem.tile.onclick)
 		{
 		case ONCLICK_GOTO_ELEMENT:
-			ctx->current = ctx->current->tile.onclick_event.goto_element.element;
+			ctx->current = ctx->current->elem.tile.onclick_event.goto_element.element;
 			break;
 
 		case ONCLICK_EXECUTE_FUNCTION:
-			ctx->current->tile.onclick_event.execute_function.function(ctx->current);
+			ctx->current->elem.tile.onclick_event.execute_function.function(ctx->current);
 			break;
 
 		case ONCLICK_SET_SIGNED_VARIABLE:
-			*ctx->current->tile.onclick_event.signed_variable.variable = ctx->current->tile.onclick_event.signed_variable.val;
+			*ctx->current->elem.tile.onclick_event.signed_variable.variable = ctx->current->elem.tile.onclick_event.signed_variable.val;
 			break;
 
 		case ONCLICK_SET_UNSIGNED_VARIABLE:
-			*ctx->current->tile.onclick_event.unsigned_variable.variable = ctx->current->tile.onclick_event.unsigned_variable.val;
+			*ctx->current->elem.tile.onclick_event.unsigned_variable.variable = ctx->current->elem.tile.onclick_event.unsigned_variable.val;
 			break;
 		}
 
@@ -610,7 +610,7 @@ static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 	const float ref_tile_sizes[TILE_SIZE_MAX] = {
 		60.0f, 100.0f, 160.0f
 	};
-	const unsigned len = (unsigned)(ref_tile_sizes[el->tile.tile_size] * ctx->dpi_multiply);
+	const unsigned len = (unsigned)(ref_tile_sizes[el->elem.tile.tile_size] * ctx->dpi_multiply);
 	const SDL_Rect dim = {
 		.h = len, .w = len, .x = p->x, .y = p->y
 	};
@@ -620,27 +620,27 @@ static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 
 	/* Draw tile background. */
 	SDL_SetRenderDrawColor(ctx->ren,
-		el->tile.bg.r, el->tile.bg.g, el->tile.bg.b, el->tile.bg.a);
+		el->elem.tile.bg.r, el->elem.tile.bg.g, el->elem.tile.bg.b, el->elem.tile.bg.a);
 	SDL_RenderFillRect(ctx->ren, &dim);
 
 	/* Render icon on tile. */
-	icon_tex = font_render_icon(ctx->font, el->tile.icon, el->tile.fg);
+	icon_tex = font_render_icon(ctx->font, el->elem.tile.icon, el->elem.tile.fg);
 	SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
 	icon_dim.x = p->x + (len / 2) - (icon_dim.w / 2);
 	icon_dim.y = p->y + (len / 2) - (icon_dim.h / 2);
 
 	SDL_SetTextureColorMod(icon_tex,
-		el->tile.fg.r, el->tile.fg.g, el->tile.fg.b);
+		el->elem.tile.fg.r, el->elem.tile.fg.g, el->elem.tile.fg.b);
 	SDL_RenderCopy(ctx->ren, icon_tex, NULL, &icon_dim);
 	SDL_DestroyTexture(icon_tex);
 
 	/* Render tile label. */
-	text_tex = font_render_text(ctx->font, el->tile.label,
+	text_tex = font_render_text(ctx->font, el->elem.tile.label,
 		FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
 		text_colour_light);
 	SDL_QueryTexture(text_tex, NULL, NULL, &text_dim.w, &text_dim.h);
 
-	switch(el->tile.label_placement)
+	switch(el->elem.tile.label_placement)
 	{
 	case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
 		text_dim.x = p->x + tile_padding.x;
@@ -674,13 +674,13 @@ static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 	}
 
 	/* Colour of elements within tile. */
-	switch(el->tile.label_placement)
+	switch(el->elem.tile.label_placement)
 	{
 	case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
 	case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
 	case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
 		SDL_SetTextureColorMod(text_tex,
-			el->tile.fg.r, el->tile.fg.g, el->tile.fg.b);
+			el->elem.tile.fg.r, el->elem.tile.fg.g, el->elem.tile.fg.b);
 
 		break;
 
@@ -789,7 +789,7 @@ out:
  * Initialise user interface (UI) context when given an SDL Renderer.
 */
 static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
-	ui_el_s *ui_elements)
+		ui_el_s *restrict ui_elements)
 {
 	int w, h;
 	ui_ctx_s *ctx;
@@ -838,7 +838,7 @@ err:
 /**
  * Initialise user interface (UI) context when given an SDL Window.
 */
-ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *ui_elements)
+ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *restrict ui_elements)
 {
 	ui_ctx_s *ctx = NULL;
 	Uint32 format;
