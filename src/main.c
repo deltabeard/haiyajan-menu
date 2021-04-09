@@ -16,8 +16,6 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 {
 	SDL_Event e;
 
-	#ifdef __AVX2__
-	#endif
 	while(SDL_PollEvent(&e))
 	{
 		if(e.type & UI_EVENT_MASK)
@@ -36,7 +34,6 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 		const int frame_delay = 5;
 		SDL_Delay(frame_delay);
 	}
-
 
 	return;
 }
@@ -60,10 +57,9 @@ int main(int argc, char *argv[])
 	ui_el_s ui_elements[] = {
 		{
 			.type = UI_ELEM_TYPE_TILE,
-			.tile = {
+			.elem.tile = {
 				.label = "Continue",
 				.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
-				.tile_shape = TILE_SHAPE_SQUARE,
 				.tile_size = TILE_SIZE_LARGE,
 				.icon = 0xE768,
 				.help = NULL,
@@ -78,10 +74,9 @@ int main(int argc, char *argv[])
 		},
 		{
 			.type = UI_ELEM_TYPE_TILE,
-			.tile = {
+			.elem.tile = {
 				.label = "Open",
 				.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
-				.tile_shape = TILE_SHAPE_SQUARE,
 				.tile_size = TILE_SIZE_LARGE,
 				.icon = 0xE8B7,
 				.help = NULL,
@@ -96,10 +91,9 @@ int main(int argc, char *argv[])
 		},
 		{
 			.type = UI_ELEM_TYPE_TILE,
-			.tile = {
+			.elem.tile = {
 				.label = "Exit",
 				.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
-				.tile_shape = TILE_SHAPE_SQUARE,
 				.tile_size = TILE_SIZE_LARGE,
 				.icon = 0xE7E8,
 				.help = NULL,
