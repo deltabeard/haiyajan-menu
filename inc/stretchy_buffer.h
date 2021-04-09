@@ -66,7 +66,7 @@
 //         sb_free(TYPE *a)           free the array
 //         sb_count(TYPE *a)          the number of elements in the array
 //         sb_push(TYPE *a, TYPE v)   adds v on the end of the array, a la push_back
-//         sb_add(TYPE *a, int n)     adds n uninitialized elements at end of array & returns pointer to first added
+//         sb_add(TYPE *a, unsigned n)     adds n uninitialized elements at end of array & returns pointer to first added
 //         sb_last(TYPE *a)           returns an lvalue of the last item in the array
 //         a[n]                       access the nth (counting from 0) element of the array
 //
@@ -189,7 +189,7 @@
 #define stb_sb_add(a,n)        (stb__sbmaybegrow(a,n), stb__sbn(a)+=(n), &(a)[stb__sbn(a)-(n)])
 #define stb_sb_last(a)         ((a)[stb__sbn(a)-1])
 
-#define stb__sbraw(a) ((int *) (void *) (a) - 2)
+#define stb__sbraw(a) ((unsigned *) (void *) (a) - 2)
 #define stb__sbm(a)   stb__sbraw(a)[0]
 #define stb__sbn(a)   stb__sbraw(a)[1]
 
@@ -199,12 +199,12 @@
 
 #include <SDL.h>
 
-static void * stb__sbgrowf(void *arr, int increment, int itemsize)
+static void * stb__sbgrowf(void *arr, unsigned increment, unsigned itemsize)
 {
-   int dbl_cur = arr ? 2*stb__sbm(arr) : 0;
-   int min_needed = stb_sb_count(arr) + increment;
-   int m = dbl_cur > min_needed ? dbl_cur : min_needed;
-   int *p = (int *) SDL_realloc(arr ? stb__sbraw(arr) : 0, itemsize * m + sizeof(int)*2);
+   unsigned dbl_cur = arr ? 2*stb__sbm(arr) : 0;
+   unsigned min_needed = stb_sb_count(arr) + increment;
+   unsigned m = dbl_cur > min_needed ? dbl_cur : min_needed;
+   unsigned *p = (unsigned *) SDL_realloc(arr ? stb__sbraw(arr) : 0, (size_t)itemsize * (size_t)m + sizeof(unsigned)*2);
    if (p) {
       if (!arr)
          p[1] = 0;
@@ -214,7 +214,7 @@ static void * stb__sbgrowf(void *arr, int increment, int itemsize)
       #ifdef STRETCHY_BUFFER_OUT_OF_MEMORY
       STRETCHY_BUFFER_OUT_OF_MEMORY ;
       #endif
-      return (void *) (2*sizeof(int)); // try to force a NULL pointer exception later
+      return (void *) (2*sizeof(unsigned)); // try to force a NULL pointer exception later
    }
 }
 #endif // STB_STRETCHY_BUFFER_H_INCLUDED
