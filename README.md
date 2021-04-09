@@ -1,4 +1,4 @@
-<img align=right alt="Language grade: C/C++" src="https://img.shields.io/lgtm/grade/cpp/g/deltabeard/haiyajan-menu.svg?logo=lgtm&logoWidth=18"/>
+<a href="https://lgtm.com/projects/g/deltabeard/haiyajan-menu/context:cpp"><img align=right alt="Language grade: C/C++" src="https://img.shields.io/lgtm/grade/cpp/g/deltabeard/haiyajan-menu.svg?logo=lgtm&logoWidth=18"/></a>
 
 # Haiyajan UI
 
