@@ -7,10 +7,23 @@
  * the Free Software Foundation.
  */
 
+#define XXH_INLINE_ALL
+
 #include <font.h>
 #include <SDL.h>
+#include <stdint.h>
 #include <stretchy_buffer.h>
 #include <ui.h>
+#include <xxhash.h>
+
+/* Use 64 bit hashing if the target platform is also 64 bit. */
+#if UINTPTR_MAX == 0xffffFFFFffffFFFFUL
+typedef XXH64_hash_t XXHNATIVE_hash_t;
+# define XXHNATIVE XXH64
+#else
+typedef XXH32_hash_t XXHNATIVE_hash_t;
+# define XXHNATIVE XXH32
+#endif
 
 static const float dpi_reference = 96.0f;
 static const SDL_Colour text_colour_light = {
@@ -43,6 +56,12 @@ struct ui_ctx
 		/* UI element associated with hit-box. */
 		ui_el_s *ui_element;
 	} *hit_boxes;
+
+	struct tex_cache
+	{
+		XXHNATIVE_hash_t hash;
+		SDL_Texture *tex;
+	} *tex_cache;
 
 	/* DPI that tex texture is rendered for. */
 	float dpi;
@@ -616,7 +635,7 @@ static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 	};
 	SDL_Texture *text_tex, *icon_tex;
 	SDL_Rect text_dim, icon_dim;
-	const SDL_Point tile_padding = { .x = 8, .y = 16 };
+	const SDL_Point tile_padding = { .x = 16, .y = 16 };
 
 	/* Draw tile background. */
 	SDL_SetRenderDrawColor(ctx->ren,
@@ -724,8 +743,7 @@ int ui_render_frame(ui_ctx_s *ctx)
 {
 	int ret = 0;
 	SDL_Point vert;
-	#if __AVX2__
-	#endif
+
 	SDL_assert(ctx != NULL);
 	SDL_assert(ctx->tex != NULL);
 
