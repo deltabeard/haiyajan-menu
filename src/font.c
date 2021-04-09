@@ -18,7 +18,6 @@
 #include <fribidi.h>
 #include <SDL.h>
 #include <SDL_ttf.h>
-#include <t1ha.h>
 
 #if defined(__WIN32__)
 # define WINDOWS_LEAN_AND_MEAN

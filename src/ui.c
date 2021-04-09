@@ -724,7 +724,8 @@ int ui_render_frame(ui_ctx_s *ctx)
 {
 	int ret = 0;
 	SDL_Point vert;
-
+	#if __AVX2__
+	#endif
 	SDL_assert(ctx != NULL);
 	SDL_assert(ctx->tex != NULL);
 

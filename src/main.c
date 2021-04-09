@@ -16,6 +16,8 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 {
 	SDL_Event e;
 
+	#ifdef __AVX2__
+	#endif
 	while(SDL_PollEvent(&e))
 	{
 		if(e.type & UI_EVENT_MASK)
