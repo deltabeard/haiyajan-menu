@@ -165,11 +165,7 @@ endif
 # Add UI example application to target.
 TARGET += $(EXE)
 
-# Set t1ha flages
-T1HA_CFLAGS := -DT1HA0_RUNTIME_SELECT=1 -DT1HA1_DISABLED=1 \
-	-DT1HA2_DISABLED=1
-
-override CFLAGS += -Iinc -DBUILD=$(BUILD) $(T1HA_CFLAGS) $(EXTRA_CFLAGS)
+override CFLAGS += -Iinc -DBUILD=$(BUILD) $(EXTRA_CFLAGS)
 override LDFLAGS += $(EXTRA_LDFLAGS)
 
 all: $(TARGET)
