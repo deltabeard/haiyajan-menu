@@ -18,7 +18,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
-      run: sudo apt-get install make libsdl2-dev libsdl2-ttf-dev libfribidi-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install make libsdl2-dev libsdl2-ttf-dev libfribidi-dev
     - name: make
       run: make
     - name: SonarCloud Scan
