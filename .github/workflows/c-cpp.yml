@@ -23,8 +23,3 @@ jobs:
         sudo apt-get install make libsdl2-dev libsdl2-ttf-dev libfribidi-dev
     - name: make
       run: make
-    - name: SonarCloud Scan
-      uses: SonarSource/sonarcloud-github-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
