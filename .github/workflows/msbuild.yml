@@ -23,7 +23,7 @@ jobs:
 
     - name: Extract build dependencies
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: .\ext\MSVC\MSVC_DEPS.exe -o"ext" -y
+      run: ext\MSVC\MSVC_DEPS.exe -o"ext" -y
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
