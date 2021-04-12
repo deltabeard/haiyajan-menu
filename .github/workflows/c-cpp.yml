@@ -20,6 +20,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install make libsdl2-dev libsdl2-ttf-dev libfribidi-dev
+        sudo apt-get upgrade
+        sudo apt-get install build-essential
+        sudo apt-get install libsdl2-dev libsdl2-ttf-dev libfribidi-dev
     - name: make
       run: make BUILD=RELDEBUG EXTRA_CFLAGS="-fanalyzer -march=haswell -fopt-info-missed"
