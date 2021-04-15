@@ -68,18 +68,18 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
  * Internal font sizes are referenced to a DPI of 96.
  *
  * \param ctx		Font context.
- * \param dpi_multiply	DPI scale. Example: 1.5f for 150% scale.
 */
-void font_change_pt(font_ctx_s *ctx, float dpi_multiply);
+void font_change_pt(font_ctx_s *restrict ctx,
+	int icon_pt, int header_pt, int regular_pt);
 
 /**
  * Initialise a new font context.
  * 
  * \param rend		SDL Renderer
- * \param dpi_multiply	Initial DPI scale.
  * \return		Font context or NULL on error (check SDL_GetError()).
 */
-font_ctx_s *font_init(SDL_Renderer *rend, float dpi_multiply);
+font_ctx_s *font_init(SDL_Renderer *rend,
+	int icon_pt, int header_pt, int regular_pt);
 
 /**
  * Frees a font context.

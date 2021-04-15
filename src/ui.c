@@ -14,15 +14,18 @@
 #include <stdint.h>
 #include <stretchy_buffer.h>
 #include <ui.h>
+
+#if 0
 #include <xxhash.h>
 
 /* Use 64 bit hashing if the target platform is also 64 bit. */
-#if UINTPTR_MAX == 0xffffFFFFffffFFFFUL
+#if UINTPTR_MAX == UINT64_MAX
 typedef XXH64_hash_t XXHNATIVE_hash_t;
 # define XXHNATIVE XXH64
 #else
 typedef XXH32_hash_t XXHNATIVE_hash_t;
 # define XXHNATIVE XXH32
+#endif
 #endif
 
 static const float dpi_reference = 96.0f;
@@ -57,11 +60,13 @@ struct ui_ctx
 		ui_el_s *ui_element;
 	} *hit_boxes;
 
+#if 0
 	struct tex_cache
 	{
 		XXHNATIVE_hash_t hash;
 		SDL_Texture *tex;
 	} *tex_cache;
+#endif
 
 	/* DPI that tex texture is rendered for. */
 	float dpi;
@@ -400,6 +405,43 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 	return;
 }
 
+/**
+ * Calculates font sizes based upon the DPI and size of the rendering target.
+ * 
+ * \param dpi 
+ * \param window_height 
+ * \param icon_pt 
+ * \param header_pt 
+ * \param regular_pt 
+*/
+static void ui_calculate_font_sizes(float dpi, Sint32 window_height,
+		int *restrict icon_pt, int *restrict header_pt,
+		int *restrict regular_pt)
+{
+	const float icon_size_reference = 72.0f;
+	const float header_size_ref = 40.0f;
+	const float regular_size_ref = 24.0f;
+	float dpi_multiply;
+
+	/* Pedantic asserts for debug builds only. */
+	SDL_assert(dpi > 0.0f);
+	SDL_assert(window_height >= UI_MIN_WINDOW_HEIGHT);
+	SDL_assert(icon_pt != NULL);
+	SDL_assert(header_pt != NULL);
+	SDL_assert(regular_pt != NULL);
+
+	/* Make sure we don't abuse "restrict" keyword. */
+	SDL_assert(icon_pt != header_pt);
+	SDL_assert(header_pt != regular_pt);
+	SDL_assert(icon_pt != regular_pt);
+
+	dpi_multiply = dpi/dpi_reference;
+
+	*icon_pt = (int)(icon_size_reference * dpi_multiply);
+	*header_pt = (int)(header_size_ref * dpi_multiply);
+	*regular_pt = (int)(regular_size_ref * dpi_multiply);
+}
+
 void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 {
 	/* Recalculate begin_actual coordinates on resolution and DPI change. */
@@ -459,14 +501,20 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 			{
 				int display_id = SDL_GetWindowDisplayIndex(win);
 				float new_dpi;
+				int h;
+				int icon_pt, header_pt, regular_pt;
 
-				SDL_GetDisplayDPI(display_id, &new_dpi, NULL, NULL);
+				if(SDL_GetDisplayDPI(display_id, &new_dpi, NULL, NULL) < 0)
+					new_dpi = 96.0f;
 
 				if(new_dpi == ctx->dpi)
 					break;
 
 				ctx->dpi_multiply = ctx->dpi / dpi_reference;
-				font_change_pt(ctx->font, ctx->dpi_multiply);
+
+				SDL_GetWindowSize(win, NULL, &h);
+				ui_calculate_font_sizes(ctx->dpi, h, &icon_pt, &header_pt, &regular_pt);
+				font_change_pt(ctx->font, icon_pt, header_pt, regular_pt);
 
 				SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
 					"Successfully resized interface elements by x%f",
@@ -480,6 +528,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 				SDL_Texture *new_tex;
 				Uint32 texture_format;
 				Sint32 new_w, new_h;
+				int icon_pt, header_pt, regular_pt;
 
 				ren = SDL_GetRenderer(win);
 				if(ren == NULL)
@@ -506,6 +555,10 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 
 				SDL_DestroyTexture(ctx->tex);
 				ctx->tex = new_tex;
+
+				ui_calculate_font_sizes(ctx->dpi, new_h,
+					&icon_pt, &header_pt, &regular_pt);
+				font_change_pt(ctx->font, icon_pt, header_pt, regular_pt);
 
 				SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
 					"Successfully resized texture size to %dW %dH",
@@ -811,6 +864,7 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 {
 	int w, h;
 	ui_ctx_s *ctx;
+	int icon_pt, header_pt, regular_pt;
 
 	SDL_assert_paranoid(rend != NULL);
 
@@ -834,7 +888,8 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 	ctx->dpi = dpi;
 	ctx->dpi_multiply = dpi / dpi_reference;
 
-	ctx->font = font_init(rend, ctx->dpi_multiply);
+	ui_calculate_font_sizes(dpi, h, &icon_pt, &header_pt, &regular_pt);
+	ctx->font = font_init(rend, icon_pt, header_pt, regular_pt);
 	if(ctx->font == NULL)
 	{
 		SDL_DestroyTexture(ctx->tex);

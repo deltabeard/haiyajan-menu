@@ -162,7 +162,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
       <LanguageStandard>Default</LanguageStandard>
       <PreprocessorDefinitions>T1HA0_RUNTIME_SELECT;T1HA1_DISABLED;T1HA2_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level4</WarningLevel>
@@ -193,7 +193,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
       <LanguageStandard>Default</LanguageStandard>
       <PreprocessorDefinitions>T1HA0_RUNTIME_SELECT;T1HA1_DISABLED;T1HA2_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>

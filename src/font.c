@@ -180,12 +180,9 @@ static void font_close_ttf(font_ctx_s *ctx)
  * \param ctx Font context.
  * \param dpi Requested DPI to scale fonts to.
 */
-void font_change_pt(font_ctx_s *ctx, float dpi_multiply)
+void font_change_pt(font_ctx_s *restrict ctx,
+		int icon_pt, int header_pt, int regular_pt)
 {
-	int icon_size_ref = (int)(72.0f * dpi_multiply);
-	int header_size_ref = (int)(40.0f * dpi_multiply);
-	int regular_size_ref = (int)(24.0f * dpi_multiply);
-
 	font_close_ttf(ctx);
 
 	/* Load built-in header font. */
@@ -193,7 +190,7 @@ void font_change_pt(font_ctx_s *ctx, float dpi_multiply)
 		SDL_RWops *hdr_font_mem;
 		hdr_font_mem = SDL_RWFromConstMem(NotoSansDisplay_SemiCondensedLight_Latin_ttf,
 			NotoSansDisplay_SemiCondensedLight_Latin_ttf_len);
-		ctx->ui_header = TTF_OpenFontRW(hdr_font_mem, 1, header_size_ref);
+		ctx->ui_header = TTF_OpenFontRW(hdr_font_mem, 1, header_pt);
 	}
 
 	/* Load built-in icon font. */
@@ -201,7 +198,7 @@ void font_change_pt(font_ctx_s *ctx, float dpi_multiply)
 		SDL_RWops *icon_font_mem;
 		icon_font_mem = SDL_RWFromConstMem(fabric_icons_ttf,
 			fabric_icons_ttf_len);
-		ctx->ui_icons = TTF_OpenFontRW(icon_font_mem, 1, icon_size_ref);
+		ctx->ui_icons = TTF_OpenFontRW(icon_font_mem, 1, icon_pt);
 	}
 
 	/* Load built-in regular font in-case platform dependant fonts cannot
@@ -210,7 +207,7 @@ void font_change_pt(font_ctx_s *ctx, float dpi_multiply)
 		SDL_RWops *font_mem;
 		font_mem = SDL_RWFromConstMem(NotoSansDisplay_Regular_Latin_ttf,
 			NotoSansDisplay_Regular_Latin_ttf_len);
-		ctx->ui_regular[0] = TTF_OpenFontRW(font_mem, 1, regular_size_ref);
+		ctx->ui_regular[0] = TTF_OpenFontRW(font_mem, 1, regular_pt);
 	}
 
 #if defined(__WINDOWS__)
@@ -240,7 +237,7 @@ void font_change_pt(font_ctx_s *ctx, float dpi_multiply)
 			ui_regular_locs[i]);
 
 		/* Errors are ignored. */
-		ctx->ui_regular[s] = TTF_OpenFont(loc, regular_size_ref);
+		ctx->ui_regular[s] = TTF_OpenFont(loc, regular_pt);
 		if(ctx->ui_regular[s] == NULL)
 			continue;
 
@@ -258,12 +255,12 @@ out:
 	return;
 }
 
-font_ctx_s *font_init(SDL_Renderer *rend, float dpi_multiply)
+font_ctx_s *font_init(SDL_Renderer *rend,
+		int icon_pt, int header_pt, int regular_pt)
 {
 	font_ctx_s *ctx = NULL;
 
 	SDL_assert(rend != NULL);
-	SDL_assert(dpi_multiply > 0.0f);
 
 	if(!TTF_WasInit() && TTF_Init() == -1)
 		goto out;
@@ -272,7 +269,7 @@ font_ctx_s *font_init(SDL_Renderer *rend, float dpi_multiply)
 	if(ctx == NULL)
 		goto out;
 
-	font_change_pt(ctx, dpi_multiply);
+	font_change_pt(ctx, icon_pt, header_pt, regular_pt);
 	ctx->rend = rend;
 
 out:
