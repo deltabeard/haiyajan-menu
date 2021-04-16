@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 
 	win = SDL_CreateWindow("Haiyajan UI",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		UI_MIN_WINDOW_WIDTH, UI_MIN_WINDOW_HEIGHT,
+		1280, 720,
 		SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI |
 		SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED);
 	if(win == NULL)
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 		goto err;
 
 	/* TODO: Allow even smaller screens. */
-	SDL_SetWindowMinimumSize(win, 320, 240);
+	SDL_SetWindowMinimumSize(win, UI_MIN_WINDOW_WIDTH, UI_MIN_WINDOW_HEIGHT);
 	SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
 	/* Initialise user interface context. */

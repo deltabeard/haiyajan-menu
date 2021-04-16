@@ -435,6 +435,31 @@ static void ui_calculate_font_sizes(float dpi, Sint32 window_height,
 	SDL_assert(header_pt != regular_pt);
 	SDL_assert(icon_pt != regular_pt);
 
+	/* Do not take DPI into account for low resolution displays. */
+	if(window_height < 480)
+	{
+		/* Curve fit model for converting window height to
+		 * a suitable header font size. */
+		const float p1_hdr = 0.0625f;
+		const float p2_hdr = 10.0f;
+		const float p1_ico = 0.1458f;
+		const float p2_ico = 2.0f;
+		const float p1_reg = 0.02083f;
+		const float p2_reg = 14.0f;
+		float pt;
+
+		pt = (p1_hdr * (float)window_height) + p2_hdr;
+		*header_pt = SDL_ceilf(pt);
+
+		pt = (p1_ico * (float)window_height) + p2_ico;
+		*icon_pt = SDL_ceilf(pt);
+
+		pt = (p1_reg * (float)window_height) + p2_reg;
+		*regular_pt = SDL_ceilf(pt);
+
+		return;
+	}
+
 	dpi_multiply = dpi/dpi_reference;
 
 	*icon_pt = (int)(icon_size_reference * dpi_multiply);
