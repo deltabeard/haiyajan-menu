@@ -29,6 +29,7 @@ typedef XXH32_hash_t XXHNATIVE_hash_t;
 #endif
 
 static const float dpi_reference = 96.0f;
+
 static const SDL_Colour text_colour_light = {
 	0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE
 };
@@ -74,6 +75,8 @@ struct ui_ctx
 
 	/* Whether the front-end must call ui_render_frame(). */
 	SDL_bool redraw;
+
+	float ref_tile_sizes[TILE_SIZE_MAX];
 };
 
 typedef enum
@@ -405,6 +408,43 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 	return;
 }
 
+static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
+{
+	const float ref_tile_sizes[TILE_SIZE_MAX] = {
+		60.0f, 100.0f, 160.0f
+	};
+
+	SDL_assert(ui != NULL);
+	SDL_assert(ui->dpi > 0);
+
+	if(window_height < 480)
+	{
+		/* Reduce size of tiles when the window size is small. */
+		const float sml_p1 = 0.1146f;
+		const float sml_p2 = 5.0f;
+		const float med_p1 = 0.2188f;
+		const float med_p2 = -5.0f;
+		const float large_p1 = 0.375f;
+		const float large_p2 = -20.0f;
+		float x;
+
+		x = (sml_p1 * window_height) + sml_p2;
+		ui->ref_tile_sizes[TILE_SIZE_SMALL] = SDL_ceilf(x);
+
+		x = (med_p1 * window_height) + med_p2;
+		ui->ref_tile_sizes[TILE_SIZE_MEDIUM] = SDL_ceilf(x);
+
+		x = (large_p1 * window_height) + large_p2;
+		ui->ref_tile_sizes[TILE_SIZE_LARGE] = SDL_ceilf(x);
+		return;
+	}
+
+	for(unsigned i = 0; i < SDL_arraysize(ui->ref_tile_sizes); i++)
+	{
+		ui->ref_tile_sizes[i] = ref_tile_sizes[i] * ui->dpi_multiply;
+	}
+}
+
 /**
  * Calculates font sizes based upon the DPI and size of the rendering target.
  * 
@@ -418,9 +458,9 @@ static void ui_calculate_font_sizes(float dpi, Sint32 window_height,
 		int *restrict icon_pt, int *restrict header_pt,
 		int *restrict regular_pt)
 {
-	const float icon_size_reference = 72.0f;
-	const float header_size_ref = 40.0f;
-	const float regular_size_ref = 24.0f;
+	static const float icon_size_reference = 72.0f;
+	static const float header_size_ref = 40.0f;
+	static const float regular_size_ref = 24.0f;
 	float dpi_multiply;
 
 	/* Pedantic asserts for debug builds only. */
@@ -526,7 +566,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 			{
 				int display_id = SDL_GetWindowDisplayIndex(win);
 				float new_dpi;
-				int h;
+				int h, w, longest;
 				int icon_pt, header_pt, regular_pt;
 
 				if(SDL_GetDisplayDPI(display_id, &new_dpi, NULL, NULL) < 0)
@@ -537,9 +577,15 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 
 				ctx->dpi_multiply = ctx->dpi / dpi_reference;
 
-				SDL_GetWindowSize(win, NULL, &h);
-				ui_calculate_font_sizes(ctx->dpi, h, &icon_pt, &header_pt, &regular_pt);
+				SDL_GetWindowSize(win, &w, &h);
+				if(w < h)
+					longest = w;
+				else
+					longest = h;
+
+				ui_calculate_font_sizes(ctx->dpi, longest, &icon_pt, &header_pt, &regular_pt);
 				font_change_pt(ctx->font, icon_pt, header_pt, regular_pt);
+				ui_set_widget_sizes(ctx, longest);
 
 				SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
 					"Successfully resized interface elements by x%f",
@@ -552,7 +598,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 				SDL_Renderer *ren;
 				SDL_Texture *new_tex;
 				Uint32 texture_format;
-				Sint32 new_w, new_h;
+				Sint32 new_w, new_h, longest;
 				int icon_pt, header_pt, regular_pt;
 
 				ren = SDL_GetRenderer(win);
@@ -581,9 +627,15 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 				SDL_DestroyTexture(ctx->tex);
 				ctx->tex = new_tex;
 
-				ui_calculate_font_sizes(ctx->dpi, new_h,
+				if(new_w < new_h)
+					longest = new_w;
+				else
+					longest = new_h;
+
+				ui_calculate_font_sizes(ctx->dpi, longest,
 					&icon_pt, &header_pt, &regular_pt);
 				font_change_pt(ctx->font, icon_pt, header_pt, regular_pt);
+				ui_set_widget_sizes(ctx, longest);
 
 				SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
 					"Successfully resized texture size to %dW %dH",
@@ -704,10 +756,7 @@ static void ui_draw_selection_bg(ui_ctx_s *ctx, const SDL_Rect *r)
 */
 static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 {
-	const float ref_tile_sizes[TILE_SIZE_MAX] = {
-		60.0f, 100.0f, 160.0f
-	};
-	const unsigned len = (unsigned)(ref_tile_sizes[el->elem.tile.tile_size] * ctx->dpi_multiply);
+	const unsigned len = (unsigned)(ctx->ref_tile_sizes[el->elem.tile.tile_size] * ctx->dpi_multiply);
 	const SDL_Rect dim = {
 		.h = len, .w = len, .x = p->x, .y = p->y
 	};
@@ -920,6 +969,8 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 		SDL_DestroyTexture(ctx->tex);
 		goto err;
 	}
+
+	ui_set_widget_sizes(ctx, h);
 
 	/* Draw the first frame. */
 	ctx->redraw = SDL_TRUE;
