@@ -15,16 +15,16 @@
 #include <stretchy_buffer.h>
 #include <ui.h>
 
-#if 0
+#if 1
 #include <xxhash.h>
 
 /* Use 64 bit hashing if the target platform is also 64 bit. */
 #if UINTPTR_MAX == UINT64_MAX
 typedef XXH64_hash_t XXHNATIVE_hash_t;
-# define XXHNATIVE XXH64
+# define XXHNATIVE(dat, len) XXH64(dat, len, 0)
 #else
 typedef XXH32_hash_t XXHNATIVE_hash_t;
-# define XXHNATIVE XXH32
+# define XXHNATIVE(dat, len) XXH32(dat, len, 0)
 #endif
 #endif
 
@@ -61,7 +61,12 @@ struct ui_ctx
 		ui_el_s *ui_element;
 	} *hit_boxes;
 
-#if 0
+	/**
+	 * Offsets hit boxes by this number of pixels vertically.
+	 */
+	Uint32 touch_offset;
+
+#if 1
 	struct tex_cache
 	{
 		XXHNATIVE_hash_t hash;
@@ -489,13 +494,13 @@ static void ui_calculate_font_sizes(float dpi, Sint32 window_height,
 		float pt;
 
 		pt = (p1_hdr * (float)window_height) + p2_hdr;
-		*header_pt = SDL_ceilf(pt);
+		*header_pt = (int)SDL_ceilf(pt);
 
 		pt = (p1_ico * (float)window_height) + p2_ico;
-		*icon_pt = SDL_ceilf(pt);
+		*icon_pt = (int)SDL_ceilf(pt);
 
 		pt = (p1_reg * (float)window_height) + p2_reg;
-		*regular_pt = SDL_ceilf(pt);
+		*regular_pt = (int)SDL_ceilf(pt);
 
 		return;
 	}
@@ -754,13 +759,14 @@ static void ui_draw_selection_bg(ui_ctx_s *ctx, const SDL_Rect *r)
  * \param el	UI element parameters. 
  * \param p	The top left point of the UI element to draw.
 */
-static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
+static SDL_Texture *ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 {
+#if 0
 	const unsigned len = (unsigned)(ctx->ref_tile_sizes[el->elem.tile.tile_size] * ctx->dpi_multiply);
 	const SDL_Rect dim = {
 		.h = len, .w = len, .x = p->x, .y = p->y
 	};
-	SDL_Texture *text_tex, *icon_tex;
+	SDL_Texture *text_tex, *icon_tex, *out;
 	SDL_Rect text_dim, icon_dim;
 	const SDL_Point tile_padding = { .x = 16, .y = 16 };
 
@@ -864,6 +870,99 @@ static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 
 	/* Increment coordinates to next element. */
 	p->y += len + tile_padding.y;
+#endif
+
+
+	/* 1. Render tile icon texture. */
+	const unsigned tile_len = (unsigned)(ctx->ref_tile_sizes[el->elem.tile.tile_size] * ctx->dpi_multiply);
+	SDL_Texture *text_tex, *tile, *out;
+	SDL_Rect text_dim, tile_dim;
+	const SDL_Point tile_padding = { .x = 16, .y = 16 };
+	SDL_Rect out_sz = { 0 };
+	Uint32 format;
+
+	SDL_QueryTexture(ctx->tex, &format, NULL, NULL, NULL);
+	tile = SDL_CreateTexture(ctx->ren, format, SDL_TEXTUREACCESS_TARGET,
+			tile_len, tile_len);
+	tile_dim.h = tile_len;
+	tile_dim.w = tile_len;
+	tile_dim.x = 0;
+	tile_dim.y = 0;
+
+	SDL_SetRenderTarget(ctx->ren, tile);
+	SDL_SetRenderDrawColor(ctx->ren,
+		el->elem.tile.bg.r, el->elem.tile.bg.g, el->elem.tile.bg.b, el->elem.tile.bg.a);
+	SDL_RenderClear(ctx->ren);
+
+	{
+		SDL_Texture *icon_tex;
+		SDL_Rect icon_dim;
+		icon_tex = font_render_icon(ctx->font, el->elem.tile.icon,
+				el->elem.tile.fg);
+		SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
+		icon_dim.x = (tile_len / 2) - (icon_dim.w / 2);
+		icon_dim.y = (tile_len / 2) - (icon_dim.h / 2);
+
+		SDL_SetTextureColorMod(icon_tex,
+			el->elem.tile.fg.r, el->elem.tile.fg.g, el->elem.tile.fg.b);
+		SDL_RenderCopy(ctx->ren, icon_tex, NULL, &icon_dim);
+		SDL_DestroyTexture(icon_tex);
+	}
+	
+	/* 2. Render label texture. */
+	{
+		text_tex = font_render_text(ctx->font, el->elem.tile.label,
+			FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
+			text_colour_light);
+		SDL_QueryTexture(text_tex, NULL, NULL, &text_dim.w, &text_dim.h);
+
+		switch(el->elem.tile.label_placement)
+		{
+		case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
+			text_dim.x = tile_padding.x;
+			text_dim.y = tile_len - text_dim.h - tile_padding.y;
+			break;
+
+		case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
+			text_dim.x = ((tile_len - text_dim.w) / 2);
+			text_dim.y = tile_len - text_dim.h - tile_padding.y;
+			break;
+
+		case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
+			text_dim.x = tile_len - text_dim.w - tile_padding.x;
+			text_dim.y = tile_len - text_dim.h - tile_padding.y;
+			break;
+
+		case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
+			text_dim.x = tile_len + tile_padding.x;
+			text_dim.y = 0;
+			break;
+
+		case LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE:
+			text_dim.x = tile_len + tile_padding.x;
+			text_dim.y = (tile_len / 2) - (text_dim.h / 2);
+			break;
+
+		case LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM:
+			text_dim.x = tile_len + tile_padding.x;
+			text_dim.y = tile_len - text_dim.h;
+			break;
+		}
+	}
+
+	/* 3. Draw textures to entry target. */
+	{
+		out_sz.h = tile_len;
+		out_sz.w = text_dim.w + tile_len;
+		out = SDL_CreateTexture(ctx->ren, format,
+			SDL_TEXTUREACCESS_TARGET, out_sz.w, out_sz.h);
+		SDL_SetRenderTarget(ctx->ren, out);
+		SDL_RenderCopy(ctx->ren, tile, NULL, &tile_dim);
+		SDL_RenderCopy(ctx->ren, text_tex, NULL, &text_dim);
+	}
+
+
+	return out;
 }
 
 int ui_render_frame(ui_ctx_s *ctx)
@@ -898,10 +997,37 @@ int ui_render_frame(ui_ctx_s *ctx)
 
 	for(ui_el_s *el = ctx->root; el->type != UI_ELEM_TYPE_END; el++)
 	{
+		struct tex_cache new_cache_entry;
+		XXHNATIVE_hash_t h = XXHNATIVE(el, sizeof(ui_el_s));
+		unsigned tcache_n = sb_count(ctx->tex_cache);
+		SDL_Rect targ;
+		SDL_Texture *el_tex;
+
+		/* Search texture cache for rendered widget. */
+		//for(struct tex_cache *tc = ctx->tex_cache; tc++; tc - ctx->tex_cache < tcache_n)
+		for(Uint32 i = 0; i++; i < tcache_n)
+		{
+			struct tex_cache *tc = &ctx->tex_cache[i];
+			int tw, th;
+
+			/* Move to next texture if hash check fails. */
+			if(tc->hash != h)
+				continue;
+
+			el_tex = tc->tex;
+
+			/* Skip rendering a new texture. */
+			goto next_element;
+		}
+
+		/* If we reach here, it means that there is no rendered texture
+		 * in the texture cache. */
+
+
 		switch(el->type)
 		{
 			case UI_ELEM_TYPE_TILE:
-				ui_draw_tile(ctx, el, &vert);
+				new_cache_entry.tex = ui_draw_tile(ctx, el, &vert);
 				break;
 
 			default:
@@ -910,6 +1036,22 @@ int ui_render_frame(ui_ctx_s *ctx)
 					el->type);
 				break;
 		}
+
+		new_cache_entry.hash = h;
+		sb_push(ctx->tex_cache, new_cache_entry);
+		el_tex = new_cache_entry.tex;
+
+next_element:
+		targ.x = vert.x;
+		targ.y = vert.y;
+
+		SDL_SetRenderTarget(ctx->ren, ctx->tex);
+		SDL_QueryTexture(el_tex, NULL, NULL, &targ.w, &targ.h);
+		SDL_RenderCopy(ctx->ren, el_tex, NULL, &targ);
+
+		vert.y += targ.h;
+
+		continue;
 
 	}
 
