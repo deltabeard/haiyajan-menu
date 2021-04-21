@@ -22,7 +22,7 @@
 #if UINTPTR_MAX == UINT64_MAX
 typedef XXH64_hash_t XXHNATIVE_hash_t;
 # define XXHNATIVE(dat, len)	XXH64(dat, len, 0)
-# define XXHNATIVE_FMT		"%08x"
+# define XXHNATIVE_FMT		"%08lx"
 #else
 typedef XXH32_hash_t XXHNATIVE_hash_t;
 # define XXHNATIVE(dat, len) XXH32(dat, len, 0)
