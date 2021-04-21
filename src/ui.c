@@ -953,14 +953,15 @@ static SDL_Texture *ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 	/* 3. Draw textures to entry target. */
 	{
 		out_sz.h = tile_len;
-		out_sz.w = text_dim.w + tile_len;
+		out_sz.w = text_dim.w + tile_len + tile_padding.x;
 		out = SDL_CreateTexture(ctx->ren, format,
 			SDL_TEXTUREACCESS_TARGET, out_sz.w, out_sz.h);
 		SDL_SetRenderTarget(ctx->ren, out);
+		SDL_SetRenderDrawColor(ctx->ren, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+		SDL_RenderClear(ctx->ren);
 		SDL_RenderCopy(ctx->ren, tile, NULL, &tile_dim);
 		SDL_RenderCopy(ctx->ren, text_tex, NULL, &text_dim);
 	}
-
 
 	return out;
 }
