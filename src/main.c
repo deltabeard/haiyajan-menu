@@ -24,6 +24,7 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 		}
 	}
 
+	/* Check if the UI needs to be redrawn. */
 	if(ui_should_redraw(ui) == SDL_TRUE)
 	{
 		ui_render_frame(ui);
