@@ -42,6 +42,10 @@ Example: make BUILD=RELEASE EXTRA_CFLAGS="-march=native"
 $(LICENSE)
 endef
 
+ifeq ($(OS)$(VSCMD_VER),Windows_NT)
+	err := $(error You must execute make in Visual Studio Native Tools on Windows NT)
+endif
+
 ifdef VSCMD_VER
 	PLATFORM := MSVC
 else
