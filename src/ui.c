@@ -597,6 +597,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 			if(SDL_GetDisplayDPI(display_id, &new_dpi, NULL, NULL) < 0)
 				new_dpi = 96.0f;
 
+			/* Don't redraw if DPI hasn't changed. */
 			if(new_dpi == ctx->dpi)
 				break;
 
@@ -676,7 +677,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 			else
 				old_longest = old_h;
 
-			ui_clear_cache(ctx);
+			/* Always redraw screen on screen resize. */
 			ctx->redraw = SDL_TRUE;
 
 			/* If the window has not changed size
@@ -684,16 +685,16 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 			 * of the elements, then do not change
 			 * element sizes. */
 			if(old_longest > dpi_ignore_thresh &&
-				longest > dpi_ignore_thresh)
+					longest > dpi_ignore_thresh)
 				break;
 
+			/* Re-render UI elements if screen size is small
+			 * enough to depend on window size rather than DPI. */
+			ui_clear_cache(ctx);
 			ui_calculate_font_sizes(ctx->dpi, longest,
 				&icon_pt, &header_pt, &regular_pt);
 			font_change_pt(ctx->font, icon_pt, header_pt, regular_pt);
 			ui_set_widget_sizes(ctx, longest);
-			SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
-				"Cache be cleared due to "
-				"significant change in window dimensions.");
 		}
 
 		break;
