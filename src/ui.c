@@ -14,8 +14,6 @@
 #include <stdint.h>
 #include <stretchy_buffer.h>
 #include <ui.h>
-
-#if 1
 #include <xxhash.h>
 
  /* Use 64 bit hashing if the target platform is also 64 bit. */
@@ -27,7 +25,6 @@ typedef XXH64_hash_t XXHNATIVE_hash_t;
 typedef XXH32_hash_t XXHNATIVE_hash_t;
 # define XXHNATIVE(dat, len) XXH32(dat, len, 0)
 # define XXHNATIVE_FMT		"%04x"
-#endif
 #endif
 
 static const float dpi_reference = 96.0f;
@@ -810,94 +807,6 @@ static void ui_draw_selection_bg(ui_ctx_s *ctx, const SDL_Rect *r)
 static SDL_Texture *ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 {
 #if 0
-	const unsigned len = (unsigned)(ctx->ref_tile_sizes[el->elem.tile.tile_size] * ctx->dpi_multiply);
-	const SDL_Rect dim = {
-		.h = len, .w = len, .x = p->x, .y = p->y
-	};
-	SDL_Texture *text_tex, *icon_tex, *out;
-	SDL_Rect text_dim, icon_dim;
-	const SDL_Point tile_padding = { .x = 16, .y = 16 };
-
-	/* Draw tile background. */
-	SDL_SetRenderDrawColor(ctx->ren,
-		el->elem.tile.bg.r, el->elem.tile.bg.g, el->elem.tile.bg.b, el->elem.tile.bg.a);
-	SDL_RenderFillRect(ctx->ren, &dim);
-
-	/* Render icon on tile. */
-	icon_tex = font_render_icon(ctx->font, el->elem.tile.icon, el->elem.tile.fg);
-	SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
-	icon_dim.x = p->x + (len / 2) - (icon_dim.w / 2);
-	icon_dim.y = p->y + (len / 2) - (icon_dim.h / 2);
-
-	SDL_SetTextureColorMod(icon_tex,
-		el->elem.tile.fg.r, el->elem.tile.fg.g, el->elem.tile.fg.b);
-	SDL_RenderCopy(ctx->ren, icon_tex, NULL, &icon_dim);
-	SDL_DestroyTexture(icon_tex);
-
-	/* Render tile label. */
-	text_tex = font_render_text(ctx->font, el->elem.tile.label,
-		FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
-		text_colour_light);
-	SDL_QueryTexture(text_tex, NULL, NULL, &text_dim.w, &text_dim.h);
-
-	switch(el->elem.tile.label_placement)
-	{
-	case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
-		text_dim.x = p->x + tile_padding.x;
-		text_dim.y = p->y + len - text_dim.h - tile_padding.y;
-		break;
-
-	case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
-		text_dim.x = p->x + ((len - text_dim.w) / 2);
-		text_dim.y = p->y + len - text_dim.h - tile_padding.y;
-		break;
-
-	case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
-		text_dim.x = p->x + len - text_dim.w - tile_padding.x;
-		text_dim.y = p->y + len - text_dim.h - tile_padding.y;
-		break;
-
-	case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
-		text_dim.x = p->x + len + tile_padding.x;
-		text_dim.y = p->y;
-		break;
-
-	case LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE:
-		text_dim.x = p->x + len + tile_padding.x;
-		text_dim.y = p->y + (len / 2) - (text_dim.h / 2);
-		break;
-
-	case LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM:
-		text_dim.x = p->x + len + tile_padding.x;
-		text_dim.y = p->y + len - text_dim.h;
-		break;
-	}
-
-	/* Colour of elements within tile. */
-	switch(el->elem.tile.label_placement)
-	{
-	case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
-	case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
-	case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
-		SDL_SetTextureColorMod(text_tex,
-			el->elem.tile.fg.r, el->elem.tile.fg.g, el->elem.tile.fg.b);
-
-		break;
-
-		/* Alternate colour for text located outside of tile. */
-	case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
-	case LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE:
-	case LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM:
-	default:
-		SDL_SetTextureColorMod(text_tex,
-			text_colour_light.r, text_colour_light.g, text_colour_light.b);
-
-		break;
-	}
-
-	SDL_RenderCopy(ctx->ren, text_tex, NULL, &text_dim);
-	SDL_DestroyTexture(text_tex);
-
 	/* Add hitbox for mouse and touch input. */
 	{
 		struct hit_box i;
@@ -909,72 +818,24 @@ static SDL_Texture *ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 			"Hit box generated for tile at (%d, %d)(%d, %d)",
 			dim.x, dim.y, dim.h, dim.w);
 	}
-
-	/* Draw outline and translucent box if tile is selected. */
-	if(ctx->current == el)
-	{
-		ui_draw_selection_bg(ctx, &dim);
-	}
-
-	/* Increment coordinates to next element. */
-	p->y += len + tile_padding.y;
 #endif
 
 	/* 1. Render tile icon texture. */
 	const unsigned tile_len = (unsigned)(ctx->ref_tile_sizes[el->elem.tile.tile_size] * ctx->dpi_multiply);
-	SDL_Texture *text_tex, *tile, *out;
-	SDL_Rect text_dim, tile_dim;
 	const SDL_Point tile_padding = { .x = 16, .y = 16 };
-	SDL_Rect out_sz = { 0 };
-	Uint32 format;
+	SDL_Texture *text_tex, *out;
+	SDL_Rect text_dim, tile_dim;
+	SDL_Rect out_sz;
+	Uint32 tex_fmt;
 	int r;
 
-	r = SDL_QueryTexture(ctx->tex, &format, NULL, NULL, NULL);
+	/* Obtain the texture format that we should use. This should remove the
+	 * need to convert between the pixel format used by the graphics API. */
+	r = SDL_QueryTexture(ctx->tex, &tex_fmt, NULL, NULL, NULL);
 	SDL_assert(r == 0);
 
-	tile = SDL_CreateTexture(ctx->ren, format, SDL_TEXTUREACCESS_TARGET,
-		tile_len, tile_len);
-	SDL_assert(tile != NULL);
-
-	tile_dim.h = tile_len;
-	tile_dim.w = tile_len;
-	tile_dim.x = 0;
-	tile_dim.y = 0;
-
-	r = SDL_SetRenderTarget(ctx->ren, tile);
-	SDL_assert(r == 0);
-
-	r = SDL_SetRenderDrawColor(ctx->ren,
-		el->elem.tile.bg.r, el->elem.tile.bg.g, el->elem.tile.bg.b, el->elem.tile.bg.a);
-	SDL_assert(r == 0);
-
-	r = SDL_RenderClear(ctx->ren);
-	SDL_assert(r == 0);
-
-	{
-		SDL_Texture *icon_tex;
-		SDL_Rect icon_dim;
-		icon_tex = font_render_icon(ctx->font, el->elem.tile.icon,
-			el->elem.tile.fg);
-		SDL_assert(icon_tex != NULL);
-
-		r = SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
-		SDL_assert(r == 0);
-
-		icon_dim.x = (tile_len / 2) - (icon_dim.w / 2);
-		icon_dim.y = (tile_len / 2) - (icon_dim.h / 2);
-
-		r = SDL_SetTextureColorMod(icon_tex,
-			el->elem.tile.fg.r, el->elem.tile.fg.g, el->elem.tile.fg.b);
-		SDL_assert(r == 0);
-
-		r = SDL_RenderCopy(ctx->ren, icon_tex, NULL, &icon_dim);
-		SDL_assert(r == 0);
-
-		SDL_DestroyTexture(icon_tex);
-	}
-
-	/* 2. Render label texture. */
+	/* Render label texture to calculate how wide the output texture needs
+	 * to be. */
 	{
 		text_tex = font_render_text(ctx->font, el->elem.tile.label,
 			FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
@@ -1018,33 +879,75 @@ static SDL_Texture *ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 		}
 	}
 
-	/* 3. Draw textures to entry target. */
+	/* Dimensions of the tile background, without the padding. */
+	tile_dim.h = tile_len;
+	tile_dim.w = tile_len;
+	tile_dim.x = 0;
+	tile_dim.y = 0;
+
+	/* Calculate the maximum size of the output texture required. */
+	out_sz.x = 0;
+	out_sz.y = 0;
+	out_sz.w = tile_dim.w + tile_padding.x + text_dim.w;
+	out_sz.h = tile_dim.h + tile_padding.y;
+	out = SDL_CreateTexture(ctx->ren, tex_fmt, SDL_TEXTUREACCESS_TARGET,
+		out_sz.w, out_sz.h);
+	SDL_assert(out != NULL);
+
+	r = SDL_SetRenderTarget(ctx->ren, out);
+	SDL_assert(r == 0);
+
+	/* Use alpha blending on texture. */
+	r = SDL_SetTextureBlendMode(out, SDL_BLENDMODE_BLEND);
+	SDL_assert(r == 0);
+
+	/* Make texture background transparent. */
+	/* This probably isn't required. */
+	r = SDL_SetRenderDrawColor(ctx->ren, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+	SDL_assert(r == 0);
+	r = SDL_RenderClear(ctx->ren);
+	SDL_assert(r == 0);
+
+	/* Set tile box colour. */
+	r = SDL_SetRenderDrawColor(ctx->ren,
+		el->elem.tile.bg.r, el->elem.tile.bg.g, el->elem.tile.bg.b,
+		el->elem.tile.bg.a);
+	SDL_assert(r == 0);
+
+	/* Draw tile box. */
+	r = SDL_RenderFillRect(ctx->ren, &tile_dim);
+	SDL_assert(r == 0);
+
+	/* Render icon texture. */
 	{
-		out_sz.h = tile_len;
-		out_sz.w = text_dim.w + tile_len + tile_padding.x;
-		out = SDL_CreateTexture(ctx->ren, format,
-			SDL_TEXTUREACCESS_TARGET, out_sz.w, out_sz.h);
-		SDL_assert(out != NULL);
+		SDL_Texture *icon_tex;
+		SDL_Rect icon_dim;
 
-		r = SDL_SetRenderTarget(ctx->ren, out);
-		SDL_assert(r == 0);
+		icon_tex = font_render_icon(ctx->font, el->elem.tile.icon,
+			el->elem.tile.fg);
+		SDL_assert(icon_tex != NULL);
 
-		/* Make texture background transparent. */
-		/* This probably isn't required. */
-		r = SDL_SetRenderDrawColor(ctx->ren, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-		SDL_assert(r == 0);
-		r = SDL_RenderClear(ctx->ren);
+		r = SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
 		SDL_assert(r == 0);
 
-		/* Use alpha blending on texture. */
-		r = SDL_SetTextureBlendMode(out, SDL_BLENDMODE_BLEND);
+		/* Place icon in the middle of the tile. */
+		icon_dim.x = (tile_len / 2) - (icon_dim.w / 2);
+		icon_dim.y = (tile_len / 2) - (icon_dim.h / 2);
+
+		/* Set icon colour. */
+		r = SDL_SetTextureColorMod(icon_tex,
+			el->elem.tile.fg.r, el->elem.tile.fg.g, el->elem.tile.fg.b);
 		SDL_assert(r == 0);
 
-		r = SDL_RenderCopy(ctx->ren, tile, NULL, &tile_dim);
+		r = SDL_RenderCopy(ctx->ren, icon_tex, NULL, &icon_dim);
 		SDL_assert(r == 0);
-		r = SDL_RenderCopy(ctx->ren, text_tex, NULL, &text_dim);
-		SDL_assert(r == 0);
+
+		SDL_DestroyTexture(icon_tex);
 	}
+
+	/* Draw text to output texture. */
+	r = SDL_RenderCopy(ctx->ren, text_tex, NULL, &text_dim);
+	SDL_assert(r == 0);
 
 	return out;
 }
