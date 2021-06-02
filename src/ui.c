@@ -7,26 +7,10 @@
  * the Free Software Foundation.
  */
 
-#define XXH_INLINE_ALL
-
 #include <font.h>
 #include <SDL.h>
-#include <stdint.h>
 #include <stretchy_buffer.h>
 #include <ui.h>
-
-#if 0
-#include <xxhash.h>
-
-/* Use 64 bit hashing if the target platform is also 64 bit. */
-#if UINTPTR_MAX == UINT64_MAX
-typedef XXH64_hash_t XXHNATIVE_hash_t;
-# define XXHNATIVE XXH64
-#else
-typedef XXH32_hash_t XXHNATIVE_hash_t;
-# define XXHNATIVE XXH32
-#endif
-#endif
 
 static const float dpi_reference = 96.0f;
 
@@ -61,14 +45,6 @@ struct ui_ctx
 		ui_el_s *ui_element;
 	} *hit_boxes;
 
-#if 0
-	struct tex_cache
-	{
-		XXHNATIVE_hash_t hash;
-		SDL_Texture *tex;
-	} *tex_cache;
-#endif
-
 	/* DPI that tex texture is rendered for. */
 	float dpi;
 	float dpi_multiply;
@@ -76,7 +52,7 @@ struct ui_ctx
 	/* Whether the front-end must call ui_render_frame(). */
 	SDL_bool redraw;
 
-	float ref_tile_sizes[TILE_SIZE_MAX];
+	Uint16 ref_tile_size;
 };
 
 typedef enum
@@ -97,265 +73,6 @@ typedef enum
 	 * Could be used when user presses ENTER. */
 	MENU_INSTR_EXEC_ITEM
 } menu_instruction_e;
-
-#if 0
-typedef enum
-{
-	UI_OBJECT_TYPE_TILE,
-	UI_OBJECT_TYPE_PUSH_BUTTON,
-	UI_OBJECT_TYPE_TOGGLE_SWITCH,
-	UI_OBJECT_TYPE_DROPDOWN_LIST,
-	UI_OBJECT_TYPE_SPINNER,
-	UI_OBJECT_TYPE_SLIDER,
-	UI_OBJECT_TYPE_HEADER
-} ui_object_type_e;
-
-struct ui_object
-{
-	ui_object_type_e object_type;
-
-	/* Every object has a label that is shown with the object. */
-	struct _label
-	{
-		SDL_bool heap;
-		union _label_string
-		{
-			char *str_heap;
-			const char *str_stack;
-		} label_string;
-	} label;
-
-	/* Stack allocated help text. NULL if not required. */
-	const char *help;
-
-	union _object_parameters
-	{
-		struct _tile_parameters
-		{
-			/* Menu to change to on pressing the tile. */
-			const struct menu_ctx *on_press;
-
-			/* Background colour of the tile. */
-			const SDL_Colour *bg_colour;
-
-			/* Icon colour. */
-			const SDL_Colour *icon_colour;
-
-			/* Text colour. */
-			const SDL_Colour *label_colour;
-
-			/* Icon to show within the tile. */
-			/* TODO: Set to correct type. */
-			const Uint32 *icon;
-
-			/* Size of icon. Proportional to the rest of the UI. */
-			enum
-			{
-				SMALL, MEDIUM, LARGE
-			} size;
-
-			/* Location and alignment of tile label. */
-			enum
-			{
-				INSIDE, OUTSIDE
-			} label_location;
-			enum
-			{
-				LEFT, MIDDLE, RIGHT
-			} label_align;
-		} tile;
-
-		struct _push_button_parameters
-		{
-			/* Menu to change to on pressing the button. */
-			struct menu_ctx *on_press;
-		} push_button;
-
-		struct _toggle_switch_parameters
-		{
-			/* Variable that is modified with the switch. */
-			SDL_bool *val;
-		} toggle_switch;
-
-		struct _dropdown_list_parameters
-		{
-			/* Array of strings to show within the dropdown list. */
-			const char **items;
-
-			/* The string selected by the user. Index 0 is the first
-			 * string. */
-			Uint8 selected_item;
-		} dropdown_list;
-
-		struct _spinner_parameters
-		{
-			/* Obtains progress and the progress message for the
-			 * spinner.
-			 * If progress is NULL, then the spinner varies with an
-			 * animation.
-			 * If text is NULL, then no progress text is displayed
-			 * with the spinner. */
-			void (*spinner_progress)(Uint32 *progress, char **text);
-		} spinner;
-
-		struct _slider_parameters
-		{
-			const Uint32 min, step, max;
-			Uint32 *val;
-		} slider;
-
-		struct _header_parameters
-		{
-			/* There are no extra options for a header object. */
-			int unused;
-		} header;
-	} object_parameters;
-};
-
-static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
-{
-	unsigned *item_selected = &ctx->current->item_selected;
-	switch(instr)
-	{
-	case MENU_INSTR_PREV_ITEM:
-		if(ctx->current->item_selected > 0)
-			(*item_selected)--;
-		break;
-
-	case MENU_INSTR_NEXT_ITEM:
-		if(*item_selected < (ctx->current->items.static_list.items_nmemb - 1))
-			(*item_selected)++;
-		break;
-
-	case MENU_INSTR_PARENT_MENU:
-		if(ctx->current->parent != NULL)
-			ctx->current = ctx->current->parent;
-
-		break;
-
-	case MENU_INSTR_EXEC_ITEM:
-	{
-		const struct menu_item *item =
-			ctx->current->items.static_list.items + ctx->current->item_selected;
-
-		switch(item->op)
-		{
-		case MENU_SUB_MENU:
-			ctx->current = item->param.sub_menu;
-			break;
-
-		case MENU_EXEC_FUNC:
-			item->param.exec_func.func(item->param.exec_func.ctx);
-			break;
-
-		case MENU_SET_VAL:
-			*item->param.set_val.set = item->param.set_val.val;
-			break;
-		}
-
-		break;
-	}
-	}
-
-	ctx->redraw = SDL_TRUE;
-	return;
-}
-
-void ui_force_redraw(ui_ctx_s *ctx)
-{
-	ctx->redraw = SDL_TRUE;
-}
-
-SDL_bool ui_should_redraw(ui_ctx_s *ctx)
-{
-	return ctx->redraw;
-}
-
-int ui_render_frame(ui_ctx_s *ctx)
-{
-	int ret = 0;
-	SDL_assert(ctx->tex != NULL);
-
-	if(ctx->redraw == SDL_FALSE)
-		goto out;
-
-	ret = SDL_SetRenderTarget(ctx->ren, ctx->tex);
-	if(ret != 0)
-		goto out;
-
-	SDL_SetRenderDrawColor(ctx->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderClear(ctx->ren);
-
-	/* Define size of each box in the main menu. */
-	SDL_Rect main_menu_box = { 150, 50, MENU_BOX_DIM, MENU_BOX_DIM };
-	SDL_Rect bg_box = { 145, 45, 110, 110 };
-
-	for(unsigned item = 0;
-		item < ctx->current->items.static_list.items_nmemb;
-		item++)
-	{
-		struct menu_item *this = &ctx->current->items.static_list.items[item];
-		const SDL_Colour ol = this->fg;
-		const SDL_Colour bg = this->bg;
-		SDL_Rect text_loc = {
-			.x = main_menu_box.x + 6,
-			.y = main_menu_box.y + 80,
-			.h = 1, .w = 1
-		};
-
-		if(item == ctx->current->item_selected)
-		{
-			SDL_SetRenderDrawColor(ctx->ren, ol.r, ol.g, ol.b, ol.a);
-			SDL_RenderFillRect(ctx->ren, &bg_box);
-			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Selected %s",
-				this->name);
-		}
-
-		/* Draw item box. */
-		SDL_SetRenderDrawColor(ctx->ren, bg.r, bg.g, bg.b, bg.a);
-		SDL_RenderFillRect(ctx->ren, &main_menu_box);
-
-		/* Record hit-box information. */
-		if(ctx->boxes_input != NULL)
-		{
-			ctx->boxes_input[item].hit_box.x = main_menu_box.x;
-			ctx->boxes_input[item].hit_box.y = main_menu_box.y;
-			ctx->boxes_input[item].hit_box.w = main_menu_box.w;
-			ctx->boxes_input[item].hit_box.h = main_menu_box.h;
-
-			ctx->boxes_input[item].item = this;
-			SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Hit box generated for (%d, %d)(%d, %d)",
-				main_menu_box.x, main_menu_box.y, main_menu_box.h, main_menu_box.w);
-		}
-
-		/* Draw item text. */
-		SDL_SetRenderDrawColor(ctx->ren, 0xFA, 0xFA, 0xFA, SDL_ALPHA_OPAQUE);
-
-		/* TODO: Replace with user defined macro. */
-		FontPrintToRenderer(ctx->font, this->name, &text_loc);
-
-		main_menu_box.y += MENU_BOX_SPACING;
-		bg_box.y += MENU_BOX_SPACING;
-	}
-
-	ret = SDL_SetRenderTarget(ctx->ren, NULL);
-	if(ret != 0)
-		goto out;
-
-	SDL_SetRenderDrawColor(ctx->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderClear(ctx->ren);
-
-	/* TODO: Do not copy full to full. */
-	SDL_RenderCopy(ctx->ren, ctx->tex, NULL, NULL);
-
-	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "UI Rendered %s",
-		ctx->current->title);
-	ctx->redraw = SDL_FALSE;
-
-out:
-	return ret;
-}
-#endif
 
 static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 {
@@ -410,39 +127,29 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 
 static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
 {
-	const float ref_tile_sizes[TILE_SIZE_MAX] = {
-		60.0f, 100.0f, 160.0f
-	};
+	Uint16 ref_tile_size = 100;
+	float dpi_multiply = ui->dpi_multiply;
+	const Sint32 dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 4;
 
 	SDL_assert(ui != NULL);
-	SDL_assert(ui->dpi > 0);
+	SDL_assert(ui->dpi > 0.0f);
+	SDL_assert(window_height >= UI_MIN_WINDOW_HEIGHT);
 
-	if(window_height < 480)
+	/* Limit minimum tile size. */
+	if(window_height <= UI_MIN_WINDOW_HEIGHT)
+		window_height = UI_MIN_WINDOW_HEIGHT;
+
+	/* Reduce effect of DPI scaling if window is very small. */
+	if(window_height <= dpi_scale_thresh)
 	{
-		/* Reduce size of tiles when the window size is small. */
-		const float sml_p1 = 0.1146f;
-		const float sml_p2 = 5.0f;
-		const float med_p1 = 0.2188f;
-		const float med_p2 = -5.0f;
-		const float large_p1 = 0.375f;
-		const float large_p2 = -20.0f;
-		float x;
-
-		x = (sml_p1 * window_height) + sml_p2;
-		ui->ref_tile_sizes[TILE_SIZE_SMALL] = SDL_ceilf(x);
-
-		x = (med_p1 * window_height) + med_p2;
-		ui->ref_tile_sizes[TILE_SIZE_MEDIUM] = SDL_ceilf(x);
-
-		x = (large_p1 * window_height) + large_p2;
-		ui->ref_tile_sizes[TILE_SIZE_LARGE] = SDL_ceilf(x);
-		return;
+		const Sint32 min_height_scale = UI_MIN_WINDOW_HEIGHT / 2;
+		float dpi_scale = (window_height - min_height_scale)/
+			(dpi_scale_thresh - min_height_scale);
+		dpi_multiply = (dpi_multiply * dpi_scale);
 	}
 
-	for(unsigned i = 0; i < SDL_arraysize(ui->ref_tile_sizes); i++)
-	{
-		ui->ref_tile_sizes[i] = ref_tile_sizes[i] * ui->dpi_multiply;
-	}
+	ref_tile_size = (Uint32) ((float) ref_tile_size * dpi_multiply);
+	ui->ref_tile_size = ref_tile_size;
 }
 
 /**
@@ -454,17 +161,18 @@ static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
  * \param header_pt 
  * \param regular_pt 
 */
-static void ui_calculate_font_sizes(float dpi, Sint32 window_height,
+static void ui_calculate_font_sizes(ui_ctx_s *restrict ui, Sint32 window_height,
 		int *restrict icon_pt, int *restrict header_pt,
 		int *restrict regular_pt)
 {
-	static const float icon_size_reference = 72.0f;
-	static const float header_size_ref = 40.0f;
-	static const float regular_size_ref = 24.0f;
-	float dpi_multiply;
+	static const float icon_size_reference = 46.0f;
+	static const float header_size_ref = 30.0f;
+	static const float regular_size_ref = 20.0f;
+	float dpi_multiply = ui->dpi_multiply;
+	const float dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 4;
 
 	/* Pedantic asserts for debug builds only. */
-	SDL_assert(dpi > 0.0f);
+	SDL_assert(ui->dpi > 0.0f);
 	SDL_assert(window_height >= UI_MIN_WINDOW_HEIGHT);
 	SDL_assert(icon_pt != NULL);
 	SDL_assert(header_pt != NULL);
@@ -475,32 +183,19 @@ static void ui_calculate_font_sizes(float dpi, Sint32 window_height,
 	SDL_assert(header_pt != regular_pt);
 	SDL_assert(icon_pt != regular_pt);
 
-	/* Do not take DPI into account for low resolution displays. */
-	if(window_height < 480)
+	/* TODO: Do not take DPI into account for low resolution displays. */
+	/* Limit minimum tile size. */
+	if(window_height <= UI_MIN_WINDOW_HEIGHT)
+		window_height = UI_MIN_WINDOW_HEIGHT;
+
+	/* Reduce effect of DPI scaling if window is very small. */
+	if(window_height <= dpi_scale_thresh)
 	{
-		/* Curve fit model for converting window height to
-		 * a suitable header font size. */
-		const float p1_hdr = 0.0625f;
-		const float p2_hdr = 10.0f;
-		const float p1_ico = 0.1458f;
-		const float p2_ico = 2.0f;
-		const float p1_reg = 0.02083f;
-		const float p2_reg = 14.0f;
-		float pt;
-
-		pt = (p1_hdr * (float)window_height) + p2_hdr;
-		*header_pt = SDL_ceilf(pt);
-
-		pt = (p1_ico * (float)window_height) + p2_ico;
-		*icon_pt = SDL_ceilf(pt);
-
-		pt = (p1_reg * (float)window_height) + p2_reg;
-		*regular_pt = SDL_ceilf(pt);
-
-		return;
+		const Sint32 min_height_scale = UI_MIN_WINDOW_HEIGHT / 8;
+		float dpi_scale = (window_height - min_height_scale)/
+				  (dpi_scale_thresh - min_height_scale);
+		dpi_multiply = (dpi_multiply * dpi_scale);
 	}
-
-	dpi_multiply = dpi/dpi_reference;
 
 	*icon_pt = (int)(icon_size_reference * dpi_multiply);
 	*header_pt = (int)(header_size_ref * dpi_multiply);
@@ -570,7 +265,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 				int icon_pt, header_pt, regular_pt;
 
 				if(SDL_GetDisplayDPI(display_id, &new_dpi, NULL, NULL) < 0)
-					new_dpi = 96.0f;
+					new_dpi = dpi_reference;
 
 				if(new_dpi == ctx->dpi)
 					break;
@@ -583,7 +278,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 				else
 					longest = h;
 
-				ui_calculate_font_sizes(ctx->dpi, longest, &icon_pt, &header_pt, &regular_pt);
+				ui_calculate_font_sizes(ctx, longest, &icon_pt, &header_pt, &regular_pt);
 				font_change_pt(ctx->font, icon_pt, header_pt, regular_pt);
 				ui_set_widget_sizes(ctx, longest);
 
@@ -632,7 +327,7 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 				else
 					longest = new_h;
 
-				ui_calculate_font_sizes(ctx->dpi, longest,
+				ui_calculate_font_sizes(ctx, longest,
 					&icon_pt, &header_pt, &regular_pt);
 				font_change_pt(ctx->font, icon_pt, header_pt, regular_pt);
 				ui_set_widget_sizes(ctx, longest);
@@ -756,7 +451,7 @@ static void ui_draw_selection_bg(ui_ctx_s *ctx, const SDL_Rect *r)
 */
 static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 {
-	const unsigned len = (unsigned)(ctx->ref_tile_sizes[el->elem.tile.tile_size] * ctx->dpi_multiply);
+	const Uint16 len = (unsigned)(ctx->ref_tile_size);
 	const SDL_Rect dim = {
 		.h = len, .w = len, .x = p->x, .y = p->y
 	};
@@ -962,7 +657,7 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
 	ctx->dpi = dpi;
 	ctx->dpi_multiply = dpi / dpi_reference;
 
-	ui_calculate_font_sizes(dpi, h, &icon_pt, &header_pt, &regular_pt);
+	ui_calculate_font_sizes(ctx, h, &icon_pt, &header_pt, &regular_pt);
 	ctx->font = font_init(rend, icon_pt, header_pt, regular_pt);
 	if(ctx->font == NULL)
 	{
@@ -1012,7 +707,7 @@ ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *restrict ui_elements)
 
 	if(SDL_GetDisplayDPI(display_id, &dpi, NULL, NULL) != 0)
 	{
-		dpi = 96.0f;
+		dpi = dpi_reference;
 		SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
 			"Unable to determine display DPI: %s", SDL_GetError());
 	}
