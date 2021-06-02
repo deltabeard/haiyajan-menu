@@ -18,8 +18,7 @@ static const SDL_Colour text_colour_light = {
 	0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE
 };
 
-struct ui_ctx
-{
+struct ui_ctx {
 	/* Required to recreate texture on resizing. */
 	SDL_Renderer *ren;
 
@@ -36,8 +35,7 @@ struct ui_ctx
 	font_ctx_s *font;
 
 	/* Rendered input boxes for touch and mouse input. */
-	struct hit_box
-	{
+	struct hit_box {
 		/* Dimensions of hit-box on screen. */
 		SDL_Rect hit_box;
 
@@ -55,8 +53,7 @@ struct ui_ctx
 	Uint16 ref_tile_size;
 };
 
-typedef enum
-{
+typedef enum {
 	/* Go back to the previous item.
 	 * Could be used when user presses UP. */
 	MENU_INSTR_PREV_ITEM,
@@ -89,11 +86,11 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 		break;
 
 #if 0
-	case MENU_INSTR_PARENT_MENU:
-		if(ctx->current->parent != NULL)
-			ctx->current = ctx->current->parent;
+		case MENU_INSTR_PARENT_MENU:
+			if(ctx->current->parent != NULL)
+				ctx->current = ctx->current->parent;
 
-		break;
+			break;
 #endif
 
 	case MENU_INSTR_EXEC_ITEM:
@@ -101,19 +98,28 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 		switch(ctx->current->elem.tile.onclick)
 		{
 		case ONCLICK_GOTO_ELEMENT:
-			ctx->current = ctx->current->elem.tile.onclick_event.goto_element.element;
+			ctx->current = ctx->current->elem.tile.onclick_event
+				.goto_element.element;
 			break;
 
 		case ONCLICK_EXECUTE_FUNCTION:
-			ctx->current->elem.tile.onclick_event.execute_function.function(ctx->current);
+			ctx->current->elem.tile.onclick_event.execute_function
+				.function(
+					ctx->current);
 			break;
 
 		case ONCLICK_SET_SIGNED_VARIABLE:
-			*ctx->current->elem.tile.onclick_event.signed_variable.variable = ctx->current->elem.tile.onclick_event.signed_variable.val;
+			*ctx->current->elem.tile.onclick_event.signed_variable
+				.variable =
+				ctx->current->elem.tile.onclick_event
+					.signed_variable.val;
 			break;
 
 		case ONCLICK_SET_UNSIGNED_VARIABLE:
-			*ctx->current->elem.tile.onclick_event.unsigned_variable.variable = ctx->current->elem.tile.onclick_event.unsigned_variable.val;
+			*ctx->current->elem.tile.onclick_event.unsigned_variable
+				.variable =
+				ctx->current->elem.tile.onclick_event
+					.unsigned_variable.val;
 			break;
 		}
 
@@ -143,8 +149,8 @@ static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
 	if(window_height <= dpi_scale_thresh)
 	{
 		const Sint32 min_height_scale = UI_MIN_WINDOW_HEIGHT / 2;
-		float dpi_scale = (window_height - min_height_scale)/
-			(dpi_scale_thresh - min_height_scale);
+		float dpi_scale = (window_height - min_height_scale) /
+				  (dpi_scale_thresh - min_height_scale);
 		dpi_multiply = (dpi_multiply * dpi_scale);
 	}
 
@@ -162,8 +168,9 @@ static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
  * \param regular_pt 
 */
 static void ui_calculate_font_sizes(ui_ctx_s *restrict ui, Sint32 window_height,
-		int *restrict icon_pt, int *restrict header_pt,
-		int *restrict regular_pt)
+	int *restrict icon_pt,
+	int *restrict header_pt,
+	int *restrict regular_pt)
 {
 	static const float icon_size_reference = 46.0f;
 	static const float header_size_ref = 30.0f;
@@ -192,14 +199,14 @@ static void ui_calculate_font_sizes(ui_ctx_s *restrict ui, Sint32 window_height,
 	if(window_height <= dpi_scale_thresh)
 	{
 		const Sint32 min_height_scale = UI_MIN_WINDOW_HEIGHT / 8;
-		float dpi_scale = (window_height - min_height_scale)/
+		float dpi_scale = (window_height - min_height_scale) /
 				  (dpi_scale_thresh - min_height_scale);
 		dpi_multiply = (dpi_multiply * dpi_scale);
 	}
 
-	*icon_pt = (int)(icon_size_reference * dpi_multiply);
-	*header_pt = (int)(header_size_ref * dpi_multiply);
-	*regular_pt = (int)(regular_size_ref * dpi_multiply);
+	*icon_pt = (int) (icon_size_reference * dpi_multiply);
+	*header_pt = (int) (header_size_ref * dpi_multiply);
+	*regular_pt = (int) (regular_size_ref * dpi_multiply);
 }
 
 void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
@@ -257,90 +264,97 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 
 		switch(e->window.event)
 		{
-			case SDL_WINDOWEVENT_MOVED:
-			{
-				int display_id = SDL_GetWindowDisplayIndex(win);
-				float new_dpi;
-				int h, w, longest;
-				int icon_pt, header_pt, regular_pt;
+		case SDL_WINDOWEVENT_MOVED:
+		{
+			int display_id = SDL_GetWindowDisplayIndex(win);
+			float new_dpi;
+			int h, w, longest;
+			int icon_pt, header_pt, regular_pt;
 
-				if(SDL_GetDisplayDPI(display_id, &new_dpi, NULL, NULL) < 0)
-					new_dpi = dpi_reference;
+			if(SDL_GetDisplayDPI(display_id, &new_dpi, NULL,
+				NULL) < 0)
+				new_dpi = dpi_reference;
 
-				if(new_dpi == ctx->dpi)
-					break;
+			if(new_dpi == ctx->dpi)
+				break;
 
-				ctx->dpi_multiply = ctx->dpi / dpi_reference;
+			ctx->dpi_multiply = ctx->dpi / dpi_reference;
 
-				SDL_GetWindowSize(win, &w, &h);
-				if(w < h)
-					longest = w;
-				else
-					longest = h;
+			SDL_GetWindowSize(win, &w, &h);
+			if(w < h)
+				longest = w;
+			else
+				longest = h;
 
-				ui_calculate_font_sizes(ctx, longest, &icon_pt, &header_pt, &regular_pt);
-				font_change_pt(ctx->font, icon_pt, header_pt, regular_pt);
-				ui_set_widget_sizes(ctx, longest);
+			ui_calculate_font_sizes(ctx, longest, &icon_pt,
+				&header_pt,
+				&regular_pt);
+			font_change_pt(ctx->font, icon_pt, header_pt,
+				regular_pt);
+			ui_set_widget_sizes(ctx, longest);
 
-				SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
-					"Successfully resized interface elements by x%f",
-					ctx->dpi_multiply);
-			}
+			SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
+				"Successfully resized interface elements by x%f",
+				ctx->dpi_multiply);
+		}
 			break;
 
-			case SDL_WINDOWEVENT_RESIZED:
+		case SDL_WINDOWEVENT_RESIZED:
+		{
+			SDL_Renderer *ren;
+			SDL_Texture *new_tex;
+			Uint32 texture_format;
+			Sint32 new_w, new_h, longest;
+			int icon_pt, header_pt, regular_pt;
+
+			ren = SDL_GetRenderer(win);
+			if(ren == NULL)
 			{
-				SDL_Renderer *ren;
-				SDL_Texture *new_tex;
-				Uint32 texture_format;
-				Sint32 new_w, new_h, longest;
-				int icon_pt, header_pt, regular_pt;
-
-				ren = SDL_GetRenderer(win);
-				if(ren == NULL)
-				{
-					SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
-						"Unable to obtain renderer from window: %s",
-						SDL_GetError());
-					return;
-				}
-
-				texture_format = SDL_GetWindowPixelFormat(win);
-				new_w = e->window.data1;
-				new_h = e->window.data2;
-
-				new_tex = SDL_CreateTexture(ren, texture_format,
-					SDL_TEXTUREACCESS_TARGET, new_w, new_h);
-				if(new_tex == NULL)
-				{
-					SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
-						"Unable to create new texture: %s",
-						SDL_GetError());
-					return;
-				}
-
-				SDL_DestroyTexture(ctx->tex);
-				ctx->tex = new_tex;
-
-				if(new_w < new_h)
-					longest = new_w;
-				else
-					longest = new_h;
-
-				ui_calculate_font_sizes(ctx, longest,
-					&icon_pt, &header_pt, &regular_pt);
-				font_change_pt(ctx->font, icon_pt, header_pt, regular_pt);
-				ui_set_widget_sizes(ctx, longest);
-
-				SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
-					"Successfully resized texture size to %dW %dH",
-					new_w, new_h);
-			}
-
-			break;
-
-			default:
+				SDL_LogDebug(SDL_LOG_CATEGORY_RENDER,
+					"Unable to obtain renderer from window: %s",
+					SDL_GetError());
 				return;
+			}
+
+			texture_format = SDL_GetWindowPixelFormat(win);
+			new_w = e->window.data1;
+			new_h = e->window.data2;
+
+			new_tex = SDL_CreateTexture(ren, texture_format,
+				SDL_TEXTUREACCESS_TARGET,
+				new_w, new_h);
+			if(new_tex == NULL)
+			{
+				SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+					"Unable to create new texture: %s",
+					SDL_GetError());
+				return;
+			}
+
+			SDL_DestroyTexture(ctx->tex);
+			ctx->tex = new_tex;
+
+			if(new_w < new_h)
+				longest = new_w;
+			else
+				longest = new_h;
+
+			ui_calculate_font_sizes(ctx, longest,
+				&icon_pt, &header_pt,
+				&regular_pt);
+			font_change_pt(ctx->font, icon_pt, header_pt,
+				regular_pt);
+			ui_set_widget_sizes(ctx, longest);
+
+			SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
+				"Successfully resized texture size to %dW %dH",
+				new_w, new_h);
+		}
+
+			break;
+
+		default:
+			return;
 		}
 
 		ctx->redraw = SDL_TRUE;
@@ -426,7 +440,7 @@ SDL_bool ui_should_redraw(ui_ctx_s *ctx)
 
 static void ui_draw_selection_bg(ui_ctx_s *ctx, const SDL_Rect *r)
 {
-	SDL_Rect outline = { .x = r->x, .y = r->y, .h = r->h, .w = r->w };
+	SDL_Rect outline = {.x = r->x, .y = r->y, .h = r->h, .w = r->w};
 
 	SDL_SetRenderDrawColor(ctx->ren, 0xFF, 0xFF, 0xFF, 128);
 
@@ -451,27 +465,30 @@ static void ui_draw_selection_bg(ui_ctx_s *ctx, const SDL_Rect *r)
 */
 static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 {
-	const Uint16 len = (unsigned)(ctx->ref_tile_size);
+	const Uint16 len = (unsigned) (ctx->ref_tile_size);
 	const SDL_Rect dim = {
 		.h = len, .w = len, .x = p->x, .y = p->y
 	};
 	SDL_Texture *text_tex, *icon_tex;
 	SDL_Rect text_dim, icon_dim;
-	const SDL_Point tile_padding = { .x = 16, .y = 16 };
+	const SDL_Point tile_padding = {.x = 16, .y = 16};
 
 	/* Draw tile background. */
 	SDL_SetRenderDrawColor(ctx->ren,
-		el->elem.tile.bg.r, el->elem.tile.bg.g, el->elem.tile.bg.b, el->elem.tile.bg.a);
+		el->elem.tile.bg.r, el->elem.tile.bg.g,
+		el->elem.tile.bg.b, el->elem.tile.bg.a);
 	SDL_RenderFillRect(ctx->ren, &dim);
 
 	/* Render icon on tile. */
-	icon_tex = font_render_icon(ctx->font, el->elem.tile.icon, el->elem.tile.fg);
+	icon_tex = font_render_icon(ctx->font, el->elem.tile.icon,
+		el->elem.tile.fg);
 	SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
 	icon_dim.x = p->x + (len / 2) - (icon_dim.w / 2);
 	icon_dim.y = p->y + (len / 2) - (icon_dim.h / 2);
 
 	SDL_SetTextureColorMod(icon_tex,
-		el->elem.tile.fg.r, el->elem.tile.fg.g, el->elem.tile.fg.b);
+		el->elem.tile.fg.r, el->elem.tile.fg.g,
+		el->elem.tile.fg.b);
 	SDL_RenderCopy(ctx->ren, icon_tex, NULL, &icon_dim);
 	SDL_DestroyTexture(icon_tex);
 
@@ -521,17 +538,21 @@ static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 	case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
 	case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
 		SDL_SetTextureColorMod(text_tex,
-			el->elem.tile.fg.r, el->elem.tile.fg.g, el->elem.tile.fg.b);
+			el->elem.tile.fg.r,
+			el->elem.tile.fg.g,
+			el->elem.tile.fg.b);
 
 		break;
 
-	/* Alternate colour for text located outside of tile. */
+		/* Alternate colour for text located outside of tile. */
 	case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
 	case LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE:
 	case LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM:
 	default:
 		SDL_SetTextureColorMod(text_tex,
-			text_colour_light.r, text_colour_light.g, text_colour_light.b);
+			text_colour_light.r,
+			text_colour_light.g,
+			text_colour_light.b);
 
 		break;
 	}
@@ -595,15 +616,15 @@ int ui_render_frame(ui_ctx_s *ctx)
 	{
 		switch(el->type)
 		{
-			case UI_ELEM_TYPE_TILE:
-				ui_draw_tile(ctx, el, &vert);
-				break;
+		case UI_ELEM_TYPE_TILE:
+			ui_draw_tile(ctx, el, &vert);
+			break;
 
-			default:
-				SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-					"The requested UI element %d is not implemented.",
-					el->type);
-				break;
+		default:
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+				"The requested UI element %d is not implemented.",
+				el->type);
+			break;
 		}
 
 	}
@@ -629,7 +650,7 @@ out:
  * Initialise user interface (UI) context when given an SDL Renderer.
 */
 static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
-		ui_el_s *restrict ui_elements)
+	ui_el_s *restrict ui_elements)
 {
 	int w, h;
 	ui_ctx_s *ctx;
@@ -709,7 +730,8 @@ ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *restrict ui_elements)
 	{
 		dpi = dpi_reference;
 		SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-			"Unable to determine display DPI: %s", SDL_GetError());
+			"Unable to determine display DPI: %s",
+			SDL_GetError());
 	}
 
 	format = SDL_GetWindowPixelFormat(win);
