@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	ui_ctx_s *ui;
 	Uint32 quit = 0;
 
-	ui_el_s ui_elements[] = {
+	const ui_el_s ui_elements[] = {
 		{
 			.type = UI_ELEM_TYPE_TILE,
 			.elem.tile = {
@@ -65,10 +65,14 @@ int main(int argc, char *argv[])
 				.help = NULL,
 				/* Persian Green */
 				.bg = { .r = 0x00, .g = 0xA3, .b = 0x98, .a = SDL_ALPHA_OPAQUE },
-				.fg = { 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE },
+				.fg = { .r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE },
 				.disabled = SDL_FALSE,
-				.onclick = ONCLICK_EXECUTE_FUNCTION,
-				.onclick_event = { .execute_function = onclick_function_debug },
+				.onclick = {
+					.action = UI_EVENT_EXECUTE_FUNCTION,
+					.action_data = {
+						.execute_function = onclick_function_debug
+					},
+				},
 				.user = NULL
 			}
 		},
@@ -81,11 +85,15 @@ int main(int argc, char *argv[])
 				.icon = 0xE8B7,
 				.help = NULL,
 				/* Persian Blue */
-				.bg = {.r = 0x1C, .g = 0x39, .b = 0xBB, .a = SDL_ALPHA_OPAQUE},
-				.fg = { 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE },
+				.bg = { .r = 0x1C, .g = 0x39, .b = 0xBB, .a = SDL_ALPHA_OPAQUE },
+				.fg = { .r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE },
 				.disabled = SDL_FALSE,
-				.onclick = ONCLICK_EXECUTE_FUNCTION,
-				.onclick_event = {.execute_function = onclick_function_debug },
+				.onclick = {
+					.action = UI_EVENT_EXECUTE_FUNCTION,
+					.action_data = {
+						.execute_function = onclick_function_debug
+					},
+				},
 				.user = NULL
 			}
 		},
@@ -98,11 +106,18 @@ int main(int argc, char *argv[])
 				.icon = 0xE7E8,
 				.help = NULL,
 				/* Auburn */
-				.bg = {.r = 0x9E, .g = 0x2A, .b = 0x2B, .a = SDL_ALPHA_OPAQUE},
-				.fg = { 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE },
+				.bg = { .r = 0x9E, .g = 0x2A, .b = 0x2B, .a = SDL_ALPHA_OPAQUE },
+				.fg = { .r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE },
 				.disabled = SDL_FALSE,
-				.onclick = ONCLICK_SET_UNSIGNED_VARIABLE,
-				.onclick_event = {.unsigned_variable = { .variable = &quit, .val = 1 }},
+				.onclick = {
+					.action = UI_EVENT_SET_UNSIGNED_VARIABLE,
+					.action_data = {
+						.unsigned_variable = {
+							.variable = &quit,
+							.val = 1
+						}
+					},
+				},
 				.user = NULL
 			}
 		},

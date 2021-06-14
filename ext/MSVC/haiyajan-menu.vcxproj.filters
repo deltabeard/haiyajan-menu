@@ -49,6 +49,7 @@
     <None Include="..\..\DESIGN.md">
       <Filter>Documents</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\meta\icon.ico">

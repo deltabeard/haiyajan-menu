@@ -95,32 +95,37 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 
 	case MENU_INSTR_EXEC_ITEM:
 	{
-		switch(ctx->current->elem.tile.onclick)
+		switch(ctx->current->elem.tile.onclick.action)
 		{
-		case ONCLICK_GOTO_ELEMENT:
-			ctx->current = ctx->current->elem.tile.onclick_event
+		case UI_EVENT_GOTO_ELEMENT:
+			ctx->current = ctx->current->elem.tile.onclick.action_data
 				.goto_element.element;
 			break;
 
-		case ONCLICK_EXECUTE_FUNCTION:
-			ctx->current->elem.tile.onclick_event.execute_function
+		case UI_EVENT_EXECUTE_FUNCTION:
+			ctx->current->elem.tile.onclick.action_data.execute_function
 				.function(
 					ctx->current);
 			break;
 
-		case ONCLICK_SET_SIGNED_VARIABLE:
-			*ctx->current->elem.tile.onclick_event.signed_variable
+		case UI_EVENT_SET_SIGNED_VARIABLE:
+			*ctx->current->elem.tile.onclick.action_data.signed_variable
 				.variable =
-				ctx->current->elem.tile.onclick_event
+				ctx->current->elem.tile.onclick.action_data
 					.signed_variable.val;
 			break;
 
-		case ONCLICK_SET_UNSIGNED_VARIABLE:
-			*ctx->current->elem.tile.onclick_event.unsigned_variable
+		case UI_EVENT_SET_UNSIGNED_VARIABLE:
+			*ctx->current->elem.tile.onclick.action_data.unsigned_variable
 				.variable =
-				ctx->current->elem.tile.onclick_event
+				ctx->current->elem.tile.onclick.action_data
 					.unsigned_variable.val;
 			break;
+
+		case UI_EVENT_NOP:
+		default:
+			/* Do not redraw on no operation. */
+			return;
 		}
 
 		break;
@@ -650,7 +655,7 @@ out:
  * Initialise user interface (UI) context when given an SDL Renderer.
 */
 static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
-	ui_el_s *restrict ui_elements)
+	const ui_el_s *ui_elements)
 {
 	int w, h;
 	ui_ctx_s *ctx;
@@ -703,7 +708,7 @@ err:
 /**
  * Initialise user interface (UI) context when given an SDL Window.
 */
-ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *restrict ui_elements)
+ui_ctx_s *ui_init(SDL_Window *win, const ui_el_s *restrict ui_elements)
 {
 	ui_ctx_s *ctx = NULL;
 	Uint32 format;

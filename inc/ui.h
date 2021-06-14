@@ -11,8 +11,8 @@
 
 #include <SDL.h>
 
-#define UI_MIN_WINDOW_WIDTH        128
-#define UI_MIN_WINDOW_HEIGHT        96
+#define UI_MIN_WINDOW_WIDTH	160
+#define UI_MIN_WINDOW_HEIGHT	144
 
 enum {
 	HAIYAJAN_LOG_CATEGORY_MAIN = SDL_LOG_CATEGORY_CUSTOM,
@@ -28,6 +28,67 @@ typedef struct ui_ctx ui_ctx_s;
 typedef struct ui_element ui_el_s;
 struct ui_element;
 
+typedef enum
+{
+	LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT = 0,
+	LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE,
+	LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT,
+	LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP,
+	LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE,
+	LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
+
+	LABEL_PLACEMENT_MAX
+} label_placement_e;
+
+typedef enum
+{
+	TILE_SIZE_SMALL = 0,
+	TILE_SIZE_MEDIUM,
+	TILE_SIZE_LARGE,
+
+	TILE_SIZE_MAX
+} tile_size_e;
+
+typedef enum
+{
+	UI_EVENT_NOP,
+	UI_EVENT_GOTO_ELEMENT,
+	UI_EVENT_EXECUTE_FUNCTION,
+	UI_EVENT_SET_SIGNED_VARIABLE,
+	UI_EVENT_SET_UNSIGNED_VARIABLE,
+} ui_event_action_e;
+
+struct ui_event
+{
+	ui_event_action_e action;
+
+	union
+	{
+		struct
+		{
+			ui_el_s *element;
+		} goto_element;
+
+		struct
+		{
+			void (*function)(ui_el_s *element);
+		} execute_function;
+
+		struct
+		{
+			Sint32 *variable;
+			Sint32 val;
+		} signed_variable;
+
+		struct
+		{
+			Uint32 *variable;
+			Uint32 val;
+		} unsigned_variable;
+
+	} action_data;
+};
+
 /**
  * A tile element.
  */
@@ -36,23 +97,11 @@ struct ui_tile {
 	const char *label;
 
 	/* Placement of label on the tile. This may affect the font colour. */
-	enum {
-		LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT = 0,
-		LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE,
-		LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT,
-		LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP,
-		LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE,
-		LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM
-	} label_placement;
+	label_placement_e label_placement;
 
-	enum {
-		TILE_SIZE_SMALL = 0,
-		TILE_SIZE_MEDIUM,
-		TILE_SIZE_LARGE,
+	tile_size_e tile_size;
 
-		TILE_SIZE_MAX
-	} tile_size;
-
+	/* Icon in UTF-16 */
 	const Uint16 icon;
 
 	/* Help text to display when the element is highlighted.
@@ -70,45 +119,51 @@ struct ui_tile {
 	 * faded to a dull colour. */
 	SDL_bool disabled;
 
-	enum {
-		ONCLICK_GOTO_ELEMENT,
-		ONCLICK_EXECUTE_FUNCTION,
-		ONCLICK_SET_SIGNED_VARIABLE,
-		ONCLICK_SET_UNSIGNED_VARIABLE,
-	} onclick;
-
-	union {
-		struct {
-			ui_el_s *element;
-		} goto_element;
-
-		struct {
-			void (*function)(ui_el_s *element);
-		} execute_function;
-
-		struct {
-			Sint32 *variable;
-			Sint32 val;
-		} signed_variable;
-
-		struct {
-			Uint32 *variable;
-			Uint32 val;
-		} unsigned_variable;
-
-	} onclick_event;
+	/* What to do on click. */
+	struct ui_event onclick;
 
 	/* Pointer can be set by the user application. */
 	void *user;
 };
 
+typedef enum
+{
+	LABEL_STYLE_NORMAL = 0,
+	LABEL_STYLE_SUBHEADER,
+	LABEL_STYLE_HEADER,
+
+	LABEL_STYLE_MAX
+} label_style_e;
+
+struct ui_label
+{
+	/* Label ascociated with the element. */
+	const char *label;
+
+	label_style_e style;
+};
+
+struct ui_bar
+{
+	/* Label ascociated with the element. */
+	const char *label;
+
+	/* Bar fill between 0 to SDL_MAX_UINT16. */
+	Uint16 value;
+};
+
+
 struct ui_element {
 	enum {
 		UI_ELEM_TYPE_END,
-		UI_ELEM_TYPE_TILE
+		UI_ELEM_TYPE_LABEL,
+		UI_ELEM_TYPE_TILE,
+		UI_ELEM_TYPE_BAR
 	} type;
 	union {
+		struct ui_label label;
 		struct ui_tile tile;
+		struct ui_bar bar;
 	} elem;
 };
 
@@ -118,7 +173,7 @@ struct ui_element {
 * \param ctx	UI Context.
 * \returns	SDL Texture with rendered UI.
 */
-int ui_render_frame(ui_ctx_s *ctx);
+int ui_render_frame(const ui_ctx_s *ctx);
 
 /**
  * Process input and window resize events.
@@ -126,7 +181,7 @@ int ui_render_frame(ui_ctx_s *ctx);
  * \param ctx	UI Context.
  * \param e	SDL_Event that was triggered.
  */
-void ui_process_event(ui_ctx_s *ctx, SDL_Event *e);
+void ui_process_event(const ui_ctx_s *ctx, SDL_Event *e);
 
 /**
  * Initialise user interface from an SDL Renderer.
@@ -138,6 +193,6 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e);
  */
 ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *restrict ui_elements);
 
-SDL_bool ui_should_redraw(ui_ctx_s *ctx);
+SDL_bool ui_should_redraw(const ui_ctx_s *ctx);
 
-void ui_exit(ui_ctx_s *ctx);
+void ui_exit(const ui_ctx_s *ctx);

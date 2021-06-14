@@ -15,7 +15,7 @@
 #include <fonts/NotoSansDisplay-SemiCondensedLight-Latin.h>
 
 #include <font.h>
-#include <fribidi.h>
+#include <fribidi/fribidi.h>
 #include <SDL.h>
 #include <SDL_ttf.h>
 
