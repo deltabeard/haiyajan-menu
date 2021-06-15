@@ -93,7 +93,7 @@ struct ui_event
  * A tile element.
  */
 struct ui_tile {
-	/* Label ascociated with the element. */
+	/* Label associated with the element. */
 	const char *label;
 
 	/* Placement of label on the tile. This may affect the font colour. */
@@ -173,7 +173,7 @@ struct ui_element {
 * \param ctx	UI Context.
 * \returns	SDL Texture with rendered UI.
 */
-int ui_render_frame(const ui_ctx_s *ctx);
+int ui_render_frame(ui_ctx_s *ctx);
 
 /**
  * Process input and window resize events.
@@ -181,7 +181,7 @@ int ui_render_frame(const ui_ctx_s *ctx);
  * \param ctx	UI Context.
  * \param e	SDL_Event that was triggered.
  */
-void ui_process_event(const ui_ctx_s *ctx, SDL_Event *e);
+void ui_process_event(ui_ctx_s *ctx, SDL_Event *e);
 
 /**
  * Initialise user interface from an SDL Renderer.
@@ -193,6 +193,6 @@ void ui_process_event(const ui_ctx_s *ctx, SDL_Event *e);
  */
 ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *restrict ui_elements);
 
-SDL_bool ui_should_redraw(const ui_ctx_s *ctx);
+SDL_bool ui_should_redraw(ui_ctx_s *ctx);
 
-void ui_exit(const ui_ctx_s *ctx);
+void ui_exit(ui_ctx_s *ctx);

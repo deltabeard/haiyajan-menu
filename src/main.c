@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	ui_ctx_s *ui;
 	Uint32 quit = 0;
 
-	const ui_el_s ui_elements[] = {
+	ui_el_s ui_elements[] = {
 		{
 			.type = UI_ELEM_TYPE_TILE,
 			.elem.tile = {

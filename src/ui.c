@@ -655,7 +655,7 @@ out:
  * Initialise user interface (UI) context when given an SDL Renderer.
 */
 static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
-	const ui_el_s *ui_elements)
+	ui_el_s *ui_elements)
 {
 	int w, h;
 	ui_ctx_s *ctx;
@@ -708,7 +708,7 @@ err:
 /**
  * Initialise user interface (UI) context when given an SDL Window.
 */
-ui_ctx_s *ui_init(SDL_Window *win, const ui_el_s *restrict ui_elements)
+ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *restrict ui_elements)
 {
 	ui_ctx_s *ctx = NULL;
 	Uint32 format;
