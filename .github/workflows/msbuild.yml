@@ -21,10 +21,6 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1
 
-    - name: Extract build dependencies
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: .\ext\MSVC_DEPS.exe -o"ext" -y
-
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
