@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <hedley.h>
 #include <SDL.h>
 
 #define UI_MIN_WINDOW_WIDTH	160
@@ -24,10 +25,10 @@ typedef struct ui_ctx ui_ctx_s;
 
 #define UI_EVENT_MASK (SDL_WINDOWEVENT | SDL_MOUSEMOTION | SDL_KEYDOWN | SDL_JOYAXISMOTION)
 
-/* Forward decleration. */
-typedef struct ui_element ui_el_s;
+/* Forward declerations. */
 struct ui_element;
 
+/* Enumurators. */
 typedef enum
 {
 	LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT = 0,
@@ -58,6 +59,16 @@ typedef enum
 	UI_EVENT_SET_UNSIGNED_VARIABLE,
 } ui_event_action_e;
 
+typedef enum
+{
+	LABEL_STYLE_NORMAL = 0,
+	LABEL_STYLE_SUBHEADER,
+	LABEL_STYLE_HEADER,
+
+	LABEL_STYLE_MAX
+} label_style_e;
+
+/* Structures. */
 struct ui_event
 {
 	ui_event_action_e action;
@@ -66,12 +77,12 @@ struct ui_event
 	{
 		struct
 		{
-			ui_el_s *element;
+			struct ui_element *element;
 		} goto_element;
 
 		struct
 		{
-			void (*function)(ui_el_s *element);
+			void (*function)(struct ui_element *element);
 		} execute_function;
 
 		struct
@@ -126,15 +137,6 @@ struct ui_tile {
 	void *user;
 };
 
-typedef enum
-{
-	LABEL_STYLE_NORMAL = 0,
-	LABEL_STYLE_SUBHEADER,
-	LABEL_STYLE_HEADER,
-
-	LABEL_STYLE_MAX
-} label_style_e;
-
 struct ui_label
 {
 	/* Label ascociated with the element. */
@@ -168,11 +170,22 @@ struct ui_element {
 };
 
 /**
+ * Initialise user interface from an SDL Renderer.
+ *
+ * \param win	SDL_Window to target.
+ * \param ui	Pointer to root (or main) menu. Must remain valid until after
+ *		ui_exit is called.
+ * \return	UI context. NULL on error.
+ */
+ui_ctx_s *ui_init(SDL_Window *HEDLEY_RESTRICT win,
+	struct ui_element *HEDLEY_RESTRICT ui_elements);
+
+/**
  * Render UI to window.
-*
-* \param ctx	UI Context.
-* \returns	SDL Texture with rendered UI.
-*/
+ *
+ * \param ctx	UI Context.
+ * \returns	SDL Texture with rendered UI.
+ */
 int ui_render_frame(ui_ctx_s *ctx);
 
 /**
@@ -181,18 +194,11 @@ int ui_render_frame(ui_ctx_s *ctx);
  * \param ctx	UI Context.
  * \param e	SDL_Event that was triggered.
  */
-void ui_process_event(ui_ctx_s *ctx, SDL_Event *e);
+void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT e);
 
 /**
- * Initialise user interface from an SDL Renderer.
+ * Free UI context.
  *
- * \param win	SDL_Window to target.
- * \param ui	Pointer to root (or main) menu. Must remain valid until after
- *		ui_exit is called.
- * \return	UI context. NULL on error.
+ * \param ctx	UI Context.
  */
-ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *restrict ui_elements);
-
-SDL_bool ui_should_redraw(ui_ctx_s *ctx);
-
 void ui_exit(ui_ctx_s *ctx);

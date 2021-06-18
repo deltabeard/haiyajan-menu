@@ -24,21 +24,14 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 		}
 	}
 
-	if(ui_should_redraw(ui) == SDL_TRUE)
-	{
-		ui_render_frame(ui);
-		SDL_RenderPresent(ren);
-	}
-	else
-	{
-		const int frame_delay = 5;
-		SDL_Delay(frame_delay);
-	}
+	SDL_RenderClear(ren);
+	ui_render_frame(ui);
+	SDL_RenderPresent(ren);
 
 	return;
 }
 
-void onclick_function_debug(ui_el_s *element)
+void onclick_function_debug(struct ui_element *element)
 {
 	SDL_Log("Element %p clicked", element);
 }
@@ -54,7 +47,7 @@ int main(int argc, char *argv[])
 	ui_ctx_s *ui;
 	Uint32 quit = 0;
 
-	ui_el_s ui_elements[] = {
+	struct ui_element ui_elements[] = {
 		{
 			.type = UI_ELEM_TYPE_TILE,
 			.elem.tile = {

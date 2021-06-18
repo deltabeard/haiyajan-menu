@@ -8,6 +8,7 @@
  */
 
 #include <font.h>
+#include <hedley.h>
 #include <SDL.h>
 #include <stretchy_buffer.h>
 #include <ui.h>
@@ -26,10 +27,10 @@ struct ui_ctx {
 	SDL_Texture *tex;
 
 	/* Root Menu. */
-	ui_el_s *root;
+	struct ui_element *root;
 
 	/* Currently rendered menu. */
-	ui_el_s *current;
+	struct ui_element *current;
 
 	/* Font context used to draw text on UI elements. */
 	font_ctx_s *font;
@@ -40,7 +41,7 @@ struct ui_ctx {
 		SDL_Rect hit_box;
 
 		/* UI element associated with hit-box. */
-		ui_el_s *ui_element;
+		struct ui_element *ui_element;
 	} *hit_boxes;
 
 	/* DPI that tex texture is rendered for. */
@@ -71,6 +72,7 @@ typedef enum {
 	MENU_INSTR_EXEC_ITEM
 } menu_instruction_e;
 
+HEDLEY_NON_NULL(1)
 static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 {
 	switch(instr)
@@ -136,6 +138,7 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 	return;
 }
 
+HEDLEY_NON_NULL(1)
 static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
 {
 	Uint16 ref_tile_size = 100;
@@ -172,10 +175,12 @@ static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
  * \param header_pt 
  * \param regular_pt 
 */
-static void ui_calculate_font_sizes(ui_ctx_s *restrict ui, Sint32 window_height,
-	int *restrict icon_pt,
-	int *restrict header_pt,
-	int *restrict regular_pt)
+HEDLEY_NON_NULL(1,3,4,5)
+static void ui_calculate_font_sizes(ui_ctx_s *HEDLEY_RESTRICT ui,
+	Sint32 window_height,
+	int *HEDLEY_RESTRICT icon_pt,
+	int *HEDLEY_RESTRICT header_pt,
+	int *HEDLEY_RESTRICT regular_pt)
 {
 	static const float icon_size_reference = 46.0f;
 	static const float header_size_ref = 30.0f;
@@ -214,7 +219,8 @@ static void ui_calculate_font_sizes(ui_ctx_s *restrict ui, Sint32 window_height,
 	*regular_pt = (int) (regular_size_ref * dpi_multiply);
 }
 
-void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
+HEDLEY_NON_NULL(1,2)
+void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT e)
 {
 	/* Recalculate begin_actual coordinates on resolution and DPI change. */
 	if(e->type == SDL_KEYDOWN)
@@ -438,12 +444,9 @@ void ui_process_event(ui_ctx_s *ctx, SDL_Event *e)
 	return;
 }
 
-SDL_bool ui_should_redraw(ui_ctx_s *ctx)
-{
-	return ctx->redraw;
-}
-
-static void ui_draw_selection_bg(ui_ctx_s *ctx, const SDL_Rect *r)
+HEDLEY_NON_NULL(1,2)
+static void ui_draw_selection_bg(ui_ctx_s *HEDLEY_RESTRICT ctx,
+		const SDL_Rect *HEDLEY_RESTRICT r)
 {
 	SDL_Rect outline = {.x = r->x, .y = r->y, .h = r->h, .w = r->w};
 
@@ -468,9 +471,12 @@ static void ui_draw_selection_bg(ui_ctx_s *ctx, const SDL_Rect *r)
  * \param el	UI element parameters. 
  * \param p	The top left point of the UI element to draw.
 */
-static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
+HEDLEY_NON_NULL(1,2,3)
+static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
+		struct ui_element *HEDLEY_RESTRICT el,
+		SDL_Point *HEDLEY_RESTRICT p)
 {
-	const Uint16 len = (unsigned) (ctx->ref_tile_size);
+	const Uint16 len = ctx->ref_tile_size;
 	const SDL_Rect dim = {
 		.h = len, .w = len, .x = p->x, .y = p->y
 	};
@@ -534,6 +540,10 @@ static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 		text_dim.x = p->x + len + tile_padding.x;
 		text_dim.y = p->y + len - text_dim.h;
 		break;
+
+	default:
+		HEDLEY_UNREACHABLE();
+		break;
 	}
 
 	/* Colour of elements within tile. */
@@ -587,6 +597,7 @@ static void ui_draw_tile(ui_ctx_s *ctx, ui_el_s *el, SDL_Point *p)
 	p->y += len + tile_padding.y;
 }
 
+HEDLEY_NON_NULL(1)
 int ui_render_frame(ui_ctx_s *ctx)
 {
 	int ret = 0;
@@ -617,7 +628,7 @@ int ui_render_frame(ui_ctx_s *ctx)
 	SDL_SetRenderDrawColor(ctx->ren, 20, 20, 20, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(ctx->ren);
 
-	for(ui_el_s *el = ctx->root; el->type != UI_ELEM_TYPE_END; el++)
+	for(struct ui_element *el = ctx->root; el->type != UI_ELEM_TYPE_END; el++)
 	{
 		switch(el->type)
 		{
@@ -651,11 +662,11 @@ out:
 	return ret;
 }
 
-/**
- * Initialise user interface (UI) context when given an SDL Renderer.
-*/
-static ui_ctx_s *ui_init_renderer(SDL_Renderer *rend, float dpi, Uint32 format,
-	ui_el_s *ui_elements)
+HEDLEY_NON_NULL(1,4)
+HEDLEY_MALLOC
+static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
+		float dpi, Uint32 format,
+		struct ui_element *HEDLEY_RESTRICT ui_elements)
 {
 	int w, h;
 	ui_ctx_s *ctx;
@@ -705,10 +716,9 @@ err:
 	goto out;
 }
 
-/**
- * Initialise user interface (UI) context when given an SDL Window.
-*/
-ui_ctx_s *ui_init(SDL_Window *win, ui_el_s *restrict ui_elements)
+HEDLEY_NON_NULL(1,2)
+ui_ctx_s *ui_init(SDL_Window *HEDLEY_RESTRICT win,
+		struct ui_element *HEDLEY_RESTRICT ui_elements)
 {
 	ui_ctx_s *ctx = NULL;
 	Uint32 format;
@@ -749,10 +759,7 @@ err:
 	goto out;
 }
 
-/**
- * Free resources used by UI.
- * \param ctx UI Context
-*/
+HEDLEY_NON_NULL(1)
 void ui_exit(ui_ctx_s *ctx)
 {
 	font_exit(ctx->font);
