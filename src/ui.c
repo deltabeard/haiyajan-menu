@@ -168,12 +168,12 @@ static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
 
 /**
  * Calculates font sizes based upon the DPI and size of the rendering target.
- * 
- * \param dpi 
- * \param window_height 
- * \param icon_pt 
- * \param header_pt 
- * \param regular_pt 
+ *
+ * \param dpi
+ * \param window_height
+ * \param icon_pt
+ * \param header_pt
+ * \param regular_pt
 */
 HEDLEY_NON_NULL(1,3,4,5)
 static void ui_calculate_font_sizes(ui_ctx_s *HEDLEY_RESTRICT ui,
@@ -393,7 +393,7 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 				ctx->current = this_box->ui_element;
 				SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
 					"Selected item %p using motion",
-					ctx->current);
+					(void *)ctx->current);
 			}
 
 			break;
@@ -429,13 +429,13 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 				ctx->current = this_box->ui_element;
 				SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
 					"Selected item %p using button",
-					ctx->current);
+					(void *)ctx->current);
 			}
 
 			ui_input(ctx, MENU_INSTR_EXEC_ITEM);
 			SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
 				"Executed item %p using button",
-				ctx->current);
+				(void *)ctx->current);
 
 			break;
 		}
@@ -468,7 +468,7 @@ static void ui_draw_selection_bg(ui_ctx_s *HEDLEY_RESTRICT ctx,
  * Draw tile element 'el' at point 'p'.
  *
  * \param ctx	UI context.
- * \param el	UI element parameters. 
+ * \param el	UI element parameters.
  * \param p	The top left point of the UI element to draw.
 */
 HEDLEY_NON_NULL(1,2,3)
@@ -598,9 +598,8 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 }
 
 HEDLEY_NON_NULL(1)
-int ui_render_frame(ui_ctx_s *ctx)
+SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 {
-	int ret = 0;
 	SDL_Point vert;
 
 	SDL_assert(ctx != NULL);
@@ -616,9 +615,8 @@ int ui_render_frame(ui_ctx_s *ctx)
 		ctx->hit_boxes = NULL;
 	}
 
-	ret = SDL_SetRenderTarget(ctx->ren, ctx->tex);
-	if(ret != 0)
-		goto out;
+	if(SDL_SetRenderTarget(ctx->ren, ctx->tex) != 0)
+		return NULL;
 
 	/* Calculate where the first element should appear vertically. */
 	SDL_GetRendererOutputSize(ctx->ren, &vert.x, &vert.y);
@@ -645,21 +643,11 @@ int ui_render_frame(ui_ctx_s *ctx)
 
 	}
 
-	ret = SDL_SetRenderTarget(ctx->ren, NULL);
-	if(ret != 0)
-		goto out;
-
-	SDL_SetRenderDrawColor(ctx->ren, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	SDL_RenderClear(ctx->ren);
-
-	/* TODO: Do not copy full to full. */
-	SDL_RenderCopy(ctx->ren, ctx->tex, NULL, NULL);
-
 	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "UI Rendered");
 	ctx->redraw = SDL_FALSE;
 
 out:
-	return ret;
+	return ctx->tex;
 }
 
 HEDLEY_NON_NULL(1,4)

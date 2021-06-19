@@ -7,17 +7,19 @@
  * the Free Software Foundation.
  */
 
-#define DONT_HAVE_FRIBIDI_CONFIG_H
-#define FRIBIDI_NO_DEPRECATED
-
 #include <fonts/fabric-icons.h>
 #include <fonts/NotoSansDisplay-Regular-Latin.h>
 #include <fonts/NotoSansDisplay-SemiCondensedLight-Latin.h>
 
 #include <font.h>
-#include <fribidi/fribidi.h>
 #include <SDL.h>
 #include <SDL_ttf.h>
+
+#ifndef NO_FRIBIDI
+# define DONT_HAVE_FRIBIDI_CONFIG_H
+# define FRIBIDI_NO_DEPRECATED
+# include <fribidi.h>
+#endif
 
 #if defined(__WIN32__)
 # define WINDOWS_LEAN_AND_MEAN
@@ -109,7 +111,7 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 				for(unsigned i = 0; i < SDL_arraysize(ctx->ui_regular); i++)
 					font = ctx->ui_regular[i];
 			}
-			
+
 			break;
 	}
 
@@ -181,7 +183,7 @@ static void font_close_ttf(font_ctx_s *ctx)
 /**
  * Initialise fonts given a DPI. This function always succeeds; a backup font is
  * used if a font cannot be found on the running platform.
- * 
+ *
  * \param ctx Font context.
  * \param dpi Requested DPI to scale fonts to.
 */
@@ -256,6 +258,8 @@ void font_change_pt(font_ctx_s *restrict ctx,
 #else
 #endif
 
+	/* Supresses unused goto on certain configurations. */
+	goto out;
 out:
 	return;
 }

@@ -68,6 +68,14 @@ typedef enum
 	LABEL_STYLE_MAX
 } label_style_e;
 
+typedef enum
+{
+	UI_ELEM_TYPE_END,
+	UI_ELEM_TYPE_LABEL,
+	UI_ELEM_TYPE_TILE,
+	UI_ELEM_TYPE_BAR
+} ui_elem_type_e;
+
 /* Structures. */
 struct ui_event
 {
@@ -154,14 +162,8 @@ struct ui_bar
 	Uint16 value;
 };
 
-
 struct ui_element {
-	enum {
-		UI_ELEM_TYPE_END,
-		UI_ELEM_TYPE_LABEL,
-		UI_ELEM_TYPE_TILE,
-		UI_ELEM_TYPE_BAR
-	} type;
+	ui_elem_type_e type;
 	union {
 		struct ui_label label;
 		struct ui_tile tile;
@@ -186,7 +188,7 @@ ui_ctx_s *ui_init(SDL_Window *HEDLEY_RESTRICT win,
  * \param ctx	UI Context.
  * \returns	SDL Texture with rendered UI.
  */
-int ui_render_frame(ui_ctx_s *ctx);
+SDL_Texture *ui_render_frame(ui_ctx_s *ctx);
 
 /**
  * Process input and window resize events.

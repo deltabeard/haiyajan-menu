@@ -15,6 +15,7 @@
 static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 {
 	SDL_Event e;
+	SDL_Texture *ui_tex;
 
 	while(SDL_PollEvent(&e))
 	{
@@ -24,8 +25,10 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 		}
 	}
 
+	ui_tex = ui_render_frame(ui);
+	SDL_SetRenderTarget(ren, NULL);
 	SDL_RenderClear(ren);
-	ui_render_frame(ui);
+	SDL_RenderCopy(ren, ui_tex, NULL, NULL);
 	SDL_RenderPresent(ren);
 
 	return;
@@ -33,7 +36,7 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 
 void onclick_function_debug(struct ui_element *element)
 {
-	SDL_Log("Element %p clicked", element);
+	SDL_Log("Element %p clicked", (void *)element);
 }
 
 /**
@@ -63,7 +66,7 @@ int main(int argc, char *argv[])
 				.onclick = {
 					.action = UI_EVENT_EXECUTE_FUNCTION,
 					.action_data = {
-						.execute_function = onclick_function_debug
+						.execute_function = { onclick_function_debug }
 					},
 				},
 				.user = NULL
@@ -84,7 +87,7 @@ int main(int argc, char *argv[])
 				.onclick = {
 					.action = UI_EVENT_EXECUTE_FUNCTION,
 					.action_data = {
-						.execute_function = onclick_function_debug
+						.execute_function = { onclick_function_debug }
 					},
 				},
 				.user = NULL
