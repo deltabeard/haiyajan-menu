@@ -145,7 +145,6 @@ static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
 	float dpi_multiply = ui->dpi_multiply;
 	const Sint32 dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 4;
 
-	SDL_assert(ui != NULL);
 	SDL_assert(ui->dpi > 0.0f);
 	SDL_assert(window_height >= UI_MIN_WINDOW_HEIGHT);
 
@@ -157,13 +156,16 @@ static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
 	if(window_height <= dpi_scale_thresh)
 	{
 		const Sint32 min_height_scale = UI_MIN_WINDOW_HEIGHT / 2;
-		float dpi_scale = (window_height - min_height_scale) /
-				  (dpi_scale_thresh - min_height_scale);
+		float dpi_scale = (float)(window_height - min_height_scale) /
+				  (float)(dpi_scale_thresh - min_height_scale);
 		dpi_multiply = (dpi_multiply * dpi_scale);
 	}
 
 	ref_tile_size = (Uint32) ((float) ref_tile_size * dpi_multiply);
 	ui->ref_tile_size = ref_tile_size;
+
+	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+		"Reference tile size changed to %d", ref_tile_size);
 }
 
 /**
@@ -191,9 +193,6 @@ static void ui_calculate_font_sizes(ui_ctx_s *HEDLEY_RESTRICT ui,
 	/* Pedantic asserts for debug builds only. */
 	SDL_assert(ui->dpi > 0.0f);
 	SDL_assert(window_height >= UI_MIN_WINDOW_HEIGHT);
-	SDL_assert(icon_pt != NULL);
-	SDL_assert(header_pt != NULL);
-	SDL_assert(regular_pt != NULL);
 
 	/* Make sure we don't abuse "restrict" keyword. */
 	SDL_assert(icon_pt != header_pt);
@@ -602,7 +601,6 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 {
 	SDL_Point vert;
 
-	SDL_assert(ctx != NULL);
 	SDL_assert(ctx->tex != NULL);
 
 	if(ctx->redraw == SDL_FALSE)
@@ -713,8 +711,6 @@ ui_ctx_s *ui_init(SDL_Window *HEDLEY_RESTRICT win,
 	int display_id;
 	SDL_Renderer *rend;
 	float dpi;
-
-	SDL_assert(win != NULL);
 
 	rend = SDL_GetRenderer(win);
 	if(rend == NULL)
