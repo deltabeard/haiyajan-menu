@@ -143,7 +143,7 @@ static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
 {
 	Uint16 ref_tile_size = 100;
 	float dpi_multiply = ui->dpi_multiply;
-	const Sint32 dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 4;
+	const Sint32 dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 2;
 
 	SDL_assert(ui->dpi > 0.0f);
 	SDL_assert(window_height >= UI_MIN_WINDOW_HEIGHT);
@@ -188,7 +188,7 @@ static void ui_calculate_font_sizes(ui_ctx_s *HEDLEY_RESTRICT ui,
 	static const float header_size_ref = 30.0f;
 	static const float regular_size_ref = 20.0f;
 	float dpi_multiply = ui->dpi_multiply;
-	const float dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 4;
+	const float dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 2;
 
 	/* Pedantic asserts for debug builds only. */
 	SDL_assert(ui->dpi > 0.0f);
@@ -208,8 +208,8 @@ static void ui_calculate_font_sizes(ui_ctx_s *HEDLEY_RESTRICT ui,
 	if(window_height <= dpi_scale_thresh)
 	{
 		const Sint32 min_height_scale = UI_MIN_WINDOW_HEIGHT / 8;
-		float dpi_scale = (window_height - min_height_scale) /
-				  (dpi_scale_thresh - min_height_scale);
+		float dpi_scale = (float)(window_height - min_height_scale) /
+				  (float)(dpi_scale_thresh - min_height_scale);
 		dpi_multiply = (dpi_multiply * dpi_scale);
 	}
 
