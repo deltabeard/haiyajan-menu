@@ -134,6 +134,15 @@
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
     <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>false</VcpkgEnableManifest>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='RelStatic|Win32'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='RelStatic|x64'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -262,7 +271,7 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <LanguageStandard>Default</LanguageStandard>
-      <PreprocessorDefinitions>T1HA0_RUNTIME_SELECT;T1HA1_DISABLED;T1HA2_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level4</WarningLevel>
     </ClCompile>
     <Link>
@@ -297,7 +306,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <LanguageStandard>Default</LanguageStandard>
-      <PreprocessorDefinitions>T1HA0_RUNTIME_SELECT;T1HA1_DISABLED;T1HA2_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
@@ -340,7 +349,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <LanguageStandard>Default</LanguageStandard>
-      <PreprocessorDefinitions>T1HA0_RUNTIME_SELECT;T1HA1_DISABLED;T1HA2_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
