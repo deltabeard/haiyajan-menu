@@ -126,7 +126,6 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 
 	{
 		/* Render text on tile. */
-		size_t instrlen = SDL_strlen(str);
 		SDL_Surface *surf;
 
 #ifndef NO_FRIBIDI
@@ -134,6 +133,7 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 		FriBidiChar *instr, *outstr;
 		FriBidiParType biditype = FRIBIDI_PAR_ON;
 		FriBidiStrIndex strinlen;
+		size_t instrlen = SDL_strlen(str);
 
 		instr = SDL_malloc(instrlen * sizeof(FriBidiChar));
 		outstr = SDL_malloc(instrlen * sizeof(FriBidiChar));

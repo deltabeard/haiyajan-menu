@@ -310,7 +310,6 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 			SDL_Texture *new_tex;
 			Uint32 texture_format;
 			Sint32 new_w, new_h;
-			const int dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 2;
 
 			ren = SDL_GetRenderer(win);
 			if(ren == NULL)
@@ -646,7 +645,6 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 {
 	int w, h;
 	ui_ctx_s *ctx;
-	int icon_pt, header_pt, regular_pt;
 
 	SDL_assert_paranoid(rend != NULL);
 
