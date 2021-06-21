@@ -78,8 +78,7 @@ void font_change_pt(font_ctx_s *restrict ctx,
  * \param rend		SDL Renderer
  * \return		Font context or NULL on error (check SDL_GetError()).
 */
-font_ctx_s *font_init(SDL_Renderer *rend,
-	int icon_pt, int header_pt, int regular_pt);
+font_ctx_s *font_init(SDL_Renderer *rend);
 
 /**
  * Frees a font context.

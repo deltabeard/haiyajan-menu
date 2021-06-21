@@ -264,8 +264,7 @@ out:
 	return;
 }
 
-font_ctx_s *font_init(SDL_Renderer *rend,
-		int icon_pt, int header_pt, int regular_pt)
+font_ctx_s *font_init(SDL_Renderer *rend)
 {
 	font_ctx_s *ctx = NULL;
 
@@ -278,7 +277,6 @@ font_ctx_s *font_init(SDL_Renderer *rend,
 	if(ctx == NULL)
 		goto out;
 
-	font_change_pt(ctx, icon_pt, header_pt, regular_pt);
 	ctx->rend = rend;
 
 out:

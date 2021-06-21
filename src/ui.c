@@ -51,6 +51,11 @@ struct ui_ctx {
 	/* Whether the front-end must call ui_render_frame(). */
 	SDL_bool redraw;
 
+	struct
+	{
+		Uint8 tile;
+	} padding;
+
 	Uint16 ref_tile_size;
 };
 
@@ -141,8 +146,6 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 HEDLEY_NON_NULL(1)
 static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
 {
-	Uint16 ref_tile_size = 100;
-	float dpi_multiply = ui->dpi_multiply;
 	const Sint32 dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 2;
 
 	SDL_assert(ui->dpi > 0.0f);
@@ -158,64 +161,71 @@ static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
 		const Sint32 min_height_scale = UI_MIN_WINDOW_HEIGHT / 2;
 		float dpi_scale = (float)(window_height - min_height_scale) /
 				  (float)(dpi_scale_thresh - min_height_scale);
-		dpi_multiply = (dpi_multiply * dpi_scale);
+		ui->dpi_multiply *= dpi_scale;
+		SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+			"DPI scaling changed to %f", ui->dpi_multiply);
 	}
 
-	ref_tile_size = (Uint32) ((float) ref_tile_size * dpi_multiply);
-	ui->ref_tile_size = ref_tile_size;
+	/* Set reference padding between elements. */
+	ui->padding.tile = 16 * ui->dpi_multiply;
+	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+		"Tile padding changed to %d", ui->padding.tile);
+
+	/* Set reference tile size. */
+	ui->ref_tile_size = (Uint16) (100.0f * ui->dpi_multiply);
 
 	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
-		"Reference tile size changed to %d", ref_tile_size);
+		"Reference tile size changed to %d", ui->ref_tile_size);
 }
 
-/**
- * Calculates font sizes based upon the DPI and size of the rendering target.
- *
- * \param dpi
- * \param window_height
- * \param icon_pt
- * \param header_pt
- * \param regular_pt
-*/
-HEDLEY_NON_NULL(1,3,4,5)
-static void ui_calculate_font_sizes(ui_ctx_s *HEDLEY_RESTRICT ui,
-	Sint32 window_height,
-	int *HEDLEY_RESTRICT icon_pt,
-	int *HEDLEY_RESTRICT header_pt,
-	int *HEDLEY_RESTRICT regular_pt)
+static void ui_resize_all(ui_ctx_s *ui, int win_w, int win_h)
 {
-	static const float icon_size_reference = 46.0f;
-	static const float header_size_ref = 30.0f;
-	static const float regular_size_ref = 20.0f;
-	float dpi_multiply = ui->dpi_multiply;
-	const float dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 2;
+	const float icon_size_reference = 46.0f;
+	const float header_size_ref = 30.0f;
+	const float regular_size_ref = 20.0f;
+	int icon_pt, header_pt, regular_pt;
 
-	/* Pedantic asserts for debug builds only. */
+	const Sint32 dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 2;
+
 	SDL_assert(ui->dpi > 0.0f);
-	SDL_assert(window_height >= UI_MIN_WINDOW_HEIGHT);
+	SDL_assert(ui->dpi_multiply > 0.0f);
+	SDL_assert(win_h >= UI_MIN_WINDOW_HEIGHT);
 
-	/* Make sure we don't abuse "restrict" keyword. */
-	SDL_assert(icon_pt != header_pt);
-	SDL_assert(header_pt != regular_pt);
-	SDL_assert(icon_pt != regular_pt);
-
-	/* TODO: Do not take DPI into account for low resolution displays. */
 	/* Limit minimum tile size. */
-	if(window_height <= UI_MIN_WINDOW_HEIGHT)
-		window_height = UI_MIN_WINDOW_HEIGHT;
+	if(win_h <= UI_MIN_WINDOW_HEIGHT)
+		win_h = UI_MIN_WINDOW_HEIGHT;
 
 	/* Reduce effect of DPI scaling if window is very small. */
-	if(window_height <= dpi_scale_thresh)
+	if(win_h <= dpi_scale_thresh)
 	{
-		const Sint32 min_height_scale = UI_MIN_WINDOW_HEIGHT / 8;
-		float dpi_scale = (float)(window_height - min_height_scale) /
-				  (float)(dpi_scale_thresh - min_height_scale);
-		dpi_multiply = (dpi_multiply * dpi_scale);
+		const Sint32 min_height_scale = UI_MIN_WINDOW_HEIGHT / 2;
+		float dpi_scale = (float)(win_h - min_height_scale) /
+			(float)(dpi_scale_thresh - min_height_scale);
+		ui->dpi_multiply *= dpi_scale;
+		SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+			"DPI scaling changed to %f", ui->dpi_multiply);
 	}
 
-	*icon_pt = (int) (icon_size_reference * dpi_multiply);
-	*header_pt = (int) (header_size_ref * dpi_multiply);
-	*regular_pt = (int) (regular_size_ref * dpi_multiply);
+	/* Set reference padding between elements. */
+	ui->padding.tile = 16 * ui->dpi_multiply;
+	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+		"Tile padding changed to %d", ui->padding.tile);
+
+	/* Set reference tile size. */
+	ui->ref_tile_size = (Uint16)(100.0f * ui->dpi_multiply);
+	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+		"Reference tile size changed to %d", ui->ref_tile_size);
+
+	icon_pt = (int)(icon_size_reference * ui->dpi_multiply);
+	header_pt = (int)(header_size_ref * (ui->dpi_multiply +
+		(1.0f - ui->dpi_multiply) / 2.0f));
+	regular_pt = (int)(regular_size_ref * ui->dpi_multiply);
+
+	SDL_assert(ui->font != NULL);
+	font_change_pt(ui->font, icon_pt, header_pt, regular_pt);
+	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+		"Font sizes changed to %d, %d, %d",
+		icon_pt, header_pt, regular_pt);
 }
 
 HEDLEY_NON_NULL(1,2)
@@ -278,34 +288,19 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 		{
 			int display_id = SDL_GetWindowDisplayIndex(win);
 			float new_dpi;
-			int h, w, longest;
-			int icon_pt, header_pt, regular_pt;
+			int h, w;
 
-			if(SDL_GetDisplayDPI(display_id, &new_dpi, NULL,
-				NULL) < 0)
+			if(SDL_GetDisplayDPI(display_id, &new_dpi, NULL, NULL) < 0)
 				new_dpi = dpi_reference;
 
 			if(new_dpi == ctx->dpi)
 				break;
 
+			ctx->dpi = new_dpi;
 			ctx->dpi_multiply = ctx->dpi / dpi_reference;
 
 			SDL_GetWindowSize(win, &w, &h);
-			if(w < h)
-				longest = w;
-			else
-				longest = h;
-
-			ui_calculate_font_sizes(ctx, longest, &icon_pt,
-				&header_pt,
-				&regular_pt);
-			font_change_pt(ctx->font, icon_pt, header_pt,
-				regular_pt);
-			ui_set_widget_sizes(ctx, longest);
-
-			SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
-				"Successfully resized interface elements by x%f",
-				ctx->dpi_multiply);
+			ui_resize_all(ctx, w, h);
 		}
 			break;
 
@@ -314,8 +309,8 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 			SDL_Renderer *ren;
 			SDL_Texture *new_tex;
 			Uint32 texture_format;
-			Sint32 new_w, new_h, longest;
-			int icon_pt, header_pt, regular_pt;
+			Sint32 new_w, new_h;
+			const int dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 2;
 
 			ren = SDL_GetRenderer(win);
 			if(ren == NULL)
@@ -344,17 +339,9 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 			SDL_DestroyTexture(ctx->tex);
 			ctx->tex = new_tex;
 
-			if(new_w < new_h)
-				longest = new_w;
-			else
-				longest = new_h;
+			ctx->dpi_multiply = ctx->dpi / dpi_reference;
 
-			ui_calculate_font_sizes(ctx, longest,
-				&icon_pt, &header_pt,
-				&regular_pt);
-			font_change_pt(ctx->font, icon_pt, header_pt,
-				regular_pt);
-			ui_set_widget_sizes(ctx, longest);
+			ui_resize_all(ctx, new_w, new_h);
 
 			SDL_LogVerbose(SDL_LOG_CATEGORY_VIDEO,
 				"Successfully resized texture size to %dW %dH",
@@ -481,7 +468,10 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	};
 	SDL_Texture *text_tex, *icon_tex;
 	SDL_Rect text_dim, icon_dim;
-	const SDL_Point tile_padding = {.x = 16, .y = 16};
+	const SDL_Point tile_padding = {
+		.x = ctx->padding.tile,
+		.y = ctx->padding.tile
+	};
 
 	/* Draw tile background. */
 	SDL_SetRenderDrawColor(ctx->ren,
@@ -680,15 +670,14 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 	ctx->dpi = dpi;
 	ctx->dpi_multiply = dpi / dpi_reference;
 
-	ui_calculate_font_sizes(ctx, h, &icon_pt, &header_pt, &regular_pt);
-	ctx->font = font_init(rend, icon_pt, header_pt, regular_pt);
+	ctx->font = font_init(rend);
 	if(ctx->font == NULL)
 	{
 		SDL_DestroyTexture(ctx->tex);
 		goto err;
 	}
 
-	ui_set_widget_sizes(ctx, h);
+	ui_resize_all(ctx, w, h);
 
 	/* Draw the first frame. */
 	ctx->redraw = SDL_TRUE;
