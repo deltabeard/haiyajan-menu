@@ -180,6 +180,10 @@
       <Message>
       </Message>
     </PreBuildEvent>
+    <ResourceCompile>
+      <Culture>0x0009</Culture>
+      <PreprocessorDefinitions>GIT_VER=$(GIT_VER);COMPANY=$(COMPANY);DESCRIPTION=$(DESCRIPTION);LICENSE=$(LICENSE);NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -221,6 +225,10 @@
       <Message>
       </Message>
     </PreBuildEvent>
+    <ResourceCompile>
+      <Culture>0x0009</Culture>
+      <PreprocessorDefinitions>GIT_VER=$(GIT_VER);COMPANY=$(COMPANY);DESCRIPTION=$(DESCRIPTION);LICENSE=$(LICENSE);NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelStatic|Win32'">
     <ClCompile>
@@ -262,6 +270,10 @@
       <Message>
       </Message>
     </PreBuildEvent>
+    <ResourceCompile>
+      <Culture>0x0009</Culture>
+      <PreprocessorDefinitions>GIT_VER=$(GIT_VER);COMPANY=$(COMPANY);DESCRIPTION=$(DESCRIPTION);LICENSE=$(LICENSE);NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -297,6 +309,10 @@
       <Message>
       </Message>
     </PreBuildEvent>
+    <ResourceCompile>
+      <Culture>0x0009</Culture>
+      <PreprocessorDefinitions>GIT_VER=$(GIT_VER);COMPANY=$(COMPANY);DESCRIPTION=$(DESCRIPTION);LICENSE=$(LICENSE);NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -338,7 +354,8 @@
       </Message>
     </PreBuildEvent>
     <ResourceCompile>
-      <Culture>0x0809</Culture>
+      <Culture>0x0009</Culture>
+      <PreprocessorDefinitions>GIT_VER=$(GIT_VER);COMPANY=$(COMPANY);DESCRIPTION=$(DESCRIPTION);LICENSE=$(LICENSE);NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelStatic|x64'">
@@ -381,7 +398,8 @@
       </Message>
     </PreBuildEvent>
     <ResourceCompile>
-      <Culture>0x0809</Culture>
+      <Culture>0x0009</Culture>
+      <PreprocessorDefinitions>GIT_VER=$(GIT_VER);COMPANY=$(COMPANY);DESCRIPTION=$(DESCRIPTION);LICENSE=$(LICENSE);NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

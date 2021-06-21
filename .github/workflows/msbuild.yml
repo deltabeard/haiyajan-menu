@@ -5,12 +5,11 @@ on: [push]
 env:
   # Path to the solution file relative to the root of the project.
   SOLUTION_FILE_PATH: .\ext\MSVC\haiyajan-menu.sln
-
-  # Configuration type to build.
-  # You can convert this to a build matrix if you need coverage of multiple configuration types.
-  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
   BUILD_CONFIGURATION: Release
   BUILD_PLATFORM: x64
+  COMPANY: Deltabeard
+  DESCRIPTION: "Menu UI for Haiyajan"
+  LICENSE: LGPL-3.0-or-later
 
 jobs:
   build:
@@ -28,12 +27,19 @@ jobs:
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: |
         nuget restore ${{env.SOLUTION_FILE_PATH}}
-        msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=${{env.BUILD_PLATFORM}} ${{env.SOLUTION_FILE_PATH}}
+	git describe --tags --always --dirty="-dirty" --abbrev=10 > BUILD_ID
+	set /P BUILD_ID=< BUILD_ID
+	set /P BUILD_ID=< BUILD_ID
+        msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=${{env.BUILD_PLATFORM}} /p:GIT_VER=%BUILD_ID% /p:COMPANY=${{env.COMPANY}} /p:DESCRIPTION=${{env.DESCRIPTION}} /p:LICENSE=${{env.LICENSE}} ${{env.SOLUTION_FILE_PATH}}
+
 
     - name: Upload build output
       uses: actions/upload-artifact@v2
       with:
-        name: haiyajan-menu-${{env.BUILD_PLATFORM}}
+        name: haiyajan-menu-${{env.BUILD_PLATFORM}}-${{env.BUILD_PLATFORM}}
         path: |
-          ext/MSVC/${{env.BUILD_CONFIGURATION}}/*/*.exe
-          ext/MSVC/${{env.BUILD_CONFIGURATION}}/*/*.dll
+          ext/MSVC/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/*.exe
+          ext/MSVC/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/*.dll
+          LICENSE
+          README.md
+          BUILD_ID
