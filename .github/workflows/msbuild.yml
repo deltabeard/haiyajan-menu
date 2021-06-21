@@ -23,15 +23,10 @@ jobs:
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      # Add additional options to the MSBuild command line here (like platform or verbosity level).
-      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: |
+        git describe --tags --always --dirty="-dirty" --abbrev=10 > BUILD_ID
         nuget restore ${{env.SOLUTION_FILE_PATH}}
-	git describe --tags --always --dirty="-dirty" --abbrev=10 > BUILD_ID
-	set /P BUILD_ID=< BUILD_ID
-	set /P BUILD_ID=< BUILD_ID
-        msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=${{env.BUILD_PLATFORM}} /p:GIT_VER=%BUILD_ID% /p:COMPANY=${{env.COMPANY}} /p:DESCRIPTION=${{env.DESCRIPTION}} /p:LICENSE=${{env.LICENSE}} ${{env.SOLUTION_FILE_PATH}}
-
+        msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=${{env.BUILD_PLATFORM}} /p:GIT_VER=${{github.sha}} /p:COMPANY=${{env.COMPANY}} /p:DESCRIPTION=${{env.DESCRIPTION}} /p:LICENSE=${{env.LICENSE}} ${{env.SOLUTION_FILE_PATH}}
 
     - name: Upload build output
       uses: actions/upload-artifact@v2
@@ -42,4 +37,3 @@ jobs:
           ext/MSVC/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/*.dll
           LICENSE
           README.md
-          BUILD_ID
