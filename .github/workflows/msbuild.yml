@@ -21,7 +21,8 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1
       
-    - name: Get Hash
+    - name: Set Git Hash Environment Variable
+      shell: bash
       run: |
         echo 'BUILD_ID<<EOF' >> $GITHUB_ENV
         git describe --tags --always --dirty="-dirty" --abbrev=10 >> $GITHUB_ENV
