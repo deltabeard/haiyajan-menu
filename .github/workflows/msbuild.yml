@@ -37,3 +37,4 @@ jobs:
           ext/MSVC/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/*.dll
           LICENSE
           README.md
+          BUILD_ID
