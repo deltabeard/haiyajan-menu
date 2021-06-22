@@ -13,7 +13,6 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        #os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
     - uses: actions/checkout@v2
@@ -22,5 +21,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install build-essential
         sudo apt-get install libsdl2-dev libsdl2-ttf-dev libfribidi-dev
+
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
     - name: make
       run: make BUILD=RELDEBUG EXTRA_CFLAGS="-march=haswell -fopt-info-missed"
