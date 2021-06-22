@@ -32,6 +32,12 @@ jobs:
       uses: github/codeql-action/init@v1
       with:
         languages: ${{ matrix.language }}
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install build-essential
+        sudo apt-get install libsdl2-dev libsdl2-ttf-dev libfribidi-dev
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     - name: Autobuild
