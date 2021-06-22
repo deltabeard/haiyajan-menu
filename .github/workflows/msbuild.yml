@@ -24,10 +24,10 @@ jobs:
     - name: Set Git Hash Environment Variable
       shell: bash
       run: |
+        git describe --tags --always --dirty="-dirty" --abbrev=10 > BUILD_ID
         echo 'BUILD_ID<<EOF' >> $GITHUB_ENV
-        git describe --tags --always --dirty="-dirty" --abbrev=10 >> $GITHUB_ENV
+        echo "$BUILD_ID" >> $GITHUB_ENV
         echo 'EOF' >> $GITHUB_ENV
-        echo "$BUILD_ID" > BUILD_ID
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
