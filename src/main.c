@@ -15,6 +15,7 @@
 static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 {
 	SDL_Event e;
+	SDL_Texture *ui_tex;
 
 	while(SDL_PollEvent(&e))
 	{
@@ -24,23 +25,18 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 		}
 	}
 
-	if(ui_should_redraw(ui) == SDL_TRUE)
-	{
-		ui_render_frame(ui);
-		SDL_RenderPresent(ren);
-	}
-	else
-	{
-		const int frame_delay = 5;
-		SDL_Delay(frame_delay);
-	}
+	ui_tex = ui_render_frame(ui);
+	SDL_SetRenderTarget(ren, NULL);
+	SDL_RenderClear(ren);
+	SDL_RenderCopy(ren, ui_tex, NULL, NULL);
+	SDL_RenderPresent(ren);
 
 	return;
 }
 
-void onclick_function_debug(ui_el_s *element)
+void onclick_function_debug(struct ui_element *element)
 {
-	SDL_Log("Element %p clicked", element);
+	SDL_Log("Element %p clicked", (void *)element);
 }
 
 /**
@@ -54,7 +50,7 @@ int main(int argc, char *argv[])
 	ui_ctx_s *ui;
 	Uint32 quit = 0;
 
-	ui_el_s ui_elements[] = {
+	struct ui_element ui_elements[] = {
 		{
 			.type = UI_ELEM_TYPE_TILE,
 			.elem.tile = {
@@ -70,7 +66,7 @@ int main(int argc, char *argv[])
 				.onclick = {
 					.action = UI_EVENT_EXECUTE_FUNCTION,
 					.action_data = {
-						.execute_function = onclick_function_debug
+						.execute_function = { onclick_function_debug }
 					},
 				},
 				.user = NULL
@@ -91,7 +87,7 @@ int main(int argc, char *argv[])
 				.onclick = {
 					.action = UI_EVENT_EXECUTE_FUNCTION,
 					.action_data = {
-						.execute_function = onclick_function_debug
+						.execute_function = { onclick_function_debug }
 					},
 				},
 				.user = NULL

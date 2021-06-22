@@ -7,17 +7,19 @@
  * the Free Software Foundation.
  */
 
-#define DONT_HAVE_FRIBIDI_CONFIG_H
-#define FRIBIDI_NO_DEPRECATED
-
 #include <fonts/fabric-icons.h>
 #include <fonts/NotoSansDisplay-Regular-Latin.h>
 #include <fonts/NotoSansDisplay-SemiCondensedLight-Latin.h>
 
 #include <font.h>
-#include <fribidi/fribidi.h>
 #include <SDL.h>
 #include <SDL_ttf.h>
+
+#ifndef NO_FRIBIDI
+# define DONT_HAVE_FRIBIDI_CONFIG_H
+# define FRIBIDI_NO_DEPRECATED
+# include <fribidi/fribidi.h>
+#endif
 
 #if defined(__WIN32__)
 # define WINDOWS_LEAN_AND_MEAN
@@ -109,7 +111,7 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 				for(unsigned i = 0; i < SDL_arraysize(ctx->ui_regular); i++)
 					font = ctx->ui_regular[i];
 			}
-			
+
 			break;
 	}
 
@@ -124,7 +126,6 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 
 	{
 		/* Render text on tile. */
-		size_t instrlen = SDL_strlen(str);
 		SDL_Surface *surf;
 
 #ifndef NO_FRIBIDI
@@ -132,6 +133,7 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 		FriBidiChar *instr, *outstr;
 		FriBidiParType biditype = FRIBIDI_PAR_ON;
 		FriBidiStrIndex strinlen;
+		size_t instrlen = SDL_strlen(str);
 
 		instr = SDL_malloc(instrlen * sizeof(FriBidiChar));
 		outstr = SDL_malloc(instrlen * sizeof(FriBidiChar));
@@ -181,7 +183,7 @@ static void font_close_ttf(font_ctx_s *ctx)
 /**
  * Initialise fonts given a DPI. This function always succeeds; a backup font is
  * used if a font cannot be found on the running platform.
- * 
+ *
  * \param ctx Font context.
  * \param dpi Requested DPI to scale fonts to.
 */
@@ -256,12 +258,13 @@ void font_change_pt(font_ctx_s *restrict ctx,
 #else
 #endif
 
+	/* Supresses unused goto on certain configurations. */
+	goto out;
 out:
 	return;
 }
 
-font_ctx_s *font_init(SDL_Renderer *rend,
-		int icon_pt, int header_pt, int regular_pt)
+font_ctx_s *font_init(SDL_Renderer *rend)
 {
 	font_ctx_s *ctx = NULL;
 
@@ -274,7 +277,6 @@ font_ctx_s *font_init(SDL_Renderer *rend,
 	if(ctx == NULL)
 		goto out;
 
-	font_change_pt(ctx, icon_pt, header_pt, regular_pt);
 	ctx->rend = rend;
 
 out:

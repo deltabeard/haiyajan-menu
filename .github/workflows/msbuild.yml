@@ -5,11 +5,11 @@ on: [push]
 env:
   # Path to the solution file relative to the root of the project.
   SOLUTION_FILE_PATH: .\ext\MSVC\haiyajan-menu.sln
-
-  # Configuration type to build.
-  # You can convert this to a build matrix if you need coverage of multiple configuration types.
-  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
   BUILD_CONFIGURATION: Release
+  BUILD_PLATFORM: x64
+  COMPANY: Deltabeard
+  DESCRIPTION: "Menu UI for Haiyajan"
+  LICENSE: LGPL-3.0-or-later
 
 jobs:
   build:
@@ -20,13 +20,33 @@ jobs:
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1
-
-    - name: Extract build dependencies
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: .\ext\MSVC_DEPS.exe -o"ext" -y
+      
+    - name: Set Git Hash Environment Variable
+      shell: bash
+      run: |
+        git describe --tags --always --dirty="-dirty" --abbrev=10 > BUILD_ID
+        echo 'BUILD_ID<<EOF' >> $GITHUB_ENV
+        cat BUILD_ID >> $GITHUB_ENV
+        echo 'EOF' >> $GITHUB_ENV
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      # Add additional options to the MSBuild command line here (like platform or verbosity level).
-      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
+      run: |
+        nuget restore ${{env.SOLUTION_FILE_PATH}}
+        msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=${{env.BUILD_PLATFORM}} /p:GIT_VER=${{env.BUILD_ID}} /p:COMPANY=${{env.COMPANY}} /p:DESCRIPTION="${{env.DESCRIPTION}}" /p:LICENSE=${{env.LICENSE}} ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Prepare additional files for artifact
+      shell: bash
+      run: |
+        mv LICENSE README.md BUILD_ID ./ext/MSVC
+    
+    - name: Upload build output
+      uses: actions/upload-artifact@v2
+      with:
+        name: haiyajan-menu-${{env.BUILD_CONFIGURATION}}-${{env.BUILD_PLATFORM}}
+        path: |
+          ext/MSVC/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/*.exe
+          ext/MSVC/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/*.dll
+          ext/MSVC/LICENSE
+          ext/MSVC/README.md
+          ext/MSVC/BUILD_ID
