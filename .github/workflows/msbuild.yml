@@ -26,7 +26,7 @@ jobs:
       run: |
         git describe --tags --always --dirty="-dirty" --abbrev=10 > BUILD_ID
         echo 'BUILD_ID<<EOF' >> $GITHUB_ENV
-        echo "$BUILD_ID" >> $GITHUB_ENV
+        cat BUILD_ID >> $GITHUB_ENV
         echo 'EOF' >> $GITHUB_ENV
 
     - name: Build
