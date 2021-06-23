@@ -43,7 +43,7 @@ jobs:
     - name: Upload build output
       uses: actions/upload-artifact@v2
       with:
-        name: haiyajan-menu-${{env.BUILD_CONFIGURATION}}-${{env.BUILD_PLATFORM}}
+        name: haiyajan-menu-${{env.BUILD_PLATFORM}}-${{github.run_number}}
         path: |
           ext/MSVC/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/*.exe
           ext/MSVC/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/*.dll
