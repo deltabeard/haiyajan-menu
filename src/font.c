@@ -156,7 +156,6 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 		strutf8_out = SDL_malloc(instrlen);
 		if(strutf8_out == NULL)
 		{
-			free(instr);
 			free(outstr);
 			goto out;
 		}
