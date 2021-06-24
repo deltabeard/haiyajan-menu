@@ -137,6 +137,16 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 
 		instr = SDL_malloc(instrlen * sizeof(FriBidiChar));
 		outstr = SDL_malloc(instrlen * sizeof(FriBidiChar));
+
+		if(instr == NULL)
+			goto out;
+			
+		if(outstr == NULL)
+		{
+			free(instr);
+			goto out;
+		}
+
 		strinlen = fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8, str,
 				(FriBidiStrIndex)instrlen, instr);
 
@@ -144,6 +154,13 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 		SDL_free(instr);
 
 		strutf8_out = SDL_malloc(instrlen);
+		if(strutf8_out == NULL)
+		{
+			free(instr);
+			free(outstr);
+			goto out;
+		}
+
 		fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8, outstr, strinlen, strutf8_out);
 		SDL_free(outstr);
 

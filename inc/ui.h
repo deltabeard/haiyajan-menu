@@ -147,7 +147,7 @@ struct ui_tile {
 
 struct ui_label
 {
-	/* Label ascociated with the element. */
+	/* Label associated with the element. */
 	const char *label;
 
 	label_style_e style;
@@ -155,7 +155,7 @@ struct ui_label
 
 struct ui_bar
 {
-	/* Label ascociated with the element. */
+	/* Label associated with the element. */
 	const char *label;
 
 	/* Bar fill between 0 to SDL_MAX_UINT16. */
