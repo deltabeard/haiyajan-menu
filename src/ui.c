@@ -172,7 +172,7 @@ static void ui_resize_all(ui_ctx_s *ui, int win_w, int win_h)
 	}
 
 	/* Set reference padding between elements. */
-	ui->padding.tile = 16 * ui->dpi_multiply;
+	ui->padding.tile = (Uint8)(16.0f * ui->dpi_multiply);
 	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
 		"Tile padding changed to %d", ui->padding.tile);
 
@@ -400,7 +400,7 @@ static void ui_draw_selection_bg(ui_ctx_s *HEDLEY_RESTRICT ctx,
 {
 	/* Offset the selection square to surround the selection from the
 	 * outside. */
-	unsigned offset = (2.0f * ctx->dpi_multiply) + 1;
+	unsigned offset = (unsigned)(2.0f * ctx->dpi_multiply) + 1;
 	/* Set the dimensions of the selection square. */
 	SDL_Rect outline = {
 		.x = r->x - offset,
