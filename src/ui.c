@@ -143,41 +143,6 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 	return;
 }
 
-HEDLEY_NON_NULL(1)
-static void ui_set_widget_sizes(ui_ctx_s *ui, Sint32 window_height)
-{
-	const Sint32 dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 2;
-
-	SDL_assert(ui->dpi > 0.0f);
-	SDL_assert(window_height >= UI_MIN_WINDOW_HEIGHT);
-
-	/* Limit minimum tile size. */
-	if(window_height <= UI_MIN_WINDOW_HEIGHT)
-		window_height = UI_MIN_WINDOW_HEIGHT;
-
-	/* Reduce effect of DPI scaling if window is very small. */
-	if(window_height <= dpi_scale_thresh)
-	{
-		const Sint32 min_height_scale = UI_MIN_WINDOW_HEIGHT / 2;
-		float dpi_scale = (float)(window_height - min_height_scale) /
-				  (float)(dpi_scale_thresh - min_height_scale);
-		ui->dpi_multiply *= dpi_scale;
-		SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
-			"DPI scaling changed to %f", ui->dpi_multiply);
-	}
-
-	/* Set reference padding between elements. */
-	ui->padding.tile = 16 * ui->dpi_multiply;
-	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
-		"Tile padding changed to %d", ui->padding.tile);
-
-	/* Set reference tile size. */
-	ui->ref_tile_size = (Uint16) (100.0f * ui->dpi_multiply);
-
-	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
-		"Reference tile size changed to %d", ui->ref_tile_size);
-}
-
 static void ui_resize_all(ui_ctx_s *ui, int win_w, int win_h)
 {
 	const float icon_size_reference = 46.0f;
