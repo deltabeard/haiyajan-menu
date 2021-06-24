@@ -6,7 +6,7 @@ UI toolkit for Haiyajan. Requires the SDL2 library only. Written in C99.
 
 Simple to implement, simple to use.
 
-![Image](test/img/main_menu_continue.png)
+![Image](meta/main_menu_continue.png)
 
 ## Building
 
