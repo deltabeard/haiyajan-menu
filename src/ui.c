@@ -398,11 +398,23 @@ HEDLEY_NON_NULL(1,2)
 static void ui_draw_selection_bg(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		const SDL_Rect *HEDLEY_RESTRICT r)
 {
-	SDL_Rect outline = {.x = r->x, .y = r->y, .h = r->h, .w = r->w};
+	/* Offset the selection square to surround the selection from the
+	 * outside. */
+	unsigned offset = (2.0f * ctx->dpi_multiply) + 1;
+	/* Set the dimensions of the selection square. */
+	SDL_Rect outline = {
+		.x = r->x - offset,
+		.y = r->y - offset,
+		.h = r->h + (offset * 2),
+		.w = r->w + (offset * 2)
+	};
+	/* Set the thickness of the selection square. */
+	unsigned thickness = (5.0f * ctx->dpi_multiply) + 1;
 
-	SDL_SetRenderDrawColor(ctx->ren, 0xFF, 0xFF, 0xFF, 128);
+	/* Use white draw colour. */
+	SDL_SetRenderDrawColor(ctx->ren, 0xFF, 0xFF, 0xFF, 0xFF);
 
-	for(unsigned i = 0; i < 5; i++)
+	for(unsigned i = 0; i < thickness; i++)
 	{
 		SDL_RenderDrawRect(ctx->ren, &outline);
 		outline.x++;
