@@ -136,11 +136,10 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 		size_t instrlen = SDL_strlen(str);
 
 		instr = SDL_malloc(instrlen * sizeof(FriBidiChar));
-		outstr = SDL_malloc(instrlen * sizeof(FriBidiChar));
-
 		if(instr == NULL)
 			goto out;
-			
+
+		outstr = SDL_malloc(instrlen * sizeof(FriBidiChar));
 		if(outstr == NULL)
 		{
 			free(instr);
