@@ -9,5 +9,4 @@ extraction:
       - "libsdl2-ttf-dev"
       - "make"
     index:
-      build_command: "make -j$(nproc) EXTRA_CFLAGS='-march=native -DT1HA0_DISABLED=1'\
-        \ BUILD=RELEASE"
+      build_command: "make -j$(nproc) BUILD=DEBUG"

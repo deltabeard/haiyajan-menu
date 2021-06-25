@@ -1,12 +1,40 @@
 cmake_minimum_required(VERSION 3.19)
-project(haiyajan_menu
+
+# Obtain the version of Haiyajan-menu that is being built.
+# If git is not available on the build platform, use this as a fallback.
+set(_build_version 0.1.0)
+find_package(Git)
+if(GIT_FOUND)
+	execute_process(
+	COMMAND ${GIT_EXECUTABLE} describe --exact-match --tags --long --always --dirty=-dirty
+	WORKING_DIRECTORY "${local_dir}"
+	OUTPUT_VARIABLE GIT_VER
+	ERROR_QUIET
+	OUTPUT_STRIP_TRAILING_WHITESPACE)
+	message(STATUS "Configuring version ${GIT_VER}")
+
+	execute_process(
+	COMMAND ${GIT_EXECUTABLE} describe --exact-match --tags
+	WORKING_DIRECTORY "${local_dir}"
+	OUTPUT_VARIABLE _build_version
+	ERROR_QUIET
+	OUTPUT_STRIP_TRAILING_WHITESPACE)
+else()
+	message(STATUS "GIT not found; this is a local build of version ${_build_version}")
+	set(GIT_VER ${_build_version}-LOCAL)
+endif()
+
+# Initialise project information.
+project(HAIYAJAN_MENU
         LANGUAGES C
-        VERSION 0.0.1
+        VERSION ${_build_version}
         DESCRIPTION "User interface library for Haiyajan"
         HOMEPAGE_URL "https://github.com/deltabeard/haiyajan-menu")
 
 set(CMAKE_C_STANDARD 99)
+set(HAIYAJAN_MENU_LICENSE "LGPL-3.0, Mahyar Koshkouei (c) 2021")
 
+# Add dependencies to project.
 add_executable(${PROJECT_NAME})
 find_package(SDL2 REQUIRED)
 find_library(SDL2_TTF_LIBRARY SDL2_ttf REQUIRED)
@@ -17,6 +45,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE inc)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2::SDL2main)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_TTF_LIBRARY})
 
+# If libfribidi is not available, disable its use.
+# This option can be forced by the user in cmake-gui.
 if(FRIBIDI_LIBRARY)
     set(FRIBIDI_LIBRARY_ENABLED_BY_DEFAULT ON)
 else()
@@ -32,7 +62,18 @@ else()
     add_compile_definitions(NO_FRIBIDI)
 endif()
 
+# Compile resources for Windows executable.
 if(WIN32)
     target_sources(${PROJECT_NAME} PRIVATE meta/winres.rc)
 endif()
 
+# Add definitions of project information.
+add_compile_definitions(COMPANY=Deltabeard)
+add_compile_definitions(DESCRIPTION=${PROJECT_DESCRIPTION})
+add_compile_definitions(LICENSE=${HAIYAJAN_MENU_LICENSE})
+add_compile_definitions(NAME=${PROJECT_NAME})
+add_compile_definitions(GIT_VER=${GIT_VER})
+add_compile_definitions(VER_MAJOR=${HAIYAJAN_MENU_VERSION_MAJOR})
+add_compile_definitions(VER_MINOR=${HAIYAJAN_MENU_VERSION_MINOR})
+add_compile_definitions(VER_PATCH=${HAIYAJAN_MENU_VERSION_PATCH})
+add_compile_definitions(VER_TWEAK=0)
