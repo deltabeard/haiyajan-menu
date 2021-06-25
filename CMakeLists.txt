@@ -31,3 +31,8 @@ if(USE_FRIBIDI)
 else()
     add_compile_definitions(NO_FRIBIDI)
 endif()
+
+if(WIN32)
+    target_sources(${PROJECT_NAME} PRIVATE meta/winres.rc)
+endif()
+

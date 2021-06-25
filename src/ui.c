@@ -395,7 +395,7 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 }
 
 HEDLEY_NON_NULL(1,2)
-static void ui_draw_selection_bg(ui_ctx_s *HEDLEY_RESTRICT ctx,
+static void ui_draw_selection(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		const SDL_Rect *HEDLEY_RESTRICT r)
 {
 	/* Offset the selection square to surround the selection from the
@@ -554,9 +554,7 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 
 	/* Draw outline and translucent box if tile is selected. */
 	if(ctx->current == el)
-	{
-		ui_draw_selection_bg(ctx, &dim);
-	}
+		ui_draw_selection(ctx, &dim);
 
 	/* Increment coordinates to next element. */
 	p->y += len + tile_padding.y;
