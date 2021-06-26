@@ -165,7 +165,6 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 		surf = TTF_Render_fn(font, strutf8_out, fg);
 		SDL_free(strutf8_out);
 #else
-		SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Test");
 		surf = TTF_Render_fn(font, str, fg);
 #endif
 
