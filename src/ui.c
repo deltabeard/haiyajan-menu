@@ -23,8 +23,10 @@ struct ui_ctx {
 	/* Required to recreate texture on resizing. */
 	SDL_Renderer *ren;
 
-	/* Texture to render on. */
+	/* Texture to render user interface on.. */
 	SDL_Texture *tex;
+	/* Texture for static elements that do not change on each frame. */
+	SDL_Texture *static_tex;
 
 	/* Root Menu. */
 	struct ui_element *root;
@@ -50,6 +52,8 @@ struct ui_ctx {
 
 	/* Whether the front-end must call ui_render_frame(). */
 	SDL_bool redraw;
+
+	SDL_Rect selection_square;
 
 	struct
 	{
@@ -272,7 +276,7 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 		case SDL_WINDOWEVENT_RESIZED:
 		{
 			SDL_Renderer *ren;
-			SDL_Texture *new_tex;
+			SDL_Texture *new_tex, *new_static_tex;
 			Uint32 texture_format;
 			Sint32 new_w, new_h;
 
@@ -300,8 +304,22 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 				return;
 			}
 
+			new_static_tex = SDL_CreateTexture(ren, texture_format,
+				SDL_TEXTUREACCESS_TARGET,
+				new_w, new_h);
+			if(new_static_tex == NULL)
+			{
+				SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
+					"Unable to create new texture for "
+					"static elements: %s",
+					SDL_GetError());
+				return;
+			}
+
 			SDL_DestroyTexture(ctx->tex);
+			SDL_DestroyTexture(ctx->static_tex);
 			ctx->tex = new_tex;
+			ctx->static_tex = new_static_tex;
 
 			ctx->dpi_multiply = ctx->dpi / dpi_reference;
 
@@ -409,10 +427,78 @@ static void ui_draw_selection(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		.w = r->w + (offset * 2)
 	};
 	/* Set the thickness of the selection square. */
-	unsigned thickness = (5.0f * ctx->dpi_multiply) + 1;
+	const unsigned thickness = (5.0f * ctx->dpi_multiply) + 1;
+	//const SDL_Colour bright = { 0x19, 0x82, 0xC4, 0xFF };
+	//const SDL_Colour dark = { 0x10, 0x54, 0x7E, 0xFF };
+	static const Uint8 red[256] = {
+		15, 15, 15, 15, 15, 16, 16, 16, 16, 16, 16, 16, 16, 16, 17, 17,
+		17, 17, 17, 17, 17, 17, 17, 17, 18, 18, 18, 18, 18, 18, 18, 18,
+		18, 18, 18, 18, 18, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19,
+		19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19,
+		20, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19,
+		19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 18, 18, 18, 18,
+		18, 18, 18, 18, 18, 18, 18, 18, 18, 17, 17, 17, 17, 17, 17, 17,
+		17, 17, 17, 16, 16, 16, 16, 16, 16, 16, 16, 16, 15, 15, 15, 15,
+		15, 15, 15, 15, 15, 14, 14, 14, 14, 14, 14, 14, 14, 14, 13, 13,
+		13, 13, 13, 13, 13, 13, 13, 13, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+		11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+		11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+		11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 13, 13, 13, 13, 13, 13, 13,
+		13, 13, 13, 14, 14, 14, 14, 14, 14, 14, 14, 14, 15, 15, 15, 15
+	};
+	static const Uint8 green[256] = {
+		126, 127, 128, 129, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+		140, 141, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 152,
+		153, 154, 155, 156, 157, 158, 159, 159, 160, 161, 162, 162, 163,
+		164, 164, 165, 165, 166, 167, 167, 168, 168, 168, 169, 169, 170,
+		170, 170, 171, 171, 171, 171, 172, 172, 172, 172, 172, 172, 172,
+		172, 172, 172, 172, 172, 172, 171, 171, 171, 171, 170, 170, 170,
+		169, 169, 168, 168, 168, 167, 167, 166, 165, 165, 164, 164, 163,
+		162, 162, 161, 160, 159, 159, 158, 157, 156, 155, 154, 153, 152,
+		152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 141, 140, 139,
+		138, 137, 136, 135, 134, 133, 132, 131, 129, 128, 127, 126, 125,
+		124, 123, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111,
+		109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 100, 99, 98,
+		97, 96, 95, 94, 93, 93, 92, 91, 90, 90, 89, 88, 88, 87, 87, 86,
+		85, 85, 84, 84, 84, 83, 83, 82, 82, 82, 81, 81, 81, 81, 80, 80,
+		80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 81, 81, 81, 81, 82,
+		82, 82, 83, 83, 84, 84, 84, 85, 85, 86, 87, 87, 88, 88, 89, 90,
+		90, 91, 92, 93, 93, 94, 95, 96, 97, 98, 99, 100, 100, 101, 102,
+		103, 104, 105, 106, 107, 108, 109, 111, 112, 113, 114, 115, 116,
+		117, 118, 119, 120, 121, 123, 124, 125
+	};
+	static const Uint8 blue[256] = {
+		189, 190, 191, 192, 192, 193, 194, 195, 196, 197, 198, 198, 199,
+		200, 201, 202, 202, 203, 204, 205, 205, 206, 207, 208, 208, 209,
+		210, 211, 211, 212, 213, 213, 214, 214, 215, 216, 216, 217, 217,
+		218, 218, 219, 219, 219, 220, 220, 221, 221, 221, 222, 222, 222,
+		222, 223, 223, 223, 223, 223, 224, 224, 224, 224, 224, 224, 224,
+		224, 224, 224, 224, 224, 224, 223, 223, 223, 223, 223, 222, 222,
+		222, 222, 221, 221, 221, 220, 220, 219, 219, 219, 218, 218, 217,
+		217, 216, 216, 215, 214, 214, 213, 213, 212, 211, 211, 210, 209,
+		208, 208, 207, 206, 205, 205, 204, 203, 202, 202, 201, 200, 199,
+		198, 198, 197, 196, 195, 194, 193, 192, 192, 191, 190, 189, 188,
+		187, 186, 186, 185, 184, 183, 182, 181, 180, 180, 179, 178, 177,
+		176, 176, 175, 174, 173, 173, 172, 171, 170, 170, 169, 168, 167,
+		167, 166, 165, 165, 164, 164, 163, 162, 162, 161, 161, 160, 160,
+		159, 159, 159, 158, 158, 157, 157, 157, 156, 156, 156, 156, 155,
+		155, 155, 155, 155, 154, 154, 154, 154, 154, 154, 154, 154, 154,
+		154, 154, 154, 154, 155, 155, 155, 155, 155, 156, 156, 156, 156,
+		157, 157, 157, 158, 158, 159, 159, 159, 160, 160, 161, 161, 162,
+		162, 163, 164, 164, 165, 165, 166, 167, 167, 168, 169, 170, 170,
+		171, 172, 173, 173, 174, 175, 176, 176, 177, 178, 179, 180, 180,
+		181, 182, 183, 184, 185, 186, 186, 187, 188};
+	unsigned col_factor = (SDL_GetTicks() % 1024) / 4;
+	SDL_Colour sel_col;
 
-	/* Use white draw colour. */
-	SDL_SetRenderDrawColor(ctx->ren, 0xFF, 0xFF, 0xFF, 0xFF);
+	sel_col.r = red[col_factor];
+	sel_col.g = green[col_factor];
+	sel_col.b = blue[col_factor];
+	sel_col.a = 0xFF;
+	SDL_SetRenderDrawColor(ctx->ren, sel_col.r, sel_col.g, sel_col.b,
+		sel_col.a);
 
 	for(unsigned i = 0; i < thickness; i++)
 	{
@@ -554,7 +640,12 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 
 	/* Draw outline and translucent box if tile is selected. */
 	if(ctx->current == el)
-		ui_draw_selection(ctx, &dim);
+	{
+		ctx->selection_square.x = dim.x;
+		ctx->selection_square.y = dim.y;
+		ctx->selection_square.h = dim.h;
+		ctx->selection_square.w = dim.w;
+	}
 
 	/* Increment coordinates to next element. */
 	p->y += len + tile_padding.y;
@@ -566,6 +657,7 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 	SDL_Point vert;
 
 	SDL_assert(ctx->tex != NULL);
+	SDL_assert(ctx->static_tex != NULL);
 
 	if(ctx->redraw == SDL_FALSE)
 		goto out;
@@ -577,7 +669,7 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 		ctx->hit_boxes = NULL;
 	}
 
-	if(SDL_SetRenderTarget(ctx->ren, ctx->tex) != 0)
+	if(SDL_SetRenderTarget(ctx->ren, ctx->static_tex) != 0)
 		return NULL;
 
 	/* Calculate where the first element should appear vertically. */
@@ -609,6 +701,15 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 	ctx->redraw = SDL_FALSE;
 
 out:
+	/* Redraw any dynamic elements. */
+	if(SDL_SetRenderTarget(ctx->ren, ctx->tex) != 0)
+		return NULL;
+
+	/* Copy static elements to output texture. */
+	SDL_RenderCopy(ctx->ren, ctx->static_tex, NULL, NULL);
+
+	ui_draw_selection(ctx, &ctx->selection_square);
+
 	return ctx->tex;
 }
 
@@ -636,6 +737,11 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 	if(ctx->tex == NULL)
 		goto err;
 
+	ctx->static_tex = SDL_CreateTexture(ctx->ren, format,
+		SDL_TEXTUREACCESS_TARGET, w, h);
+	if(ctx->static_tex == NULL)
+		goto err;
+
 	ctx->root = ui_elements;
 	ctx->current = ui_elements;
 	ctx->redraw = SDL_TRUE;
@@ -647,6 +753,7 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 	if(ctx->font == NULL)
 	{
 		SDL_DestroyTexture(ctx->tex);
+		SDL_DestroyTexture(ctx->static_tex);
 		goto err;
 	}
 
@@ -711,6 +818,7 @@ void ui_exit(ui_ctx_s *ctx)
 	font_exit(ctx->font);
 
 	SDL_DestroyTexture(ctx->tex);
+	SDL_DestroyTexture(ctx->static_tex);
 	sb_free(ctx->hit_boxes);
 	SDL_free(ctx);
 }

@@ -2,32 +2,32 @@ cmake_minimum_required(VERSION 3.19)
 
 # Obtain the version of Haiyajan-menu that is being built.
 # If git is not available on the build platform, use this as a fallback.
-set(_build_version 0.1.0)
+set(BUILD_VERSION 0.1.0)
 find_package(Git)
 if(GIT_FOUND)
 	execute_process(
-	COMMAND ${GIT_EXECUTABLE} describe --exact-match --tags --long --always --dirty=-dirty
-	WORKING_DIRECTORY "${local_dir}"
-	OUTPUT_VARIABLE GIT_VER
-	ERROR_QUIET
-	OUTPUT_STRIP_TRAILING_WHITESPACE)
+	    COMMAND ${GIT_EXECUTABLE} describe --exact-match --tags --long --always --dirty=-dirty
+	    WORKING_DIRECTORY "${local_dir}"
+	    OUTPUT_VARIABLE GIT_VER
+	    ERROR_QUIET
+	    OUTPUT_STRIP_TRAILING_WHITESPACE)
 	message(STATUS "Configuring version ${GIT_VER}")
 
 	execute_process(
-	COMMAND ${GIT_EXECUTABLE} describe --exact-match --tags
-	WORKING_DIRECTORY "${local_dir}"
-	OUTPUT_VARIABLE _build_version
-	ERROR_QUIET
-	OUTPUT_STRIP_TRAILING_WHITESPACE)
+	    COMMAND ${GIT_EXECUTABLE} describe --exact-match --tags
+	    WORKING_DIRECTORY "${local_dir}"
+	    OUTPUT_VARIABLE BUILD_VERSION
+	    ERROR_QUIET
+	    OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
-	message(STATUS "GIT not found; this is a local build of version ${_build_version}")
-	set(GIT_VER ${_build_version}-LOCAL)
+	message(STATUS "GIT not found; this is a local build of version ${BUILD_VERSION}")
+	set(GIT_VER ${BUILD_VERSION}-LOCAL)
 endif()
 
 # Initialise project information.
 project(HAIYAJAN_MENU
         LANGUAGES C
-        VERSION ${_build_version}
+        VERSION ${BUILD_VERSION}
         DESCRIPTION "User interface library for Haiyajan"
         HOMEPAGE_URL "https://github.com/deltabeard/haiyajan-menu")
 
