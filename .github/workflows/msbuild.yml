@@ -20,10 +20,11 @@ jobs:
       uses: lukka/run-vcpkg@v7
       with:
         setupOnly: true
+        vcpkgDirectory: $env:VCPKG_INSTALLATION_ROOT
+        vcpkgTriplet: x64-windows
         
     - name: Install Dependencies
-      shell: bash
-      run: $VCPKG_ROOT/vcpkg install sdl2 sdl2-ttf
+      run: vcpkg install sdl2 sdl2-ttf
     
     - name: Configure and build
       uses: lukka/run-cmake@v3
