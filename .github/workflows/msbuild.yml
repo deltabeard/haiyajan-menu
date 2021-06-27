@@ -4,6 +4,7 @@ on: [push]
 
 env:
   BUILD_TYPE: Debug
+  TRIPLET: x64-windows
 
 jobs:
   build:
@@ -15,7 +16,7 @@ jobs:
         fetch-depth: 0
         
     - name: Install Dependencies
-      run: vcpkg install --triplet=x64-windows sdl2 sdl2-ttf
+      run: vcpkg install --triplet=${{env.TRIPLET}} sdl2 sdl2-ttf
       
     - name: Configure Cmake
       run: cmake -B ${{github.workspace}}/${{env.BUILD_TYPE}}-build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
@@ -23,12 +24,14 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/${{env.BUILD_TYPE}}-build --config ${{env.BUILD_TYPE}}
       
+    - shell: bash
+      run: |
+        mv ${{github.workspace}}/README.md ${{github.workspace}}/LICENSE ${{github.workspace}}/${{env.BUILD_TYPE}}-build/
+      
     - name: Upload output
       uses: actions/upload-artifact@v2
       with:
-        name: haiyajan-menu-${{env.BUILD_PLATFORM}}-${{github.run_number}}
+        name: haiyajan-menu-${{env.TRIPLET}}-${{github.run_number}}
         path: |
-          ${{github.workspace}}/README.md
-          ${{github.workspace}}/LICENSE
           ${{github.workspace}}/${{env.BUILD_TYPE}}-build/*
         
