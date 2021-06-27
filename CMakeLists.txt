@@ -6,7 +6,7 @@ set(BUILD_VERSION 0.1.0)
 find_package(Git)
 if(GIT_FOUND)
 	execute_process(
-	    COMMAND ${GIT_EXECUTABLE} describe --exact-match --tags --long --always --dirty=-dirty
+	    COMMAND ${GIT_EXECUTABLE} describe --tags --long --always --dirty=-dirty
 	    WORKING_DIRECTORY "${local_dir}"
 	    OUTPUT_VARIABLE GIT_VER
 	    ERROR_QUIET
@@ -14,15 +14,17 @@ if(GIT_FOUND)
 	message(STATUS "Configuring version ${GIT_VER}")
 
 	execute_process(
-	    COMMAND ${GIT_EXECUTABLE} describe --exact-match --tags
+	    COMMAND ${GIT_EXECUTABLE} describe --abbrev=0 --tags
 	    WORKING_DIRECTORY "${local_dir}"
 	    OUTPUT_VARIABLE BUILD_VERSION
 	    ERROR_QUIET
 	    OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
-	message(STATUS "GIT not found; this is a local build of version ${BUILD_VERSION}")
 	set(GIT_VER ${BUILD_VERSION}-LOCAL)
 endif()
+
+message(STATUS "Using build version: ${BUILD_VERSION}")
+message(STATUS "Building commit: ${GIT_VER}")
 
 # Initialise project information.
 project(HAIYAJAN_MENU
