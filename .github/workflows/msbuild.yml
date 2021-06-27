@@ -24,10 +24,6 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/${{env.BUILD_TYPE}}-build --config ${{env.BUILD_TYPE}}
       
-    - shell: bash
-      run: |
-        mv ${{github.workspace}}/README.md ${{github.workspace}}/LICENSE ${{github.workspace}}/${{env.BUILD_TYPE}}-build/
-      
     - name: Upload output
       uses: actions/upload-artifact@v2
       with:
