@@ -27,7 +27,7 @@ message(STATUS "Using build version: ${BUILD_VERSION}")
 message(STATUS "Building commit: ${GIT_VER}")
 
 # Initialise project information.
-project(HAIYAJAN_MENU
+project(haiyajan-menu
         LANGUAGES C
         VERSION ${BUILD_VERSION}
         DESCRIPTION "User interface library for Haiyajan"
@@ -75,7 +75,9 @@ add_compile_definitions(DESCRIPTION=${PROJECT_DESCRIPTION})
 add_compile_definitions(LICENSE=${HAIYAJAN_MENU_LICENSE})
 add_compile_definitions(NAME=${PROJECT_NAME})
 add_compile_definitions(GIT_VER=${GIT_VER})
-add_compile_definitions(VER_MAJOR=${HAIYAJAN_MENU_VERSION_MAJOR})
-add_compile_definitions(VER_MINOR=${HAIYAJAN_MENU_VERSION_MINOR})
-add_compile_definitions(VER_PATCH=${HAIYAJAN_MENU_VERSION_PATCH})
+add_compile_definitions(VER_MAJOR=${haiyajan-menu_VERSION_MAJOR})
+add_compile_definitions(VER_MINOR=${haiyajan-menu_VERSION_MINOR})
+add_compile_definitions(VER_PATCH=${haiyajan-menu_VERSION_PATCH})
 add_compile_definitions(VER_TWEAK=0)
+
+include(CPack)
