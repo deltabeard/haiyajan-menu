@@ -1,52 +1,33 @@
-name: MSBuild
+name: Debug
 
 on: [push]
 
 env:
-  # Path to the solution file relative to the root of the project.
-  SOLUTION_FILE_PATH: .\ext\MSVC\haiyajan-menu.sln
-  BUILD_CONFIGURATION: Release
-  BUILD_PLATFORM: x64
-  COMPANY: Deltabeard
-  DESCRIPTION: "Menu UI for Haiyajan"
-  LICENSE: LGPL-3.0-or-later
+  BUILD_TYPE: Debug
+  TRIPLET: x64-windows
 
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v1
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        
+    - name: Install Dependencies
+      run: vcpkg install --triplet=${{env.TRIPLET}} sdl2 sdl2-ttf
       
-    - name: Set Git Hash Environment Variable
-      shell: bash
-      run: |
-        git describe --tags --always --dirty="-dirty" --abbrev=10 > BUILD_ID
-        echo 'BUILD_ID<<EOF' >> $GITHUB_ENV
-        cat BUILD_ID >> $GITHUB_ENV
-        echo 'EOF' >> $GITHUB_ENV
-
+    - name: Configure Cmake
+      run: cmake -B ${{github.workspace}}/${{env.BUILD_TYPE}}-build -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        
     - name: Build
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: |
-        nuget restore ${{env.SOLUTION_FILE_PATH}}
-        msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=${{env.BUILD_PLATFORM}} /p:GIT_VER=${{env.BUILD_ID}} /p:COMPANY=${{env.COMPANY}} /p:DESCRIPTION="${{env.DESCRIPTION}}" /p:LICENSE=${{env.LICENSE}} ${{env.SOLUTION_FILE_PATH}}
-
-    - name: Prepare additional files for artifact
-      shell: bash
-      run: |
-        mv LICENSE README.md BUILD_ID ./ext/MSVC
-    
-    - name: Upload build output
+      run: cmake --build ${{github.workspace}}/${{env.BUILD_TYPE}}-build --config ${{env.BUILD_TYPE}}
+      
+    - name: Upload output
       uses: actions/upload-artifact@v2
       with:
-        name: haiyajan-menu-${{env.BUILD_PLATFORM}}-${{github.run_number}}
+        name: haiyajan-menu-${{env.TRIPLET}}-${{github.run_number}}
         path: |
-          ext/MSVC/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/*.exe
-          ext/MSVC/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/*.dll
-          ext/MSVC/LICENSE
-          ext/MSVC/README.md
-          ext/MSVC/BUILD_ID
+          ${{github.workspace}}/${{env.BUILD_TYPE}}-build/*
+        
