@@ -2,33 +2,43 @@ name: MSBuild
 
 on: [push]
 
-env:
-  BUILD_CONFIGURATION: Release
-  BUILD_PLATFORM: x64
-  COMPANY: Deltabeard
-  DESCRIPTION: "Menu UI for Haiyajan"
-  LICENSE: LGPL-3.0-or-later
-
 jobs:
-  build:
+  setup:
     runs-on: windows-latest
-
     steps:
     - uses: actions/checkout@v2
-    
-    - name: Restore artifacts, or setup vcpkg (do not install any package)
-      uses: lukka/run-vcpkg@v7
-      with:
-        setupOnly: true
-        vcpkgDirectory: $env:VCPKG_INSTALLATION_ROOT
-        vcpkgTriplet: x64-windows
-        
+    - uses: microsoft/setup-msbuild@v1
     - name: Install Dependencies
       run: vcpkg install sdl2 sdl2-ttf
     
-    - name: Configure and build
-      uses: lukka/run-cmake@v3
-      with:
-        cmakeListsOrSettingsJson: CMakeListsTxtBasic
-        useVcpkgToolchainFile: true
-        buildWithCMake: true
+  configure-debug:
+    runs-on: windows-latest
+    needs: setup
+    steps:
+    - name: Configure
+      run: |
+        mkdir build-debug
+        cmake -S . -B build-debug -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Debug
+    
+  configure-release:
+    runs-on: windows-latest
+    needs: setup
+    steps:
+    - name: Configure
+      run: |
+        mkdir build-release
+        cmake -S . -B build-release -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release
+    
+  build-debug:
+    runs-on: windows-latest
+    needs: configure-debug
+    steps:
+    - name: Build Debug
+      run: msbuild build-debug/ALL_BUILD.vcxproj
+      
+  build-release:
+    runs-on: windows-latest
+    needs: configure-release
+    steps:
+    - name: Build Release
+      run: msbuild build-release/ALL_BUILD.vcxproj
