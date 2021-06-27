@@ -3,42 +3,31 @@ name: MSBuild
 on: [push]
 
 jobs:
-  setup:
+  build-release:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
     - uses: microsoft/setup-msbuild@v1
     - name: Install Dependencies
       run: vcpkg install sdl2 sdl2-ttf
-    
-  configure-debug:
-    runs-on: windows-latest
-    needs: setup
-    steps:
-    - name: Configure
-      run: |
-        mkdir build-debug
-        cmake -S . -B build-debug -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Debug
-    
-  configure-release:
-    runs-on: windows-latest
-    needs: setup
-    steps:
     - name: Configure
       run: |
         mkdir build-release
         cmake -S . -B build-release -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release
-    
+        msbuild build-release/ALL_BUILD.vcxproj
+        
   build-debug:
     runs-on: windows-latest
-    needs: configure-debug
     steps:
-    - name: Build Debug
-      run: msbuild build-debug/ALL_BUILD.vcxproj
+    - name: Checkout
+      uses: actions/checkout@v2
+    - uses: microsoft/setup-msbuild@v1
+    - name: Install Dependencies
+      run: vcpkg install sdl2 sdl2-ttf
+    - name: Configure
+      run: |
+        mkdir build-debug
+        cmake -S . -B build-debug -G "Visual Studio 16 2019" -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Debug
+        msbuild build-debug/ALL_BUILD.vcxproj
       
-  build-release:
-    runs-on: windows-latest
-    needs: configure-release
-    steps:
-    - name: Build Release
-      run: msbuild build-release/ALL_BUILD.vcxproj
