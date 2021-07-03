@@ -80,4 +80,12 @@ add_compile_definitions(VER_MINOR=${haiyajan-menu_VERSION_MINOR})
 add_compile_definitions(VER_PATCH=${haiyajan-menu_VERSION_PATCH})
 add_compile_definitions(VER_TWEAK=0)
 
+# Package options
+include(GNUInstallDirs)
+install(TARGETS haiyajan-menu RUNTIME)
+
 include(CPack)
+set(CPACK_PACKAGE_VENDOR Deltabeard)
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION})
+set(CPACK_PACKAGE_ICON meta/icon.ico)
+set(CPACK_RESOURCE_FILE_LICENSE LICENSE)
