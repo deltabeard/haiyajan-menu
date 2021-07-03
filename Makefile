@@ -60,17 +60,17 @@ ifeq ($(PLATFORM),MSVC)
 	EXE	:= $(NAME).exe
 
 else ifeq ($(PLATFORM),SWITCH)
-	PORTLIBSBIN := $(DEVKITPRO)/portlibs/switch/bin
-	PATH	:= $(PORTLIBSBIN):$(DEVKITPRO)/tools/bin:$(DEVKITPRO)/devkitA64/bin:$(PATH)
+	PKGCONFIG := $(DEVKITPRO)/portlibs/switch/bin/aarch64-none-elf-pkg-config
+	PATH	:= $(DEVKITPRO)/tools/bin:$(DEVKITPRO)/devkitA64/bin:$(PATH)
 	PREFIX	:= aarch64-none-elf-
 	CC	:= $(PREFIX)gcc
 	CXX	:= $(PREFIX)g++
 	EXE	:= $(NAME).nro
 	OBJEXT	:= o
 	CFLAGS	:= -march=armv8-a+crc+crypto -mtune=cortex-a57 -fPIE -mtp=soft -D__SWITCH__ \
-		  $(shell $(PORTLIBSBIN)/sdl2-config --cflags)
+		  $(shell $(PKGCONFIG) --static --cflags sdl2 SDL2_ttf)
 	LDFLAGS	= -specs=$(DEVKITPRO)/libnx/switch.specs \
-		  $(shell $(PORTLIBSBIN)/sdl2-config --static-libs)
+		  $(shell $(PKGCONFIG) --static --libs sdl2 SDL2_ttf)
 	APP_ICON := $(DEVKITPRO)/libnx/default_icon.jpg
 
 else ifeq ($(PLATFORM),UNIX)

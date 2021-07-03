@@ -1,0 +1,50 @@
+name: Debug
+
+on: [push]
+
+jobs:
+  build:
+    name: Debug build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        build_type: [debug]
+        include:
+          - os: windows-latest
+            triplet: x64-windows
+            generator: "Visual Studio 16 2019"
+            toolchain: "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+          - os: windows-latest
+            triplet: x86-windows
+            generator: "Visual Studio 16 2019"
+            toolchain: "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+          - os: ubuntu-latest
+            triplet: x64-linux
+            generator: "Ninja"
+            toolchain: "/usr/share/vcpkg/scripts/buildsystems/vcpkg.cmake"
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        
+    - name: Install Dependencies
+      run: vcpkg install --triplet=${{ matrix.triplet }} sdl2 sdl2-ttf
+      
+    - name: Configure Cmake
+      run: cmake -B ${{ matrix.build_type }}-build -G ${{ matrix.generator }} -DCMAKE_TOOLCHAIN_FILE=${{ matrix.toolchain }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        
+    - name: Build
+      run: cmake --build ${{ matrix.build_type }}-build --config ${{ matrix.build_type }}
+      
+    - name: Pack output
+      run: cpack --config ${{ matrix.build_type }}-build/CPackConfig.cmake -G ZIP
+      
+    - name: Upload output
+      uses: actions/upload-artifact@v2
+      with:
+        name: haiyajan-menu-${{ matrix.triplet }}-${{ github.run_number }}
+        path: ${{ github.workspace }}/haiyajan-menu*.zip
+        

@@ -38,14 +38,18 @@ set(HAIYAJAN_MENU_LICENSE "LGPL-3.0, Mahyar Koshkouei (c) 2021")
 
 # Add dependencies to project.
 add_executable(${PROJECT_NAME})
-find_package(SDL2 REQUIRED)
-find_library(SDL2_TTF_LIBRARY SDL2_ttf REQUIRED)
-find_library(FRIBIDI_LIBRARY fribidi)
 
 target_sources(${PROJECT_NAME} PRIVATE src/main.c src/font.c src/ui.c)
 target_include_directories(${PROJECT_NAME} PRIVATE inc)
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2::SDL2main)
-target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_TTF_LIBRARY})
+
+# Discover libraries
+find_package(SDL2 CONFIG REQUIRED)
+find_package(sdl2-ttf CONFIG REQUIRED)
+find_library(FRIBIDI_LIBRARY fribidi)
+
+# Add required dependencies
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main SDL2::SDL2-static)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2_ttf)
 
 # If libfribidi is not available, disable its use.
 # This option can be forced by the user in cmake-gui.
