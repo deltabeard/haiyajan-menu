@@ -14,15 +14,14 @@ jobs:
           - os: windows-latest
             triplet: x64-windows
             generator: "Visual Studio 16 2019"
-            toolchain: "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            platform_name: "-A x64"
           - os: windows-latest
             triplet: x86-windows
             generator: "Visual Studio 16 2019"
-            toolchain: "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            platform_name: "-A Win32"
           - os: ubuntu-latest
             triplet: x64-linux
-            generator: "Ninja"
-            toolchain: "/usr/share/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            generator: "Unix Makefiles"
 
     steps:
     - name: Checkout
@@ -34,7 +33,7 @@ jobs:
       run: vcpkg install --triplet=${{ matrix.triplet }} sdl2 sdl2-ttf
       
     - name: Configure Cmake
-      run: cmake -B ${{ matrix.build_type }}-build -G ${{ matrix.generator }} -DCMAKE_TOOLCHAIN_FILE=${{ matrix.toolchain }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      run: cmake -B ${{ matrix.build_type }}-build -G ${{ matrix.generator }} -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_INSTALLATION_ROOT }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.platform_name }}
         
     - name: Build
       run: cmake --build ${{ matrix.build_type }}-build --config ${{ matrix.build_type }}
