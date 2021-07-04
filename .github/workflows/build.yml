@@ -33,7 +33,7 @@ jobs:
       run: vcpkg install --triplet=${{ matrix.triplet }} sdl2 sdl2-ttf
       
     - name: Configure Cmake
-      run: cmake -B ${{ matrix.build_type }}-build -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_INSTALLATION_ROOT }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.platform_name }}
+      run: cmake -B ${{ matrix.build_type }}-build -DCMAKE_TOOLCHAIN_FILE=${{ matrix.vcpkg-path }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.platform_name }}
         
     - name: Build
       run: cmake --build ${{ matrix.build_type }}-build --config ${{ matrix.build_type }}
