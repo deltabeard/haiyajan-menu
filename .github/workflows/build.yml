@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
-        build_type: [debug]
+        build_type: [Debug, Release]
         include:
           - os: windows-latest
             triplet: x64-windows
