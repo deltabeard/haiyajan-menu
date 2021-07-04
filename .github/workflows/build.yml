@@ -13,11 +13,11 @@ jobs:
         include:
           - os: windows-latest
             triplet: x64-windows
-            vcpkg-path: "C:\vcpkg"
+            vcpkg-path: "C:\\vcpkg"
             platform_name: "-A x64"
           - os: windows-latest
             triplet: x86-windows
-            vcpkg-path: "C:\vcpkg"
+            vcpkg-path: "C:\\vcpkg"
             platform_name: "-A Win32"
           - os: ubuntu-latest
             triplet: x64-linux
