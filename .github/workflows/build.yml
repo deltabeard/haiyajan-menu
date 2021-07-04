@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build:
-    name: Debug build on ${{ matrix.os }}
+    name: ${{ matrix.build_type }} build for ${{ matrix.triplet }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
