@@ -12,12 +12,12 @@ jobs:
         build_type: [Debug, Release]
         include:
           - os: windows-latest
-            triplet: x64-windows
+            triplet: x64-windows-static
             vcpkg-path: "C:\\vcpkg"
             arch: amd64
             generator: "'NMake Makefiles'"
           - os: windows-latest
-            triplet: x86-windows
+            triplet: x86-windows-static
             vcpkg-path: "C:\\vcpkg"
             arch: amd64_x86
             generator: "'NMake Makefiles'"
