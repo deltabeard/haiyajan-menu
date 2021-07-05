@@ -33,7 +33,7 @@ jobs:
         fetch-depth: 0
         
     - name: Initialise MSVC environment
-      if: contains(matrix.triplet, "windows")
+      if: "contains(matrix.triplet, 'windows')"
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.arch }}
