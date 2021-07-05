@@ -42,7 +42,7 @@ jobs:
       run: cmake --build build --config ${{ matrix.build_type }}
       
     - name: Pack
-      run: cpack -G ZIP --config build\CPackConfig.cmake
+      run: cpack -G ZIP --config build/CPackConfig.cmake
       
     - name: Upload output
       uses: actions/upload-artifact@v2
