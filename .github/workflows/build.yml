@@ -1,4 +1,4 @@
-name: Debug
+name: Build
 
 on: [push]
 
@@ -15,13 +15,16 @@ jobs:
             triplet: x64-windows
             vcpkg-path: "C:\\vcpkg"
             platform_name: "-A x64"
+            generator: "'NMake Makefiles'"
           - os: windows-latest
             triplet: x86-windows
             vcpkg-path: "C:\\vcpkg"
             platform_name: "-A Win32"
+            generator: "'NMake Makefiles'"
           - os: ubuntu-latest
             triplet: x64-linux
             vcpkg-path: "$VCPKG_INSTALLATION_ROOT"
+            generator: "'Unix Makefiles'"
 
     steps:
     - name: Checkout
@@ -33,14 +36,17 @@ jobs:
       run: vcpkg install --triplet=${{ matrix.triplet }} sdl2 sdl2-ttf
       
     - name: Configure Cmake
-      run: cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=${{ matrix.vcpkg-path }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.platform_name }}
+      run: cmake -S . -B build -G ${{ matrix.generator }} -DCMAKE_TOOLCHAIN_FILE=${{ matrix.vcpkg-path }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.platform_name }}
         
     - name: Build
       run: cmake --build build --config ${{ matrix.build_type }}
+      
+    - name: Pack
+      run: cpack -G ZIP --config build\CPackConfig.cmake
       
     - name: Upload output
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.triplet }}-${{ matrix.build_type }}-${{ github.run_number }}
-        path: ${{ github.workspace }}/build/haiyajan-menu*
+        path: ${{ github.workspace }}/haiyajan-menu*.zip
         
