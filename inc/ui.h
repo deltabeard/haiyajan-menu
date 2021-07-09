@@ -85,12 +85,12 @@ struct ui_event
 	{
 		struct
 		{
-			struct ui_element *element;
+			const struct ui_element *element;
 		} goto_element;
 
 		struct
 		{
-			void (*function)(struct ui_element *element);
+			void (*function)(const struct ui_element *element);
 		} execute_function;
 
 		struct
@@ -180,7 +180,7 @@ struct ui_element {
  * \return	UI context. NULL on error.
  */
 ui_ctx_s *ui_init(SDL_Window *HEDLEY_RESTRICT win,
-	struct ui_element *HEDLEY_RESTRICT ui_elements);
+	const struct ui_element *HEDLEY_RESTRICT ui_elements);
 
 /**
  * Render UI to window.

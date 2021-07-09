@@ -29,10 +29,10 @@ struct ui_ctx {
 	SDL_Texture *static_tex;
 
 	/* Root Menu. */
-	struct ui_element *root;
+	const struct ui_element *root;
 
 	/* Currently rendered menu. */
-	struct ui_element *current;
+	const struct ui_element *current;
 
 	/* Font context used to draw text on UI elements. */
 	font_ctx_s *font;
@@ -43,7 +43,7 @@ struct ui_ctx {
 		SDL_Rect hit_box;
 
 		/* UI element associated with hit-box. */
-		struct ui_element *ui_element;
+		const struct ui_element *ui_element;
 	} *hit_boxes;
 
 	/* DPI that tex texture is rendered for. */
@@ -115,8 +115,7 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 
 		case UI_EVENT_EXECUTE_FUNCTION:
 			ctx->current->elem.tile.onclick.action_data.execute_function
-				.function(
-					ctx->current);
+				.function(ctx->current);
 			break;
 
 		case UI_EVENT_SET_SIGNED_VARIABLE:
@@ -521,7 +520,7 @@ static void ui_draw_selection(ui_ctx_s *HEDLEY_RESTRICT ctx,
 */
 HEDLEY_NON_NULL(1,2,3)
 static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
-		struct ui_element *HEDLEY_RESTRICT el,
+		const struct ui_element *HEDLEY_RESTRICT el,
 		SDL_Point *HEDLEY_RESTRICT p)
 {
 	const Uint16 len = ctx->ref_tile_size;
@@ -680,7 +679,8 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 	SDL_SetRenderDrawColor(ctx->ren, 20, 20, 20, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(ctx->ren);
 
-	for(struct ui_element *el = ctx->root; el->type != UI_ELEM_TYPE_END; el++)
+	for(const struct ui_element *el = ctx->root;
+			el->type != UI_ELEM_TYPE_END; el++)
 	{
 		switch(el->type)
 		{
@@ -717,7 +717,7 @@ HEDLEY_NON_NULL(1,4)
 HEDLEY_MALLOC
 static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 		float dpi, Uint32 format,
-		struct ui_element *HEDLEY_RESTRICT ui_elements)
+		const struct ui_element *HEDLEY_RESTRICT ui_elements)
 {
 	int w, h;
 	ui_ctx_s *ctx;
@@ -773,7 +773,7 @@ err:
 
 HEDLEY_NON_NULL(1,2)
 ui_ctx_s *ui_init(SDL_Window *HEDLEY_RESTRICT win,
-		struct ui_element *HEDLEY_RESTRICT ui_elements)
+		const struct ui_element *HEDLEY_RESTRICT ui_elements)
 {
 	ui_ctx_s *ctx = NULL;
 	Uint32 format;

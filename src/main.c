@@ -12,6 +12,83 @@
 #include <ui.h>
 //#include <win_dirent.h>
 
+void onclick_function_debug(const struct ui_element *element);
+
+static Uint32 quit = 0;
+static const struct ui_element ui_elements[] = {
+	{
+		.type = UI_ELEM_TYPE_TILE,
+		.elem.tile = {
+			.label = "Continue",
+			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
+			.tile_size = TILE_SIZE_LARGE,
+			.icon = 0xE768,
+			.help = NULL,
+			/* Persian Green */
+			.bg = {.r = 0x00, .g = 0xA3, .b = 0x98, .a = SDL_ALPHA_OPAQUE},
+			.fg = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE},
+			.disabled = SDL_FALSE,
+			.onclick = {
+				.action = UI_EVENT_EXECUTE_FUNCTION,
+				.action_data = {
+					.execute_function = {
+						onclick_function_debug}
+				},
+			},
+			.user = NULL
+		}
+	},
+	{
+		.type = UI_ELEM_TYPE_TILE,
+		.elem.tile = {
+			.label = "Open",
+			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
+			.tile_size = TILE_SIZE_LARGE,
+			.icon = 0xE8B7,
+			.help = NULL,
+			/* Persian Blue */
+			.bg = {.r = 0x1C, .g = 0x39, .b = 0xBB, .a = SDL_ALPHA_OPAQUE},
+			.fg = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE},
+			.disabled = SDL_FALSE,
+			.onclick = {
+				.action = UI_EVENT_EXECUTE_FUNCTION,
+				.action_data = {
+					.execute_function = {
+						onclick_function_debug}
+				},
+			},
+			.user = NULL
+		}
+	},
+	{
+		.type = UI_ELEM_TYPE_TILE,
+		.elem.tile = {
+			.label = "Exit",
+			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
+			.tile_size = TILE_SIZE_LARGE,
+			.icon = 0xE7E8,
+			.help = NULL,
+			/* Auburn */
+			.bg = {.r = 0x9E, .g = 0x2A, .b = 0x2B, .a = SDL_ALPHA_OPAQUE},
+			.fg = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE},
+			.disabled = SDL_FALSE,
+			.onclick = {
+				.action = UI_EVENT_SET_UNSIGNED_VARIABLE,
+				.action_data = {
+					.unsigned_variable = {
+						.variable = &quit,
+						.val = 1
+					}
+				},
+			},
+			.user = NULL
+		}
+	},
+	{
+		.type = UI_ELEM_TYPE_END,
+	}
+};
+
 static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 {
 	SDL_Event e;
@@ -34,7 +111,7 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 	return;
 }
 
-void onclick_function_debug(struct ui_element *element)
+void onclick_function_debug(const struct ui_element *element)
 {
 	SDL_Log("Element %p clicked", (void *)element);
 }
@@ -48,79 +125,6 @@ int main(int argc, char *argv[])
 	SDL_Renderer *ren = NULL;
 	int ret;
 	ui_ctx_s *ui;
-	Uint32 quit = 0;
-
-	struct ui_element ui_elements[] = {
-		{
-			.type = UI_ELEM_TYPE_TILE,
-			.elem.tile = {
-				.label = "Continue",
-				.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
-				.tile_size = TILE_SIZE_LARGE,
-				.icon = 0xE768,
-				.help = NULL,
-				/* Persian Green */
-				.bg = { .r = 0x00, .g = 0xA3, .b = 0x98, .a = SDL_ALPHA_OPAQUE },
-				.fg = { .r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE },
-				.disabled = SDL_FALSE,
-				.onclick = {
-					.action = UI_EVENT_EXECUTE_FUNCTION,
-					.action_data = {
-						.execute_function = { onclick_function_debug }
-					},
-				},
-				.user = NULL
-			}
-		},
-		{
-			.type = UI_ELEM_TYPE_TILE,
-			.elem.tile = {
-				.label = "Open",
-				.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
-				.tile_size = TILE_SIZE_LARGE,
-				.icon = 0xE8B7,
-				.help = NULL,
-				/* Persian Blue */
-				.bg = { .r = 0x1C, .g = 0x39, .b = 0xBB, .a = SDL_ALPHA_OPAQUE },
-				.fg = { .r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE },
-				.disabled = SDL_FALSE,
-				.onclick = {
-					.action = UI_EVENT_EXECUTE_FUNCTION,
-					.action_data = {
-						.execute_function = { onclick_function_debug }
-					},
-				},
-				.user = NULL
-			}
-		},
-		{
-			.type = UI_ELEM_TYPE_TILE,
-			.elem.tile = {
-				.label = "Exit",
-				.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
-				.tile_size = TILE_SIZE_LARGE,
-				.icon = 0xE7E8,
-				.help = NULL,
-				/* Auburn */
-				.bg = { .r = 0x9E, .g = 0x2A, .b = 0x2B, .a = SDL_ALPHA_OPAQUE },
-				.fg = { .r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE },
-				.disabled = SDL_FALSE,
-				.onclick = {
-					.action = UI_EVENT_SET_UNSIGNED_VARIABLE,
-					.action_data = {
-						.unsigned_variable = {
-							.variable = &quit,
-							.val = 1
-						}
-					},
-				},
-				.user = NULL
-			}
-		},
-		{
-			.type = UI_ELEM_TYPE_END,
-		}
-	};
 
 	/* Input arguments are currently unused. */
 	(void)argc;
