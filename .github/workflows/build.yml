@@ -54,8 +54,8 @@ jobs:
       run: vcpkg install --triplet=${{ matrix.triplet }} sdl2 sdl2-ttf
       
     - name: Testing vcpkg directory
-      shell: bash
-      run: ls -aslh ${{ matrix.vcpkg-path }}
+      if: "contains(matrix.triplet, 'windows')"
+      run: dir ${{ matrix.vcpkg-path }}
       
     - name: Configure Cmake
       run: cmake -S . -B build -G ${{ matrix.generator }} -DCMAKE_TOOLCHAIN_FILE=${{ matrix.vcpkg-path }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
