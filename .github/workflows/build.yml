@@ -37,8 +37,16 @@ jobs:
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.arch }}
+
+    - name: Cache dependencies
+      id: cache-deps
+      uses: actions/cache@v2
+      with:
+        path: ${{ matrix.vcpkg-path }}
+        key: ${{matrix.os}}-${{ matrix.triplet }}-deps
         
     - name: Install Dependencies
+      if: steps.cache-deps.outputs.cache-hit != 'true'
       run: vcpkg install --triplet=${{ matrix.triplet }} sdl2 sdl2-ttf
       
     - name: Configure Cmake
