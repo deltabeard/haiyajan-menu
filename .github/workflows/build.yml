@@ -8,21 +8,21 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        triplet: [x64-windows-static, x86-windows-static, x64-linux]
         build_type: [Debug, Release]
         include:
-          - os: windows-latest
-            triplet: x64-windows-static
+          - triplet: x64-windows-static
+            os: windows-latest
             vcpkg-path: "C:\\vcpkg"
             arch: amd64
             generator: "'NMake Makefiles'"
-          - os: windows-latest
-            triplet: x86-windows-static
+          - triplet: x86-windows-static
+            os: windows-latest
             vcpkg-path: "C:\\vcpkg"
             arch: amd64_x86
             generator: "'NMake Makefiles'"
-          - os: ubuntu-latest
-            triplet: x64-linux
+          - triplet: x64-linux
+            os: ubuntu-latest
             vcpkg-path: "$VCPKG_INSTALLATION_ROOT"
             generator: "'Unix Makefiles'"
 
@@ -42,12 +42,20 @@ jobs:
       id: cache-deps
       uses: actions/cache@v2
       with:
-        path: ${{ matrix.vcpkg-path }}
-        key: ${{matrix.os}}-${{ matrix.triplet }}-deps
+        path: |
+          ${{ matrix.vcpkg-path }}
+          !${{ matrix.vcpkg-path }}/buildtrees
+          !${{ matrix.vcpkg-path }}/packages
+          !${{ matrix.vcpkg-path }}/downloads
+        key: ${{ matrix.os }}-${{ matrix.triplet }}-${{ matrix.build_type }}-deps
         
     - name: Install Dependencies
       if: steps.cache-deps.outputs.cache-hit != 'true'
       run: vcpkg install --triplet=${{ matrix.triplet }} sdl2 sdl2-ttf
+      
+    - name: Testing vcpkg directory
+      shell: bash
+      run: ls -aslh ${{ matrix.vcpkg-path }}
       
     - name: Configure Cmake
       run: cmake -S . -B build -G ${{ matrix.generator }} -DCMAKE_TOOLCHAIN_FILE=${{ matrix.vcpkg-path }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
