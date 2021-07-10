@@ -43,9 +43,13 @@ target_sources(${PROJECT_NAME} PRIVATE src/main.c src/font.c src/ui.c)
 target_include_directories(${PROJECT_NAME} PRIVATE inc)
 
 # Discover libraries
+find_package(PkgConfig)
+pkg_check_modules(FRIBIDI QUIET fribidi)
+find_path(FRIBIDI_INCLUDE_DIR NAMES fribidi/fribidi.h)
+
 find_package(SDL2 CONFIG REQUIRED)
 find_package(sdl2-ttf CONFIG REQUIRED)
-find_library(FRIBIDI_LIBRARY fribidi)
+find_library(FRIBIDI_LIBRARY NAMES fribidi)
 
 # Add required dependencies
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main SDL2::SDL2-static)
@@ -53,11 +57,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2_ttf)
 
 # If libfribidi is not available, disable its use.
 # This option can be forced by the user in cmake-gui.
-if(FRIBIDI_LIBRARY)
+if (NOT FRIBIDI_FOUND)
+    message(STATUS "GNU FriBidi not found")
     set(FRIBIDI_LIBRARY_ENABLED_BY_DEFAULT ON)
 else()
+    message(STATUS "Found GNU FriBidi: ${FRIBIDI_LIBRARY}")
     set(FRIBIDI_LIBRARY_ENABLED_BY_DEFAULT OFF)
-endif()
+endif (NOT FRIBIDI_FOUND)
 
 option(USE_FRIBIDI "Use Fribidi library for bidirection text support"
         ${FRIBIDI_LIBRARY_ENABLED_BY_DEFAULT})
