@@ -23,9 +23,6 @@ else()
 	set(GIT_VER ${BUILD_VERSION}-LOCAL)
 endif()
 
-message(STATUS "Using build version: ${BUILD_VERSION}")
-message(STATUS "Building commit: ${GIT_VER}")
-
 # Initialise project information.
 project(haiyajan-menu
         LANGUAGES C
@@ -43,28 +40,31 @@ target_sources(${PROJECT_NAME} PRIVATE src/main.c src/font.c src/ui.c)
 target_include_directories(${PROJECT_NAME} PRIVATE inc)
 
 # Discover libraries
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/ext")
+
 find_package(SDL2 CONFIG REQUIRED)
-find_package(sdl2-ttf CONFIG REQUIRED)
-find_library(FRIBIDI_LIBRARY fribidi)
+find_package(sdl2-ttf REQUIRED)
+find_package(fribidi)
 
 # Add required dependencies
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main SDL2::SDL2-static)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main SDL2::SDL2)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2_ttf)
+target_include_directories(${PROJECT_NAME} PUBLIC ${SDL_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${SDL_TTF_INCLUDE_DIRS})
 
-# If libfribidi is not available, disable its use.
-# This option can be forced by the user in cmake-gui.
-if(FRIBIDI_LIBRARY)
-    set(FRIBIDI_LIBRARY_ENABLED_BY_DEFAULT ON)
-else()
-    set(FRIBIDI_LIBRARY_ENABLED_BY_DEFAULT OFF)
-endif()
-
+# Add options to configure optional dependencies
 option(USE_FRIBIDI "Use Fribidi library for bidirection text support"
-        ${FRIBIDI_LIBRARY_ENABLED_BY_DEFAULT})
+        ${FRIBIDI_FOUND})
 
-if(USE_FRIBIDI)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${FRIBIDI_LIBRARY})
+# Process optional dependencies
+if(USE_FRIBIDI AND NOT FRIBIDI_FOUND)
+    message(SEND_ERROR "Fribidi enabled, but not found")
+elseif(USE_FRIBIDI)
+    message(STATUS "Enabled: GNU FriBidi")
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${FRIBIDI_LIBRARIES})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${FRIBIDI_INCLUDE_DIRS})
 else()
+    message(STATUS "Disabled: GNU FriBidi")
     add_compile_definitions(NO_FRIBIDI)
 endif()
 

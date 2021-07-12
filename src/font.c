@@ -18,7 +18,7 @@
 #ifndef NO_FRIBIDI
 # define DONT_HAVE_FRIBIDI_CONFIG_H
 # define FRIBIDI_NO_DEPRECATED
-# include <fribidi/fribidi.h>
+# include <fribidi.h>
 #endif
 
 #if defined(__WIN32__)
