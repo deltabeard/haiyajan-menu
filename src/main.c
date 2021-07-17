@@ -19,7 +19,7 @@ static const struct ui_element ui_elements[] = {
 	{
 		.type = UI_ELEM_TYPE_TILE,
 		.elem.tile = {
-			.label = "Continue",
+			.label = "Label",
 			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 			.tile_size = TILE_SIZE_LARGE,
 			.icon = 0xE768,
@@ -30,9 +30,8 @@ static const struct ui_element ui_elements[] = {
 			.disabled = SDL_FALSE,
 			.onclick = {
 				.action = UI_EVENT_EXECUTE_FUNCTION,
-				.action_data = {
-					.execute_function = {
-						onclick_function_debug}
+				.action_data.execute_function = {
+					onclick_function_debug
 				},
 			},
 			.user = NULL
@@ -41,7 +40,7 @@ static const struct ui_element ui_elements[] = {
 	{
 		.type = UI_ELEM_TYPE_TILE,
 		.elem.tile = {
-			.label = "Open",
+			.label = "Second Label",
 			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 			.tile_size = TILE_SIZE_LARGE,
 			.icon = 0xE8B7,
@@ -52,9 +51,8 @@ static const struct ui_element ui_elements[] = {
 			.disabled = SDL_FALSE,
 			.onclick = {
 				.action = UI_EVENT_EXECUTE_FUNCTION,
-				.action_data = {
-					.execute_function = {
-						onclick_function_debug}
+				.action_data.execute_function = {
+					onclick_function_debug
 				},
 			},
 			.user = NULL
@@ -74,11 +72,72 @@ static const struct ui_element ui_elements[] = {
 			.disabled = SDL_FALSE,
 			.onclick = {
 				.action = UI_EVENT_SET_UNSIGNED_VARIABLE,
-				.action_data = {
-					.unsigned_variable = {
-						.variable = &quit,
-						.val = 1
-					}
+				.action_data.unsigned_variable = {
+					.variable = &quit,
+					.val = 1
+				},
+			},
+			.user = NULL
+		}
+	},
+	{
+		.type = UI_ELEM_TYPE_TILE,
+		.elem.tile = {
+			.label = "Fourth Label",
+			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
+			.tile_size = TILE_SIZE_LARGE,
+			.icon = 0xE8B7,
+			.help = NULL,
+			/* Persian Blue */
+			.bg = {.r = 0x1C, .g = 0x39, .b = 0xBB, .a = SDL_ALPHA_OPAQUE},
+			.fg = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE},
+			.disabled = SDL_FALSE,
+			.onclick = {
+				.action = UI_EVENT_EXECUTE_FUNCTION,
+				.action_data.execute_function = {
+					onclick_function_debug
+				},
+			},
+			.user = NULL
+		}
+	},
+	{
+		.type = UI_ELEM_TYPE_TILE,
+		.elem.tile = {
+			.label = "Fifth Label",
+			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
+			.tile_size = TILE_SIZE_LARGE,
+			.icon = 0xE8B7,
+			.help = NULL,
+			/* Persian Blue */
+			.bg = {.r = 0x1C, .g = 0x39, .b = 0xBB, .a = SDL_ALPHA_OPAQUE},
+			.fg = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE},
+			.disabled = SDL_FALSE,
+			.onclick = {
+				.action = UI_EVENT_EXECUTE_FUNCTION,
+				.action_data.execute_function = {
+					onclick_function_debug
+				},
+			},
+			.user = NULL
+		}
+	},
+	{
+		.type = UI_ELEM_TYPE_TILE,
+		.elem.tile = {
+			.label = "Last Label",
+			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
+			.tile_size = TILE_SIZE_LARGE,
+			.icon = 0xE8B7,
+			.help = NULL,
+			/* Persian Blue */
+			.bg = {.r = 0x1C, .g = 0x39, .b = 0xBB, .a = SDL_ALPHA_OPAQUE},
+			.fg = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE},
+			.disabled = SDL_FALSE,
+			.onclick = {
+				.action = UI_EVENT_EXECUTE_FUNCTION,
+				.action_data.execute_function = {
+					onclick_function_debug
 				},
 			},
 			.user = NULL
@@ -132,8 +191,9 @@ int main(int argc, char *argv[])
 
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
-	ret = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER |
-			SDL_INIT_EVENTS | SDL_INIT_TIMER);
+	ret = SDL_Init(
+		SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER |
+		SDL_INIT_EVENTS | SDL_INIT_TIMER);
 	if(ret != 0)
 		goto err;
 
@@ -146,12 +206,14 @@ int main(int argc, char *argv[])
 		goto err;
 
 	ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED |
-		SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
+					  SDL_RENDERER_PRESENTVSYNC |
+					  SDL_RENDERER_TARGETTEXTURE);
 	if(ren == NULL)
 		goto err;
 
 	/* TODO: Allow even smaller screens. */
-	SDL_SetWindowMinimumSize(win, UI_MIN_WINDOW_WIDTH, UI_MIN_WINDOW_HEIGHT);
+	SDL_SetWindowMinimumSize(win, UI_MIN_WINDOW_WIDTH,
+		UI_MIN_WINDOW_HEIGHT);
 	SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 
 	/* Initialise user interface context. */
@@ -175,7 +237,8 @@ err:
 	{
 		char buf[128];
 		SDL_snprintf(buf, sizeof(buf),
-			"A critical error has occured, and Haiyajan must now close.\n"
+			"A critical error has occurred, and Haiyajan must "
+			"now close.\n"
 			"Error %d: %s\n", ret, SDL_GetError());
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
 			"Critical Error", buf, win);
