@@ -13,6 +13,7 @@
 #include <stretchy_buffer.h>
 #include <ui.h>
 
+static const unsigned drag_y_per_ms = 1;
 static const float dpi_reference = 96.0f;
 
 static const SDL_Colour text_colour_light = {
@@ -50,6 +51,13 @@ struct ui_ctx {
 	float dpi;
 	float dpi_multiply;
 
+	/* Vertical screen offset in pixels, used for scrolling elements. */
+	struct {
+		Uint64 px_y;
+		Sint32 px_requested_y;
+		Uint32 last_update_ms;
+	} offset;
+
 	/* Whether the front-end must call ui_render_frame(). */
 	SDL_bool redraw;
 
@@ -80,6 +88,55 @@ typedef enum {
 	 * Could be used when user presses ENTER. */
 	MENU_INSTR_EXEC_ITEM
 } menu_instruction_e;
+
+/**
+ * Make changes to vertical offset when drag is enabled.
+ */
+static void ui_handle_offset(ui_ctx_s *ctx)
+{
+	Uint32 cur_ms, diff_ms;
+	Uint64 diff_offset;
+
+	cur_ms = SDL_GetTicks();
+
+	if(ctx->offset.px_requested_y == 0)
+	{
+		ctx->offset.last_update_ms = cur_ms;
+		return;
+	}
+
+	if(cur_ms > ctx->offset.last_update_ms)
+	{
+		diff_ms = cur_ms - ctx->offset.last_update_ms;
+	}
+	else
+	{
+		/* If GetTicks has overflowed, do not take last value into
+		 * account. */
+		diff_ms = cur_ms;
+	}
+
+	diff_offset = diff_ms * drag_y_per_ms;
+	if(ctx->offset.px_requested_y < 0)
+	{
+		ctx->offset.px_requested_y += diff_offset;
+		ctx->offset.px_y += diff_offset;
+		if(ctx->offset.px_requested_y > 0)
+			ctx->offset.px_requested_y = 0;
+	}
+	else if(ctx->offset.px_requested_y > 0)
+	{
+		ctx->offset.px_requested_y -= diff_offset;
+		ctx->offset.px_y -= diff_offset;
+		if(ctx->offset.px_requested_y < 0)
+			ctx->offset.px_requested_y = 0;
+	}
+
+	ctx->offset.last_update_ms = cur_ms;
+	ctx->redraw = SDL_TRUE;
+
+	return;
+}
 
 HEDLEY_NON_NULL(1)
 static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
@@ -407,6 +464,16 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 			break;
 		}
 	}
+	else if(e->type == SDL_MOUSEWHEEL)
+	{
+		Sint32 px_y = e->wheel.y * -1 * (Sint32)ctx->ref_tile_size;
+		ctx->offset.px_requested_y += px_y;
+		SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
+			"Requesting a scroll of %d pixels",
+			ctx->offset.px_requested_y);
+		ctx->redraw = SDL_TRUE;
+		return;
+	}
 
 	return;
 }
@@ -417,7 +484,7 @@ static void ui_draw_selection(ui_ctx_s *HEDLEY_RESTRICT ctx,
 {
 	/* Offset the selection square to surround the selection from the
 	 * outside. */
-	unsigned offset = (unsigned)(2.0f * ctx->dpi_multiply) + 1;
+	Uint32 offset = (unsigned)(2.0f * ctx->dpi_multiply) + 1;
 	/* Set the dimensions of the selection square. */
 	SDL_Rect outline = {
 		.x = r->x - offset,
@@ -658,6 +725,9 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 	SDL_assert(ctx->tex != NULL);
 	SDL_assert(ctx->static_tex != NULL);
 
+	/* Check if any animations need to be rendered. */
+	ui_handle_offset(ctx);
+
 	if(ctx->redraw == SDL_FALSE)
 		goto out;
 
@@ -675,6 +745,7 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 	SDL_GetRendererOutputSize(ctx->ren, &vert.x, &vert.y);
 	vert.x /= 8;
 	vert.y /= 16;
+	vert.y -= ctx->offset.px_y;
 
 	SDL_SetRenderDrawColor(ctx->ren, 20, 20, 20, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(ctx->ren);
