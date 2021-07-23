@@ -145,7 +145,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>NO_FRIBIDI</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NO_FRIBIDI;VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -182,12 +182,12 @@
     </PreBuildEvent>
     <ResourceCompile>
       <Culture>0x0009</Culture>
-      <PreprocessorDefinitions>GIT_VER=$(GIT_VER);COMPANY=$(COMPANY);DESCRIPTION=$(DESCRIPTION);LICENSE=$(LICENSE);NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0;COMPANY=Deltabeard;DESCRIPTION='UI for Haiyajan';LICENSE=LGPLv3;NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>NO_FRIBIDI</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NO_FRIBIDI;VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -227,12 +227,12 @@
     </PreBuildEvent>
     <ResourceCompile>
       <Culture>0x0009</Culture>
-      <PreprocessorDefinitions>GIT_VER=$(GIT_VER);COMPANY=$(COMPANY);DESCRIPTION=$(DESCRIPTION);LICENSE=$(LICENSE);NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0;COMPANY=Deltabeard;DESCRIPTION='UI for Haiyajan';LICENSE=LGPLv3;NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelStatic|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>NO_FRIBIDI</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NO_FRIBIDI;VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -272,7 +272,7 @@
     </PreBuildEvent>
     <ResourceCompile>
       <Culture>0x0009</Culture>
-      <PreprocessorDefinitions>GIT_VER=$(GIT_VER);COMPANY=$(COMPANY);DESCRIPTION=$(DESCRIPTION);LICENSE=$(LICENSE);NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0;COMPANY=Deltabeard;DESCRIPTION='UI for Haiyajan';LICENSE=LGPLv3;NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -283,7 +283,7 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <LanguageStandard>Default</LanguageStandard>
-      <PreprocessorDefinitions>NO_FRIBIDI</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NO_FRIBIDI;VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0</PreprocessorDefinitions>
       <WarningLevel>Level4</WarningLevel>
     </ClCompile>
     <Link>
@@ -311,7 +311,7 @@
     </PreBuildEvent>
     <ResourceCompile>
       <Culture>0x0009</Culture>
-      <PreprocessorDefinitions>GIT_VER=$(GIT_VER);COMPANY=$(COMPANY);DESCRIPTION=$(DESCRIPTION);LICENSE=$(LICENSE);NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0;COMPANY=Deltabeard;DESCRIPTION='UI for Haiyajan';LICENSE=LGPLv3;NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -322,7 +322,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <LanguageStandard>Default</LanguageStandard>
-      <PreprocessorDefinitions>NO_FRIBIDI</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NO_FRIBIDI;VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
@@ -355,7 +355,7 @@
     </PreBuildEvent>
     <ResourceCompile>
       <Culture>0x0009</Culture>
-      <PreprocessorDefinitions>GIT_VER=$(GIT_VER);COMPANY=$(COMPANY);DESCRIPTION=$(DESCRIPTION);LICENSE=$(LICENSE);NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0;COMPANY=Deltabeard;DESCRIPTION='UI for Haiyajan';LICENSE=LGPLv3;NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelStatic|x64'">
@@ -366,7 +366,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <LanguageStandard>Default</LanguageStandard>
-      <PreprocessorDefinitions>NO_FRIBIDI</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NO_FRIBIDI;VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
@@ -399,7 +399,7 @@
     </PreBuildEvent>
     <ResourceCompile>
       <Culture>0x0009</Culture>
-      <PreprocessorDefinitions>GIT_VER=$(GIT_VER);COMPANY=$(COMPANY);DESCRIPTION=$(DESCRIPTION);LICENSE=$(LICENSE);NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0;COMPANY=Deltabeard;DESCRIPTION='UI for Haiyajan';LICENSE=LGPLv3;NAME=$(ProjectName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

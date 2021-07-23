@@ -13,7 +13,6 @@
 #include <stretchy_buffer.h>
 #include <ui.h>
 
-static const unsigned drag_y_per_ms = 1;
 static const float dpi_reference = 96.0f;
 
 static const SDL_Colour text_colour_light = {
@@ -53,7 +52,7 @@ struct ui_ctx {
 
 	/* Vertical screen offset in pixels, used for scrolling elements. */
 	struct {
-		Uint64 px_y;
+		Sint32 px_y;
 		Sint32 px_requested_y;
 		Uint32 last_update_ms;
 	} offset;
@@ -90,12 +89,19 @@ typedef enum {
 } menu_instruction_e;
 
 /**
- * Make changes to vertical offset when drag is enabled.
+ * Scrolls the user interface. This function is executed on each from and
+ * modifies the vertical offset when the value of ctx->offset.px_requested_y is
+ * non-zero.
+ * TODO: The requested vertical offset is reset if the user interface can not be
+ * scrolled further in a given direction. This could be due to reaching the
+ * first for last element in the rendered menu.
  */
 static void ui_handle_offset(ui_ctx_s *ctx)
 {
+	unsigned drag_y_per_ms = 2;
 	Uint32 cur_ms, diff_ms;
-	Uint64 diff_offset;
+	Sint32 diff_offset;
+	Sint32 old_px_y;
 
 	cur_ms = SDL_GetTicks();
 
@@ -116,7 +122,20 @@ static void ui_handle_offset(ui_ctx_s *ctx)
 		diff_ms = cur_ms;
 	}
 
+	/* In the event that the time elapsed since last redraw is so
+	 * significant that a signed overflow could happen later, then
+	 * immediately*/
+	if(HEDLEY_UNLIKELY(diff_ms > SDL_MAX_SINT32 / drag_y_per_ms))
+	{
+
+	}
+
+	old_px_y = ctx->offset.px_y;
 	diff_offset = diff_ms * drag_y_per_ms;
+
+	if(diff_offset > SDL_abs(ctx->offset.px_requested_y))
+		diff_offset = SDL_abs(ctx->offset.px_requested_y);
+
 	if(ctx->offset.px_requested_y < 0)
 	{
 		ctx->offset.px_requested_y += diff_offset;
@@ -132,8 +151,14 @@ static void ui_handle_offset(ui_ctx_s *ctx)
 			ctx->offset.px_requested_y = 0;
 	}
 
+	if(ctx->offset.px_y < 0)
+		ctx->offset.px_y = 0;
+
 	ctx->offset.last_update_ms = cur_ms;
-	ctx->redraw = SDL_TRUE;
+
+	/* Only redraw if offset has changed. */
+	if(ctx->offset.px_y != old_px_y)
+		ctx->redraw = SDL_TRUE;
 
 	return;
 }
@@ -467,11 +492,11 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 	else if(e->type == SDL_MOUSEWHEEL)
 	{
 		Sint32 px_y = e->wheel.y * -1 * (Sint32)ctx->ref_tile_size;
+		ctx->offset.px_requested_y = 0;
 		ctx->offset.px_requested_y += px_y;
 		SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
 			"Requesting a scroll of %d pixels",
 			ctx->offset.px_requested_y);
-		ctx->redraw = SDL_TRUE;
 		return;
 	}
 
@@ -628,21 +653,6 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 
 	switch(el->elem.tile.label_placement)
 	{
-	case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
-		text_dim.x = p->x + tile_padding.x;
-		text_dim.y = p->y + len - text_dim.h - tile_padding.y;
-		break;
-
-	case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
-		text_dim.x = p->x + ((len - text_dim.w) / 2);
-		text_dim.y = p->y + len - text_dim.h - tile_padding.y;
-		break;
-
-	case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
-		text_dim.x = p->x + len - text_dim.w - tile_padding.x;
-		text_dim.y = p->y + len - text_dim.h - tile_padding.y;
-		break;
-
 	case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
 		text_dim.x = p->x + len + tile_padding.x;
 		text_dim.y = p->y;
@@ -664,30 +674,10 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	}
 
 	/* Colour of elements within tile. */
-	switch(el->elem.tile.label_placement)
-	{
-	case LABEL_PLACEMENT_INSIDE_BOTTOM_LEFT:
-	case LABEL_PLACEMENT_INSIDE_BOTTOM_MIDDLE:
-	case LABEL_PLACEMENT_INSIDE_BOTTOM_RIGHT:
-		SDL_SetTextureColorMod(text_tex,
-			el->elem.tile.fg.r,
-			el->elem.tile.fg.g,
-			el->elem.tile.fg.b);
-
-		break;
-
-		/* Alternate colour for text located outside of tile. */
-	case LABEL_PLACEMENT_OUTSIDE_RIGHT_TOP:
-	case LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE:
-	case LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM:
-	default:
-		SDL_SetTextureColorMod(text_tex,
-			text_colour_light.r,
-			text_colour_light.g,
-			text_colour_light.b);
-
-		break;
-	}
+	SDL_SetTextureColorMod(text_tex,
+		el->elem.tile.fg.r,
+		el->elem.tile.fg.g,
+		el->elem.tile.fg.b);
 
 	SDL_RenderCopy(ctx->ren, text_tex, NULL, &text_dim);
 	SDL_DestroyTexture(text_tex);
