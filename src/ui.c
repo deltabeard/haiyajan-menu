@@ -124,10 +124,12 @@ static void ui_handle_offset(ui_ctx_s *ctx)
 
 	/* In the event that the time elapsed since last redraw is so
 	 * significant that a signed overflow could happen later, then
-	 * immediately*/
+	 * immediately apply the full offset. */
 	if(HEDLEY_UNLIKELY(diff_ms > SDL_MAX_SINT32 / drag_y_per_ms))
 	{
-
+		ctx->offset.px_requested_y = 0;
+		ctx->offset.px_y = 0;
+		goto out;
 	}
 
 	old_px_y = ctx->offset.px_y;
@@ -153,7 +155,28 @@ static void ui_handle_offset(ui_ctx_s *ctx)
 
 	if(ctx->offset.px_y < 0)
 		ctx->offset.px_y = 0;
+	else
+	{
+		/* FIXME: This method relies on hitboxes, which are generated
+		 * *after* a redraw, not during the scrolling event. */
+		/* Make sure that user doesn't scroll past last element. */
+		const struct hit_box h = sb_last(ctx->hit_boxes);
+		int y_thresh;
+		int disp_height;
 
+		SDL_GetRendererOutputSize(ctx->ren, NULL, &disp_height);
+		y_thresh = disp_height - ctx->ref_tile_size;
+
+		/* If last element is above the vertical threshold, pull it
+		 * back. */
+		if(h.hit_box.y < y_thresh)
+		{
+			ctx->offset.px_requested_y = 0;
+			ctx->offset.px_y -= (y_thresh - h.hit_box.y);
+		}
+	}
+
+out:
 	ctx->offset.last_update_ms = cur_ms;
 
 	/* Only redraw if offset has changed. */

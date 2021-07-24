@@ -44,7 +44,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/ext")
 
 find_package(SDL2 CONFIG REQUIRED)
 find_package(sdl2-ttf REQUIRED)
-find_package(fribidi)
+find_package(fribidi QUIET)
 
 # Add required dependencies
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main SDL2::SDL2)
