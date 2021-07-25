@@ -101,6 +101,7 @@ static void ui_handle_offset(ui_ctx_s *ctx)
 	Sint32 old_px_y;
 
 	cur_ms = SDL_GetTicks();
+	old_px_y = ctx->offset.px_y;
 
 	/* Exit if no scrolling is requested. */
 	if(ctx->offset.px_requested_y == 0)
@@ -131,7 +132,6 @@ static void ui_handle_offset(ui_ctx_s *ctx)
 		goto out;
 	}
 
-	old_px_y = ctx->offset.px_y;
 	diff_offset = diff_ms * drag_y_per_ms;
 
 	if(diff_offset > SDL_abs(ctx->offset.px_requested_y))
