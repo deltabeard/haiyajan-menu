@@ -92,25 +92,24 @@ typedef enum {
  * Scrolls the user interface. This function is executed on each from and
  * modifies the vertical offset when the value of ctx->offset.px_requested_y is
  * non-zero.
- * TODO: The requested vertical offset is reset if the user interface can not be
- * scrolled further in a given direction. This could be due to reaching the
- * first for last element in the rendered menu.
  */
 static void ui_handle_offset(ui_ctx_s *ctx)
 {
-	unsigned drag_y_per_ms = 2;
+	const unsigned drag_y_per_ms = 2;
 	Uint32 cur_ms, diff_ms;
 	Sint32 diff_offset;
 	Sint32 old_px_y;
 
 	cur_ms = SDL_GetTicks();
 
+	/* Exit if no scrolling is requested. */
 	if(ctx->offset.px_requested_y == 0)
 	{
 		ctx->offset.last_update_ms = cur_ms;
 		return;
 	}
 
+	/* Calculate time since last update. */
 	if(cur_ms > ctx->offset.last_update_ms)
 	{
 		diff_ms = cur_ms - ctx->offset.last_update_ms;
@@ -138,6 +137,7 @@ static void ui_handle_offset(ui_ctx_s *ctx)
 	if(diff_offset > SDL_abs(ctx->offset.px_requested_y))
 		diff_offset = SDL_abs(ctx->offset.px_requested_y);
 
+	/* Apply scrolling offset for next draw. */
 	if(ctx->offset.px_requested_y < 0)
 	{
 		ctx->offset.px_requested_y += diff_offset;
