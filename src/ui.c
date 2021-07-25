@@ -153,26 +153,28 @@ static void ui_handle_offset(ui_ctx_s *ctx)
 			ctx->offset.px_requested_y = 0;
 	}
 
+	/* Do not allow scrolling further up from the first element. */
 	if(ctx->offset.px_y < 0)
+	{
 		ctx->offset.px_y = 0;
+	}
 	else
 	{
-		/* FIXME: This method relies on hitboxes, which are generated
-		 * *after* a redraw, not during the scrolling event. */
 		/* Make sure that user doesn't scroll past last element. */
 		const struct hit_box h = sb_last(ctx->hit_boxes);
 		int y_thresh;
 		int disp_height;
 
 		SDL_GetRendererOutputSize(ctx->ren, NULL, &disp_height);
-		y_thresh = disp_height - ctx->ref_tile_size;
+		y_thresh = disp_height - (ctx->ref_tile_size * 2);
 
 		/* If last element is above the vertical threshold, pull it
 		 * back. */
 		if(h.hit_box.y < y_thresh)
 		{
-			ctx->offset.px_requested_y = 0;
-			ctx->offset.px_y -= (y_thresh - h.hit_box.y);
+			ctx->offset.px_requested_y = (y_thresh - h.hit_box.y);
+			SDL_Log("Pulling back by %d",
+				ctx->offset.px_requested_y);
 		}
 	}
 

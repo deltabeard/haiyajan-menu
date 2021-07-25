@@ -80,6 +80,7 @@ static const struct ui_element ui_elements[] = {
 			.user = NULL
 		}
 	},
+#if 0
 	{
 		.type = UI_ELEM_TYPE_TILE,
 		.elem.tile = {
@@ -122,6 +123,7 @@ static const struct ui_element ui_elements[] = {
 			.user = NULL
 		}
 	},
+#endif
 	{
 		.type = UI_ELEM_TYPE_TILE,
 		.elem.tile = {
