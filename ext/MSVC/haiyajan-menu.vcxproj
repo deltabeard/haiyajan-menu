@@ -281,7 +281,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <LanguageStandard_C>stdc11</LanguageStandard_C>
+      <LanguageStandard_C>Default</LanguageStandard_C>
       <LanguageStandard>Default</LanguageStandard>
       <PreprocessorDefinitions>NO_FRIBIDI;VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0</PreprocessorDefinitions>
       <WarningLevel>Level4</WarningLevel>
@@ -320,7 +320,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <LanguageStandard_C>stdc11</LanguageStandard_C>
+      <LanguageStandard_C>Default</LanguageStandard_C>
       <LanguageStandard>Default</LanguageStandard>
       <PreprocessorDefinitions>NO_FRIBIDI;VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -364,7 +364,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <LanguageStandard_C>stdc11</LanguageStandard_C>
+      <LanguageStandard_C>Default</LanguageStandard_C>
       <LanguageStandard>Default</LanguageStandard>
       <PreprocessorDefinitions>NO_FRIBIDI;VER_MAJOR=0;VER_MINOR=0;VER_PATCH=0;VER_TWEAK=0</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -403,16 +403,19 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\cache.c" />
     <ClCompile Include="..\..\src\font.c" />
     <ClCompile Include="..\..\src\main.c" />
     <ClCompile Include="..\..\src\ui.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\inc\cache.h" />
     <ClInclude Include="..\..\inc\font.h" />
     <ClInclude Include="..\..\inc\hedley.h" />
     <ClInclude Include="..\..\inc\stretchy_buffer.h" />
     <ClInclude Include="..\..\inc\ui.h" />
     <ClInclude Include="..\..\inc\win_dirent.h" />
+    <ClInclude Include="..\..\inc\xxhash.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\DESIGN.md" />

@@ -666,7 +666,8 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		icon_tex = font_render_icon(ctx->font, el->elem.tile.icon,
 				el->elem.tile.fg);
 		/* FIXME: Missing checks. */
-		store_cached_texture(ctx->cache, &el->elem.tile.icon, sizeof(el->elem.tile.icon), icon_tex);
+		ctx->cache = store_cached_texture(ctx->cache, &el->elem.tile.icon,
+				sizeof(el->elem.tile.icon), icon_tex);
 	}
 	SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
 	icon_dim.x = p->x + (len / 2) - (icon_dim.w / 2);
@@ -687,7 +688,7 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 					FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
 					text_colour_light);
 		/* FIXME: Missing checks. */
-		store_cached_texture(ctx->cache, el->elem.tile.label,
+		ctx->cache = store_cached_texture(ctx->cache, el->elem.tile.label,
 					SDL_strlen(el->elem.tile.label), text_tex);
 	}
 	SDL_QueryTexture(text_tex, NULL, NULL, &text_dim.w, &text_dim.h);

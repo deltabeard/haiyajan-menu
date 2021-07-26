@@ -47,7 +47,7 @@ out:
 	return NULL;
 }
 
-void store_cached_texture(cache_ctx_s *ctx, const void *dat, Uint32 len, SDL_Texture *tex)
+cache_ctx_s *store_cached_texture(cache_ctx_s *ctx, const void *dat, Uint32 len, SDL_Texture *tex)
 {
 	struct textures new_entry;
 
@@ -55,14 +55,14 @@ void store_cached_texture(cache_ctx_s *ctx, const void *dat, Uint32 len, SDL_Tex
 	{
 		ctx = SDL_calloc(1, sizeof(struct cache_ctx));
 		if(ctx == NULL)
-			return;
+			return NULL;
 	}
 
 	new_entry.hash = XXH3_64bits(dat, len);
 	new_entry.tex = tex;
 	sb_push(ctx->textures, new_entry);
 
-	return;
+	return ctx;
 }
 
 void clear_cached_textures(cache_ctx_s *ctx)
