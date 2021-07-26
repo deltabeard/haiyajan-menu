@@ -175,6 +175,8 @@
 #ifndef STB_STRETCHY_BUFFER_H_INCLUDED
 #define STB_STRETCHY_BUFFER_H_INCLUDED
 
+#include <SDL.h>
+
 #ifndef NO_STRETCHY_BUFFER_SHORT_NAMES
 #define sb_free   stb_sb_free
 #define sb_push   stb_sb_push
@@ -183,7 +185,15 @@
 #define sb_last   stb_sb_last
 #endif
 
-#define stb_sb_free(a)         ((a) ? SDL_SIMDFree(stb__sbraw(a)),0 : 0)
+#if SDL_VERSION_ATLEAST(2, 0, 10)
+# define STB_SB_FREE(mem) SDL_SIMDFree(mem)
+# define STB_SB_REALLOC(mem, size) SDL_SIMDRealloc(mem, size)
+#else
+# define STB_SB_FREE(mem) SDL_free(mem)
+# define STB_SB_REALLOC(mem, size) SDL_realloc(mem, size)
+#endif
+
+#define stb_sb_free(a)         ((a) ? STB_SB_FREE(stb__sbraw(a)),0 : 0)
 #define stb_sb_push(a,v)       (stb__sbmaybegrow(a,1), (a)[stb__sbn(a)++] = (v))
 #define stb_sb_count(a)        ((a) ? stb__sbn(a) : 0)
 #define stb_sb_add(a,n)        (stb__sbmaybegrow(a,n), stb__sbn(a)+=(n), &(a)[stb__sbn(a)-(n)])
@@ -204,7 +214,7 @@ static void * stb__sbgrowf(void *arr, unsigned increment, unsigned itemsize)
    unsigned dbl_cur = arr ? 2*stb__sbm(arr) : 0;
    unsigned min_needed = stb_sb_count(arr) + increment;
    unsigned m = dbl_cur > min_needed ? dbl_cur : min_needed;
-   unsigned *p = (unsigned *) SDL_SIMDRealloc(arr ? stb__sbraw(arr) : 0, (size_t)itemsize * (size_t)m + sizeof(unsigned)*2);
+   unsigned *p = (unsigned *) STB_SB_REALLOC(arr ? stb__sbraw(arr) : 0, (size_t)itemsize * (size_t)m + sizeof(unsigned)*2);
    if (p) {
       if (!arr)
          p[1] = 0;
