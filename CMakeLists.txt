@@ -36,7 +36,7 @@ set(HAIYAJAN_MENU_LICENSE "LGPL-3.0, Mahyar Koshkouei (c) 2021")
 # Add dependencies to project.
 add_executable(${PROJECT_NAME})
 
-target_sources(${PROJECT_NAME} PRIVATE src/main.c src/font.c src/ui.c)
+target_sources(${PROJECT_NAME} PRIVATE src/main.c src/cache.c src/font.c src/ui.c)
 target_include_directories(${PROJECT_NAME} PRIVATE inc)
 
 # Discover libraries

@@ -183,7 +183,7 @@
 #define sb_last   stb_sb_last
 #endif
 
-#define stb_sb_free(a)         ((a) ? SDL_free(stb__sbraw(a)),0 : 0)
+#define stb_sb_free(a)         ((a) ? SDL_SIMDFree(stb__sbraw(a)),0 : 0)
 #define stb_sb_push(a,v)       (stb__sbmaybegrow(a,1), (a)[stb__sbn(a)++] = (v))
 #define stb_sb_count(a)        ((a) ? stb__sbn(a) : 0)
 #define stb_sb_add(a,n)        (stb__sbmaybegrow(a,n), stb__sbn(a)+=(n), &(a)[stb__sbn(a)-(n)])
@@ -204,7 +204,7 @@ static void * stb__sbgrowf(void *arr, unsigned increment, unsigned itemsize)
    unsigned dbl_cur = arr ? 2*stb__sbm(arr) : 0;
    unsigned min_needed = stb_sb_count(arr) + increment;
    unsigned m = dbl_cur > min_needed ? dbl_cur : min_needed;
-   unsigned *p = (unsigned *) SDL_realloc(arr ? stb__sbraw(arr) : 0, (size_t)itemsize * (size_t)m + sizeof(unsigned)*2);
+   unsigned *p = (unsigned *) SDL_SIMDRealloc(arr ? stb__sbraw(arr) : 0, (size_t)itemsize * (size_t)m + sizeof(unsigned)*2);
    if (p) {
       if (!arr)
          p[1] = 0;

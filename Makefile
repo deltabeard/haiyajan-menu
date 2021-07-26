@@ -48,6 +48,16 @@ else
 	PLATFORM := UNIX
 endif
 
+# On Unix platforms, pkg-config is required.
+ifneq ($(PLATFORM),MSVC)
+	# Check that pkg-config is available
+	CHECK	:= $(shell which pkg-config)
+ifneq ($(.SHELLSTATUS),0)
+	err	:= $(error Unable to locate 'pkg-config' application)
+endif
+	PKGCONFIG := pkg-config
+endif
+
 ifeq ($(PLATFORM),MSVC)
 	# Default compiler options for Microsoft Visual C++ (MSVC)
 	CC	:= cl
@@ -74,23 +84,13 @@ else ifeq ($(PLATFORM),SWITCH)
 	APP_ICON := $(DEVKITPRO)/libnx/default_icon.jpg
 
 else ifeq ($(PLATFORM),UNIX)
-	# Check that pkg-config is available
-	CHECK	:= $(shell which which)
-ifneq ($(.SHELLSTATUS),0)
-	err	:= $(error Unable to execute 'which' application)
-endif
-
-	CHECK	:= $(shell which pkg-config)
-ifneq ($(.SHELLSTATUS),0)
-	err	:= $(error Unable to locate 'pkg-config' application)
-endif
 
 	# Default compiler options for GCC and Clang
 	CC	:= cc
 	OBJEXT	:= o
 	RM	:= rm -f
-	CFLAGS	:= -Wall -Wextra -D_DEFAULT_SOURCE $(shell pkg-config sdl2 fribidi SDL2_ttf --cflags)
-	LDFLAGS	:= $(shell pkg-config sdl2 fribidi SDL2_ttf --libs)
+	CFLAGS	:= -Wall -Wextra -D_DEFAULT_SOURCE $(shell $(PKGCONFIG) --cflags sdl2 fribidi SDL2_ttf)
+	LDFLAGS	:= $(shell $(PKGCONFIG) --libs sdl2 fribidi SDL2_ttf)
 	EXE	:= $(NAME)
 
 else
@@ -111,7 +111,6 @@ endif
 #
 LICENSE := (C) $(AUTHOR). $(LICENSE_SPDX).
 GIT_VER := $(shell git describe --dirty --always --tags --long)
-
 
 SRCS := $(wildcard src/*.c) $(wildcard src/**/*.c)
 

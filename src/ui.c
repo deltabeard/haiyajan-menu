@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include <cache.h>
 #include <font.h>
 #include <hedley.h>
 #include <SDL.h>
@@ -33,6 +34,9 @@ struct ui_ctx {
 
 	/* Currently rendered menu. */
 	const struct ui_element *current;
+
+	/* Cache of elements. */
+	struct cache_ctx *cache;
 
 	/* Font context used to draw text on UI elements. */
 	font_ctx_s *font;
@@ -173,8 +177,6 @@ static void ui_handle_offset(ui_ctx_s *ctx)
 		if(h.hit_box.y < y_thresh)
 		{
 			ctx->offset.px_requested_y = (y_thresh - h.hit_box.y);
-			SDL_Log("Pulling back by %d",
-				ctx->offset.px_requested_y);
 		}
 	}
 
@@ -658,8 +660,14 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	SDL_RenderFillRect(ctx->ren, &dim);
 
 	/* Render icon on tile. */
-	icon_tex = font_render_icon(ctx->font, el->elem.tile.icon,
-		el->elem.tile.fg);
+	icon_tex = get_cached_texture(ctx->cache, &el->elem.tile.icon, sizeof(el->elem.tile.icon));
+	if(icon_tex == NULL)
+	{
+		icon_tex = font_render_icon(ctx->font, el->elem.tile.icon,
+				el->elem.tile.fg);
+		/* FIXME: Missing checks. */
+		store_cached_texture(ctx->cache, &el->elem.tile.icon, sizeof(el->elem.tile.icon), icon_tex);
+	}
 	SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
 	icon_dim.x = p->x + (len / 2) - (icon_dim.w / 2);
 	icon_dim.y = p->y + (len / 2) - (icon_dim.h / 2);
@@ -668,12 +676,20 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		el->elem.tile.fg.r, el->elem.tile.fg.g,
 		el->elem.tile.fg.b);
 	SDL_RenderCopy(ctx->ren, icon_tex, NULL, &icon_dim);
-	SDL_DestroyTexture(icon_tex);
+	//SDL_DestroyTexture(icon_tex);
 
 	/* Render tile label. */
-	text_tex = font_render_text(ctx->font, el->elem.tile.label,
-		FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
-		text_colour_light);
+	text_tex = get_cached_texture(ctx->cache, el->elem.tile.label,
+				      SDL_strlen(el->elem.tile.label));
+	if(text_tex == NULL)
+	{
+		text_tex = font_render_text(ctx->font, el->elem.tile.label,
+					FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
+					text_colour_light);
+		/* FIXME: Missing checks. */
+		store_cached_texture(ctx->cache, el->elem.tile.label,
+					SDL_strlen(el->elem.tile.label), text_tex);
+	}
 	SDL_QueryTexture(text_tex, NULL, NULL, &text_dim.w, &text_dim.h);
 
 	switch(el->elem.tile.label_placement)
@@ -705,7 +721,7 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		el->elem.tile.fg.b);
 
 	SDL_RenderCopy(ctx->ren, text_tex, NULL, &text_dim);
-	SDL_DestroyTexture(text_tex);
+	//SDL_DestroyTexture(text_tex);
 
 	/* Add hitbox for mouse and touch input. */
 	{
