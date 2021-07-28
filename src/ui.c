@@ -545,7 +545,7 @@ static void ui_draw_selection(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		.w = r->w + (offset * 2)
 	};
 	/* Set the thickness of the selection square. */
-	const unsigned thickness = (5.0f * ctx->dpi_multiply) + 1;
+	const unsigned thickness = 1 + (unsigned)SDL_ceilf(5.0f * ctx->dpi_multiply);
 	//const SDL_Colour bright = { 0x19, 0x82, 0xC4, 0xFF };
 	//const SDL_Colour dark = { 0x10, 0x54, 0x7E, 0xFF };
 	static const Uint8 red[256] = {

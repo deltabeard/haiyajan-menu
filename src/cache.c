@@ -30,7 +30,7 @@ struct cache_ctx {
 	struct textures *textures;
 };
 
-SDL_Texture *get_cached_texture(cache_ctx_s *ctx, const void *dat, Uint32 len)
+SDL_Texture *get_cached_texture(cache_ctx_s *ctx, const void *dat, size_t len)
 {
 	Hash hash;
 	unsigned count;
@@ -53,7 +53,7 @@ out:
 	return NULL;
 }
 
-cache_ctx_s *store_cached_texture(cache_ctx_s *ctx, const void *dat, Uint32 len, SDL_Texture *tex)
+cache_ctx_s *store_cached_texture(cache_ctx_s *ctx, const void *dat, size_t len, SDL_Texture *tex)
 {
 	struct textures new_entry;
 

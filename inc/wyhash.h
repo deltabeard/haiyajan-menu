@@ -100,7 +100,7 @@ static inline uint64_t _wyr4(const uint8_t *p) {
 #endif
 static inline uint64_t _wyr3(const uint8_t *p, uint64_t k) { return (((uint64_t)p[0])<<16)|(((uint64_t)p[k>>1])<<8)|p[k-1];}
 //wyhash main function
-static inline uint64_t wyhash64(const void *key, uint64_t len, uint64_t seed){
+static inline uint64_t wyhash64(const void *key, size_t len, uint64_t seed){
   static const uint64_t secret[4] = { 0xa0761d6478bd642full, 0xe7037ed1a0b428dbull, 0x8ebc6af09c88c6e3ull, 0x589965cc75374cc3ull };
   const uint8_t *p=(const uint8_t *)key; seed^=*secret;	uint64_t	a,	b;
   if(_likely_(len<=16)){
@@ -141,7 +141,7 @@ static inline void _wymix32(uint32_t* A, uint32_t* B) {
 }
 // This version is vulnerable when used with a few bad seeds, which should be skipped beforehand:
 // 0x429dacdd, 0xd637dbf3
-static inline uint32_t wyhash32(const void* key, uint64_t len, uint32_t seed) {
+static inline uint32_t wyhash32(const void* key, size_t len, uint32_t seed) {
 	const uint8_t* p = (const uint8_t*)key; uint64_t i = len;
 	uint32_t see1 = (uint32_t)len; seed ^= (uint32_t)(len >> 32); _wymix32(&seed, &see1);
 	for (; i > 8; i -= 8, p += 8) { seed ^= _wyr32(p); see1 ^= _wyr32(p + 4); _wymix32(&seed, &see1); }
