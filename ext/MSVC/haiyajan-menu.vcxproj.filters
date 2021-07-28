@@ -50,7 +50,7 @@
     <ClInclude Include="..\..\inc\cache.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\inc\xxhash.h">
+    <ClInclude Include="..\..\inc\wyhash.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

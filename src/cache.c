@@ -11,12 +11,18 @@
 #include <SDL.h>
 #include <stretchy_buffer.h>
 
-#define XXH_INLINE_ALL
-#define XXH_IMPLEMENTATION
-#include <xxhash.h>
+#include <wyhash.h>
+
+#if SIZEOF_VOIDP == 8
+typedef Uint64 Hash;
+# define HASH_FN(dat, len, seed) wyhash64(dat, len, seed)
+#else
+typedef Uint32 Hash
+# define HASH_FN(dat, len, seed) wyhash32(dat, len, seed)
+#endif
 
 struct textures {
-	XXH64_hash_t hash;
+	Hash hash;
 	SDL_Texture *tex;
 };
 
@@ -26,14 +32,14 @@ struct cache_ctx {
 
 SDL_Texture *get_cached_texture(cache_ctx_s *ctx, const void *dat, Uint32 len)
 {
-	XXH64_hash_t hash;
+	Hash hash;
 	unsigned count;
 
 	if(ctx == NULL)
 		goto out;
 
 	count = sb_count(ctx->textures);
-	hash = XXH3_64bits(dat, len);
+	hash = HASH_FN(dat, len, 0);
 
 	for(unsigned i = 0; i < count; i++)
 	{
@@ -58,7 +64,7 @@ cache_ctx_s *store_cached_texture(cache_ctx_s *ctx, const void *dat, Uint32 len,
 			return NULL;
 	}
 
-	new_entry.hash = XXH3_64bits(dat, len);
+	new_entry.hash = HASH_FN(dat, len, 0);
 	new_entry.tex = tex;
 	sb_push(ctx->textures, new_entry);
 
