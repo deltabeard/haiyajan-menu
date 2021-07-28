@@ -69,7 +69,7 @@ else()
 endif()
 
 # Compile resources for Windows executable.
-if(WIN32)
+if(MSVC)
     target_sources(${PROJECT_NAME} PRIVATE meta/winres.rc)
 endif()
 
@@ -88,9 +88,20 @@ add_compile_definitions(VER_TWEAK=0)
 file(GLOB PROJ_FILES LIST_DIRECTORIES false
 		RELATIVE ${PROJECT_SOURCE_DIR} CONFIGURE_DEPENDS
 		inc/*.h src/*.c LICENSE README.md CMakeLists.txt)
-file(ARCHIVE_CREATE OUTPUT ${PROJECT_SOURCE_DIR}/meta/src.tar.xz
+file(ARCHIVE_CREATE OUTPUT meta/src.tar.xz
 		PATHS ${PROJ_FILES}
 		FORMAT gnutar COMPRESSION XZ COMPRESSION_LEVEL 6)
+
+if(NOT MSVC)
+	file(READ meta/src.tar.xz filedata HEX)
+	string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," filedata ${filedata})
+	file(WRITE meta/src.c
+		"/* This file is required for LGPLv3 compliance. */\n\n"
+		"#include <stddef.h>\n\n"
+		"const volatile unsigned char src[] = {${filedata}};\n"
+		"const size_t src_sz = sizeof(src);\n")
+	target_sources(${PROJECT_NAME} PRIVATE meta/src.c)
+endif()
 
 # Package options
 include(GNUInstallDirs)
