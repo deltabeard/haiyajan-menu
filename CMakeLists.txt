@@ -84,6 +84,14 @@ add_compile_definitions(VER_MINOR=${haiyajan-menu_VERSION_MINOR})
 add_compile_definitions(VER_PATCH=${haiyajan-menu_VERSION_PATCH})
 add_compile_definitions(VER_TWEAK=0)
 
+# Collect source files and compress them
+file(GLOB PROJ_FILES LIST_DIRECTORIES false
+		RELATIVE ${PROJECT_SOURCE_DIR} CONFIGURE_DEPENDS
+		inc/*.h src/*.c LICENSE README.md CMakeLists.txt)
+file(ARCHIVE_CREATE OUTPUT ${PROJECT_SOURCE_DIR}/meta/src.tar.xz
+		PATHS ${PROJ_FILES}
+		FORMAT gnutar COMPRESSION XZ COMPRESSION_LEVEL 6)
+
 # Package options
 include(GNUInstallDirs)
 install(TARGETS haiyajan-menu RUNTIME)

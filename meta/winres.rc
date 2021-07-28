@@ -9,7 +9,7 @@
 #endif
 
 #ifndef SRC_FILE
-#define SRC_FILE src.tar.gz
+#define SRC_FILE src.tar.xz
 #endif
 
 IDI_ICON1	ICON	QUOTE(ICON_FILE)

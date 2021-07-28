@@ -69,7 +69,7 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
  *
  * \param ctx		Font context.
 */
-void font_change_pt(font_ctx_s *restrict ctx,
+void font_change_pt(font_ctx_s *ctx,
 	int icon_pt, int header_pt, int regular_pt);
 
 /**

@@ -201,7 +201,7 @@ static void font_close_ttf(font_ctx_s *ctx)
  * \param ctx Font context.
  * \param dpi Requested DPI to scale fonts to.
 */
-void font_change_pt(font_ctx_s *restrict ctx,
+void font_change_pt(font_ctx_s *ctx,
 		int icon_pt, int header_pt, int regular_pt)
 {
 	font_close_ttf(ctx);

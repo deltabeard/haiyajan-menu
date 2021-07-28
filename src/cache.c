@@ -17,7 +17,7 @@
 typedef Uint64 Hash;
 # define HASH_FN(dat, len, seed) wyhash64(dat, len, seed)
 #else
-typedef Uint32 Hash
+typedef Uint32 Hash;
 # define HASH_FN(dat, len, seed) wyhash32(dat, len, seed)
 #endif
 
