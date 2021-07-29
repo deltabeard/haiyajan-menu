@@ -40,15 +40,19 @@ target_sources(${PROJECT_NAME} PRIVATE src/main.c src/font.c src/ui.c)
 target_include_directories(${PROJECT_NAME} PRIVATE inc)
 
 # Discover libraries
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/ext")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/ext/cmake")
 
-find_package(SDL2 CONFIG REQUIRED)
-find_package(sdl2-ttf REQUIRED)
+find_package(SDL2 REQUIRED)
+find_package(SDL2_ttf REQUIRED)
 find_package(fribidi QUIET)
 
+#if (NOT SDL_VERSION_MAJOR EQUAL 2)
+#	message(SEND_ERROR "Only SDL2 is supported; Found SDL${SDL_VERSION_MAJOR}")
+#endif()
+
 # Add required dependencies
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main SDL2::SDL2)
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2_ttf)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::Core SDL2::Main)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::TTF)
 target_include_directories(${PROJECT_NAME} PUBLIC ${SDL_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${SDL_TTF_INCLUDE_DIRS})
 
