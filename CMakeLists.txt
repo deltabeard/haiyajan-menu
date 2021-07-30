@@ -75,6 +75,7 @@ endif()
 # Compile resources for Windows executable.
 if(MSVC)
     target_sources(${PROJECT_NAME} PRIVATE meta/winres.rc)
+	set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DPI_AWARE "PerMonitor")
 endif()
 
 # Add definitions of project information.
