@@ -1,6 +1,12 @@
 *ext/inc
 *ext/lib*
 *.res
+meta/*.c
+
+*.tar*
+*.7z
+*.nacp
+*.nro
 
 ### C ###
 # Prerequisites
