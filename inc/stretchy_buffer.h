@@ -185,7 +185,7 @@
 #define sb_last   stb_sb_last
 #endif
 
-#if SDL_VERSION_ATLEAST(2, 0, 10)
+#if SDL_VERSION_ATLEAST(2, 0, 14)
 # define STB_SB_FREE(mem) SDL_SIMDFree(mem)
 # define STB_SB_REALLOC(mem, size) SDL_SIMDRealloc(mem, size)
 #else
