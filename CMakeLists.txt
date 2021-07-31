@@ -42,7 +42,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE inc)
 # Discover libraries
 include(FindPkgConfig)
 if(PKG_CONFIG_FOUND)
-    pkg_search_module(SDL2     REQUIRED SDL2)
+    pkg_search_module(SDL2     REQUIRED sdl2)
     pkg_search_module(SDL2_TTF REQUIRED SDL2_ttf)
     pkg_search_module(FRIBIDI  QUIET    fribidi)
 elseif(VCPKG)
