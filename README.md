@@ -23,57 +23,52 @@ The following tools and dependencies are required to build Haiyajan-UI.
 
 - A C99 compatible compiler
   - Support includes GCC, Clang, and Visual Studio Build Tools\*.
-- GNU Make with pkg-config, or Cmake with vcpkg
-- SDL2
-- SDL2_ttf
+- [CMake](https://cmake.org/)
+  - Building for Windows NT platforms additionally requires [vcpkg](https://vcpkg.io/).
+  - Other platforms will benefit with having pkg-config installed.
+- [SDL2](https://www.libsdl.org/)
+- [SDL2_ttf](https://www.libsdl.org/projects/SDL_ttf/)
   - SDL2_ttf depends upon FreeType.
 
 And optionally:
 - GNU Fribidi
 
-\* Visual Studio Build Tools is only supported for Windows targets. Only the latest version of Visual Studio Build Tools is supported.<br>
+\* Visual Studio Build Tools is only supported on for Windows targets. Only the latest version of Visual Studio Build Tools is supported.<br>
 
-### Using CMake
+### Windows NT
 
-This method is supported on Windows NT, and Unix-like systems such as Linux, MacOS, BSD, etc.
+Windows 10 is required for builds targeting Windows NT (XP, Vista, 7, 8.1, 10 and 11). It may be possible to cross-compile from a Unix-like platform, but this is not supported or recommended by this project.
+
+The following toolchains are tested regularly:
+- [Visual Studio Build Tools](https://aka.ms/buildtools)
+- [w64devkit](https://github.com/skeeto/w64devkit)
+
+#### Instructions
 
 1. Download the latest release of [vcpkg](https://vcpkg.io/).
 2. Install the required dependencies within vcpkg, making sure that the target triplet is set.
-    - For example: `vcpkg install --triplet=x64-windows sdl2 sdl2-ttf fribidi`
+    - For example, the command `vcpkg install --triplet=x64-windows-static sdl2 sdl2-ttf fribidi` installs all dependencies for a static 64-bit build.
     - Use `vcpkg help triplet` to list supported triplets.
-3. Use [CMake](https://cmake.org/) to configure the project with
+3. Within one of the supported toolchain environments, use CMake to configure the project with
    `cmake -S <source directory> -B <build directory> -DCMAKE_TOOLCHAIN_FILE=<path to vcpkg>/vcpkg/scripts/buildsystems/vcpkg.cmake`
 4. Start the build by executing `cmake --build <build directory>`
 
-### Using GNU Make
+### Linux, MacOS, BSD, and other Unix-like
 
-This method is supported on Unix-like systems such as Linux, MacOS, BSD, etc, and Nintendo Switch.
+1. Install the dependecies listed above.
+   - On Debian for example, the following command can be executed as root to install the required dependencies: `apt-get install gcc cmake libsdl2-dev libsdl2-ttf-dev libfribidi-dev pkg-config`.
+2. Use CMake to configure the project with
+   `cmake -S <source directory> -B <build directory> -DCMAKE_TOOLCHAIN_FILE=<path to vcpkg>/vcpkg/scripts/buildsystems/vcpkg.cmake`
+3. Start the build by executing `cmake --build <build directory>`
 
-1. Make sure that the dependecies listed above are installed.
-   - On Debian for example, the following command can be executed as root to install the required dependencies: `apt-get install gcc make libsdl2-dev libsdl2-ttf-dev libfribidi-dev pkg-config`.
+### Nintendo Switch
 
-2. Execute GNU Make `make` in the project directory.
+The [devkitPro toolchain](https://devkitpro.org/wiki/Getting_Started) with devkitA64 enabled, is required.
 
-### Using MSBuild
-
-These instructions are for building on Windows 8.1 and 10. The project may still be configured to support Windows XP.
-
-This method of building Haiyajan-UI requires the use of non-free software.
-As an alternative, consider using [MSYS2](https://www.msys2.org/) or [w64devkit](https://github.com/skeeto/w64devkit) with the [Using CMake](#Using CMake) instructions. 
-
-This method requires [Visual Studio](https://visualstudio.microsoft.com/vs/). *Visual Studio 2019 Community* is free to download.
-*Visual Studio Code* does not provide a Windows NT compiler, and is therefore not supported.
-
-1. Open `./ext/MSVC/haiyajan-menu.vcxproj` within Visual Studio and build solution (Ctrl+Shift+B).
-
-Or
-
-This method requires [Visual Studio Build Tools](https://aka.ms/buildtools).
-
-1. Open *Native Tools Command Prompt for VS*.
-
-2. Execute `MSBuild -restore -p:RestorePackagesConfig=true ext\MSVC\`
-   - This automatically downloads dependencies using nuget.
+1. Within the devkitPro environment, install the required dependencies with `pacman -S switch-cmake switch-pkg-config switch-sdl2 switch-sdl2_ttf switch-libfribidi`
+2. Use CMake to configure the project with
+   `cmake -S <source directory> -B <build directory> -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake`
+3. Start the build by executing `cmake --build <build directory>`
 
 ## License
 
