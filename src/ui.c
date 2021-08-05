@@ -35,6 +35,9 @@ struct ui_ctx {
 	/* Currently rendered menu. */
 	const struct ui_element *current;
 
+	/* Currently selected menu item. */
+	const struct ui_element *selected;
+
 	/* Cache of elements. */
 	struct cache_ctx *cache;
 
@@ -196,49 +199,46 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 	switch(instr)
 	{
 	case MENU_INSTR_PREV_ITEM:
-		if(ctx->current > ctx->root)
-			ctx->current--;
+		if(ctx->selected > ctx->current)
+			ctx->selected--;
 		break;
 
 	case MENU_INSTR_NEXT_ITEM:
-		if((ctx->current + 1)->type != UI_ELEM_TYPE_END)
-			ctx->current++;
+		if((ctx->selected + 1)->type != UI_ELEM_TYPE_END)
+			ctx->selected++;
 		break;
 
 #if 0
 		case MENU_INSTR_PARENT_MENU:
-			if(ctx->current->parent != NULL)
-				ctx->current = ctx->current->parent;
+			if(ctx->selected->parent != NULL)
+				ctx->selected = ctx->selected->parent;
 
 			break;
 #endif
 
 	case MENU_INSTR_EXEC_ITEM:
 	{
-		switch(ctx->current->elem.tile.onclick.action)
+		switch(ctx->selected->elem.tile.onclick.action)
 		{
 		case UI_EVENT_GOTO_ELEMENT:
-			ctx->current = ctx->current->elem.tile.onclick.action_data
-				.goto_element.element;
+			ctx->current = ctx->selected->elem.tile.onclick.action_data.goto_element.element;
+
+			/* Set the selected item as the first item in the new menu. */
+			ctx->selected = ctx->current;
 			break;
 
 		case UI_EVENT_EXECUTE_FUNCTION:
-			ctx->current->elem.tile.onclick.action_data.execute_function
-				.function(ctx->current);
+			ctx->selected->elem.tile.onclick.action_data.execute_function.function(ctx->selected);
 			break;
 
 		case UI_EVENT_SET_SIGNED_VARIABLE:
-			*ctx->current->elem.tile.onclick.action_data.signed_variable
-				.variable =
-				ctx->current->elem.tile.onclick.action_data
-					.signed_variable.val;
+			*ctx->selected->elem.tile.onclick.action_data.signed_variable.variable =
+				ctx->selected->elem.tile.onclick.action_data.signed_variable.val;
 			break;
 
 		case UI_EVENT_SET_UNSIGNED_VARIABLE:
-			*ctx->current->elem.tile.onclick.action_data.unsigned_variable
-				.variable =
-				ctx->current->elem.tile.onclick.action_data
-					.unsigned_variable.val;
+			*ctx->selected->elem.tile.onclick.action_data.unsigned_variable.variable =
+				ctx->selected->elem.tile.onclick.action_data.unsigned_variable.val;
 			break;
 
 		case UI_EVENT_NOP:
@@ -463,13 +463,13 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 			if(intersects == SDL_FALSE)
 				continue;
 
-			if(ctx->current != this_box->ui_element)
+			if(ctx->selected != this_box->ui_element)
 			{
 				ctx->redraw = SDL_TRUE;
-				ctx->current = this_box->ui_element;
+				ctx->selected = this_box->ui_element;
 				SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
 					"Selected item %p using motion",
-					(void *)ctx->current);
+					(void *)ctx->selected);
 			}
 
 			break;
@@ -499,19 +499,19 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 			if(intersects == SDL_FALSE)
 				continue;
 
-			if(ctx->current != this_box->ui_element)
+			if(ctx->selected != this_box->ui_element)
 			{
 				ctx->redraw = SDL_TRUE;
-				ctx->current = this_box->ui_element;
+				ctx->selected = this_box->ui_element;
 				SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
 					"Selected item %p using button",
-					(void *)ctx->current);
+					(void *)ctx->selected);
 			}
 
 			ui_input(ctx, MENU_INSTR_EXEC_ITEM);
 			SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
 				"Executed item %p using button",
-				(void *)ctx->current);
+				(void *)ctx->selected);
 
 			break;
 		}
@@ -737,7 +737,7 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	}
 
 	/* Draw outline and translucent box if tile is selected. */
-	if(ctx->current == el)
+	if(ctx->selected == el)
 	{
 		ctx->selection_square.x = dim.x;
 		ctx->selection_square.y = dim.y;
@@ -782,7 +782,7 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 	SDL_SetRenderDrawColor(ctx->ren, 20, 20, 20, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(ctx->ren);
 
-	for(const struct ui_element *el = ctx->root;
+	for(const struct ui_element *el = ctx->current;
 			el->type != UI_ELEM_TYPE_END; el++)
 	{
 		switch(el->type)
@@ -847,6 +847,7 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 
 	ctx->root = ui_elements;
 	ctx->current = ui_elements;
+	ctx->selected = &ui_elements[0];
 	ctx->redraw = SDL_TRUE;
 	ctx->hit_boxes = NULL;
 	ctx->dpi = dpi;

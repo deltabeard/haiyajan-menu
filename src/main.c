@@ -15,7 +15,56 @@
 void onclick_function_debug(const struct ui_element *element);
 
 static Uint32 quit = 0;
-static const struct ui_element ui_elements[] = {
+
+extern const struct ui_element ui_elements[];
+
+static const struct ui_element sub_menu_1[] = {
+	{
+		.type = UI_ELEM_TYPE_TILE,
+		.elem.tile = {
+			.label = "First sub-menu tile",
+			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
+			.tile_size = TILE_SIZE_LARGE,
+			.icon = 0xE8B7,
+			.help = NULL,
+			.bg = { 0, 0, 0, SDL_ALPHA_OPAQUE},
+			.fg = { 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE},
+			.disabled = SDL_FALSE,
+			.onclick = {
+				.action = UI_EVENT_EXECUTE_FUNCTION,
+				.action_data.execute_function = {
+					onclick_function_debug
+				},
+			},
+			.user = NULL
+		}
+	},
+	{
+		.type = UI_ELEM_TYPE_TILE,
+		.elem.tile = {
+			.label = "Back",
+			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
+			.tile_size = TILE_SIZE_LARGE,
+			.icon = 0xE8B7,
+			.help = NULL,
+			.bg = { 0, 0, 0, SDL_ALPHA_OPAQUE},
+			.fg = { 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE},
+			.disabled = SDL_FALSE,
+			.onclick = {
+				.action = UI_EVENT_GOTO_ELEMENT,
+				.action_data.goto_element = {
+					ui_elements
+				},
+			},
+			.user = NULL
+		}
+	},
+	{
+		.type = UI_ELEM_TYPE_END
+	}
+};
+
+const struct ui_element ui_elements[] = {
 	{
 		.type = UI_ELEM_TYPE_TILE,
 		.elem.tile = {
@@ -80,32 +129,10 @@ static const struct ui_element ui_elements[] = {
 			.user = NULL
 		}
 	},
-#if 0
 	{
 		.type = UI_ELEM_TYPE_TILE,
 		.elem.tile = {
-			.label = "Fourth Label",
-			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_MIDDLE,
-			.tile_size = TILE_SIZE_LARGE,
-			.icon = 0xE8B7,
-			.help = NULL,
-			/* Persian Blue */
-			.bg = {.r = 0x1C, .g = 0x39, .b = 0xBB, .a = SDL_ALPHA_OPAQUE},
-			.fg = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE},
-			.disabled = SDL_FALSE,
-			.onclick = {
-				.action = UI_EVENT_EXECUTE_FUNCTION,
-				.action_data.execute_function = {
-					onclick_function_debug
-				},
-			},
-			.user = NULL
-		}
-	},
-	{
-		.type = UI_ELEM_TYPE_TILE,
-		.elem.tile = {
-			.label = "Fifth Label",
+			.label = "Go to sub-menu",
 			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 			.tile_size = TILE_SIZE_LARGE,
 			.icon = 0xE8B7,
@@ -115,31 +142,9 @@ static const struct ui_element ui_elements[] = {
 			.fg = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE},
 			.disabled = SDL_FALSE,
 			.onclick = {
-				.action = UI_EVENT_EXECUTE_FUNCTION,
-				.action_data.execute_function = {
-					onclick_function_debug
-				},
-			},
-			.user = NULL
-		}
-	},
-#endif
-	{
-		.type = UI_ELEM_TYPE_TILE,
-		.elem.tile = {
-			.label = "Last Label",
-			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
-			.tile_size = TILE_SIZE_LARGE,
-			.icon = 0xE8B7,
-			.help = NULL,
-			/* Persian Blue */
-			.bg = {.r = 0x1C, .g = 0x39, .b = 0xBB, .a = SDL_ALPHA_OPAQUE},
-			.fg = {.r = 0xFF, .g = 0xFF, .b = 0xFF, .a = SDL_ALPHA_OPAQUE},
-			.disabled = SDL_FALSE,
-			.onclick = {
-				.action = UI_EVENT_EXECUTE_FUNCTION,
-				.action_data.execute_function = {
-					onclick_function_debug
+				.action = UI_EVENT_GOTO_ELEMENT,
+				.action_data.goto_element = {
+					sub_menu_1
 				},
 			},
 			.user = NULL
