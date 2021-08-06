@@ -128,8 +128,14 @@ ELSEIF(NINTENDO_SWITCH)
     NX_CREATE_NRO(${PROJECT_NAME}
             NACP ${PROJECT_NAME}.nacp
             ICON "${PROJECT_SOURCE_DIR}/meta/icon.jpg")
-else()
+ELSE()
     TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE freetype m dl)
+ENDIF()
+
+IF(MSVC)
+	ADD_COMPILE_OPTIONS(/W4)
+ELSE()
+	ADD_COMPILE_OPTIONS(-Wall -Wextra -std=c99 -pedantic)
 ENDIF()
 
 # Package options
