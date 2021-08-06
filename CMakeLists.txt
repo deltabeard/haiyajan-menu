@@ -77,11 +77,9 @@ OPTION(USE_FRIBIDI "Use Fribidi library for bidirection text support"
 IF(USE_FRIBIDI AND NOT FRIBIDI_FOUND)
     MESSAGE(SEND_ERROR "Fribidi enabled, but not found")
 ELSEIF(USE_FRIBIDI)
-    MESSAGE(STATUS "Enabled: GNU FriBidi")
     TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE ${FRIBIDI_LIBRARIES})
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE ${FRIBIDI_INCLUDE_DIRS})
 ELSE()
-    MESSAGE(STATUS "Disabled: GNU FriBidi")
     ADD_COMPILE_DEFINITIONS(NO_FRIBIDI)
 ENDIF()
 
@@ -143,3 +141,19 @@ SET(CPACK_PACKAGE_VENDOR Deltabeard)
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION})
 SET(CPACK_PACKAGE_ICON meta/icon.ico)
 SET(CPACK_RESOURCE_FILE_LICENSE LICENSE)
+
+# The following macro was taken from the SDL2 project.
+macro(message_bool_option _NAME _VALUE)
+    if(${_VALUE})
+        message(STATUS "  ${_NAME}: enabled")
+    else()
+        message(STATUS "  ${_NAME}: disabled")
+    endif()
+endmacro()
+
+message(STATUS "Haiyajan-UI will build with the following options:")
+message_bool_option("GNU FriBidi" USE_FRIBIDI)
+
+MESSAGE(STATUS "  CC:      ${CMAKE_C_COMPILER}")
+MESSAGE(STATUS "  CFLAGS:  ${CMAKE_C_FLAGS}")
+MESSAGE(STATUS "  LDFLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
