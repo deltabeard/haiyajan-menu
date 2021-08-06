@@ -35,6 +35,7 @@ jobs:
           vcpkgTriplet: '${{ matrix.triplet }}'
           vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
           vcpkgGitCommitId: '5568f110b509a9fd90711978a7cb76bae75bb092'
+          appendedCacheKey: '${{ secrets.CACHE_VERSION }}'
           
       - name: Execute build
         uses: lukka/run-cmake@main
