@@ -8,17 +8,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]
+        #os: [ubuntu-latest, macos-latest, windows-latest]
         include:
-          - os: windows-latest
-            triplet: x64-windows
-            vcpkgPackages: 'sdl2 sdl2-ttf'
+#          - os: windows-latest
+#            triplet: x64-windows
+#            vcpkgPackages: 'sdl2 sdl2-ttf'
           - os: ubuntu-latest
             triplet: x64-linux
             vcpkgPackages: 'sdl2 sdl2-ttf'
-          - os: macos-latest
-            triplet: x64-osx
-            vcpkgPackages: 'sdl2 sdl2-ttf'
+#          - os: macos-latest
+#            triplet: x64-osx
+#            vcpkgPackages: 'sdl2 sdl2-ttf'
 
     steps:
       - uses: actions/checkout@v2
@@ -33,13 +34,7 @@ jobs:
           vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
           vcpkgGitCommitId: '5568f110b509a9fd90711978a7cb76bae75bb092'
           
-      - name: Execute build
-        uses: lukka/run-cmake@main
-        id: runcmake_cmd
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
         with:
-          cmakeGenerator: 'Ninja'
-          cmakeListsOrSettingsJson: 'CMakeListsTxtBasic'
-          useVcpkgToolchainFile: true
-          buildWithCMakeArgs: '-- -v'
-          vcpkgTriplet: '${{ matrix.triplet }}'
-          buildDirectory: '${{ runner.workspace }}/b/ninja/'
+          limit-access-to-actor: true
