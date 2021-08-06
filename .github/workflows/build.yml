@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: lukka/get-cmake@latest
 
-      - name: Restore artifacts, or run vcpkg, build and cache artifacts
+      - name: Acquire vcpkg
         uses: lukka/run-vcpkg@main
         id: runvcpkg
         with:
@@ -33,13 +33,13 @@ jobs:
           vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
           vcpkgGitCommitId: '5568f110b509a9fd90711978a7cb76bae75bb092'
           
-      - name: Run CMake+Ninja with triplet (cmd)
+      - name: Execute build
         uses: lukka/run-cmake@main
         id: runcmake_cmd
         with:
-          cmakeGenerator: 'Ninja'  
+          cmakeGenerator: 'Ninja'
           cmakeListsOrSettingsJson: 'CMakeListsTxtBasic'
           useVcpkgToolchainFile: true
           buildWithCMakeArgs: '-- -v'
-          vcpkgTriplet: ${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_TRIPLET_OUT }}
+          vcpkgTriplet: '${{ matrix.triplet }}'
           buildDirectory: '${{ runner.workspace }}/b/ninja/'
