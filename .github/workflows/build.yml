@@ -26,7 +26,7 @@ jobs:
         with:
           repository: microsoft/vcpkg
           ref: 'master'
-          path: '${{ runner.workspace }}/b/vcpkg'
+          path: './b/vcpkg'
           
       - uses: lukka/get-cmake@latest
 
