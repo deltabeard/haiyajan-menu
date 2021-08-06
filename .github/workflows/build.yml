@@ -1,69 +1,50 @@
-name: Build
-
+name: build
 on: [push]
 
 jobs:
-  build:
-    name: ${{ matrix.build_type }} build for ${{ matrix.triplet }}
+  job:
+    name: ${{ matrix.triplet }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        triplet: [x64-windows-static, x86-windows-static, x64-linux]
-        build_type: [Debug, Release]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         include:
-          - triplet: x64-windows-static
-            os: windows-latest
-            vcpkg-path: "C:\\vcpkg"
-            arch: amd64
-            generator: "'NMake Makefiles'"
-          - triplet: x86-windows-static
-            os: windows-latest
-            vcpkg-path: "C:\\vcpkg"
-            arch: amd64_x86
-            generator: "'NMake Makefiles'"
-          - triplet: x64-linux
-            os: ubuntu-latest
-            vcpkg-path: "$VCPKG_INSTALLATION_ROOT"
-            generator: "'Unix Makefiles'"
+          - os: windows-latest
+            triplet: x64-windows
+            vcpkgPackages: 'sdl2 sdl2-ttf'
+          - os: ubuntu-latest
+            triplet: x64-linux
+            vcpkgPackages: 'sdl2 sdl2-ttf'
+          - os: macos-latest
+            triplet: x64-osx
+            vcpkgPackages: 'sdl2 sdl2-ttf'
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-        
-    - name: Initialise MSVC environment
-      if: "contains(matrix.triplet, 'windows')"
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: ${{ matrix.arch }}
+      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          repository: microsoft/vcpkg
+          ref: 'master'
+          path: '${{ runner.workspace }}/b/vcpkg'
+          
+      - uses: lukka/get-cmake@latest
 
-    - name: Cache dependencies
-      id: cache-deps
-      uses: actions/cache@v2
-      with:
-        path: |
-          ${{ matrix.vcpkg-path }}
-          !${{ matrix.vcpkg-path }}/buildtrees
-          !${{ matrix.vcpkg-path }}/packages
-          !${{ matrix.vcpkg-path }}/downloads
-        key: ${{ matrix.os }}-${{ matrix.triplet }}-${{ matrix.build_type }}-deps
-        
-    - name: Install Dependencies
-      run: vcpkg install --triplet=${{ matrix.triplet }} sdl2 sdl2-ttf
-      
-    - name: Configure Cmake
-      run: cmake -S . -B build -G ${{ matrix.generator }} -DCMAKE_TOOLCHAIN_FILE=${{ matrix.vcpkg-path }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
-        
-    - name: Build
-      run: cmake --build build --config ${{ matrix.build_type }}
-      
-    - name: Pack
-      run: cpack -G ZIP --config build/CPackConfig.cmake
-      
-    - name: Upload output
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.triplet }}-${{ matrix.build_type }}-#${{ github.run_number }}
-        path: ${{ github.workspace }}/haiyajan-menu*.zip
-        
+      - name: Restore artifacts, or run vcpkg, build and cache artifacts
+        uses: lukka/run-vcpkg@main
+        id: runvcpkg
+        with:
+          vcpkgArguments: '${{ matrix.vcpkgPackages }}'
+          vcpkgTriplet: '${{ matrix.triplet }}'
+          vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
+          
+      - name: Run CMake+Ninja with triplet (cmd)
+        uses: lukka/run-cmake@main
+        id: runcmake_cmd
+        with:
+          cmakeGenerator: 'Ninja'  
+          cmakeListsOrSettingsJson: 'CMakeListsTxtBasic'
+          useVcpkgToolchainFile: true
+          buildWithCMakeArgs: '-- -v'
+          vcpkgTriplet: ${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_TRIPLET_OUT }}
+          buildDirectory: '${{ runner.workspace }}/b/ninja/'
