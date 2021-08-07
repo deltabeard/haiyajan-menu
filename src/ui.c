@@ -670,6 +670,15 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 				sizeof(el->elem.tile.icon), icon_tex);
 	}
 	SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
+
+	/* If the icon texture is larger than the tile itself (due to the
+	 * cached icon being high resolution) then resize the icon until it
+	 * fits within the tile. */
+	while(icon_dim.w + ctx->padding.tile >= dim.w)
+	{
+		icon_dim.w /= 2;
+		icon_dim.h /= 2;
+	}
 	icon_dim.x = p->x + (len / 2) - (icon_dim.w / 2);
 	icon_dim.y = p->y + (len / 2) - (icon_dim.h / 2);
 
@@ -921,6 +930,7 @@ void ui_exit(ui_ctx_s *ctx)
 {
 	font_exit(ctx->font);
 
+	clear_cached_textures(ctx->cache);
 	SDL_DestroyTexture(ctx->tex);
 	SDL_DestroyTexture(ctx->static_tex);
 	sb_free(ctx->hit_boxes);
