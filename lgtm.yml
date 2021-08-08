@@ -7,6 +7,8 @@ extraction:
       - "libfribidi-dev"
       - "libsdl2-dev"
       - "libsdl2-ttf-dev"
-      - "make"
+      - "cmake"
     index:
-      build_command: "make -j$(nproc) BUILD=DEBUG"
+      build_command:
+      - "cmake -S . -B build"
+      - "cmake --build build"
