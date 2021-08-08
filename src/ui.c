@@ -107,21 +107,47 @@ typedef enum {
 
 Uint32 timer_clear_cache(Uint32 interval, void *param)
 {
-	SDL_Event event;
+	SDL_Event event = { 0 };
 	const ui_ctx_s *const ctx = param;
 
+	SDL_RemoveTimer(ctx->clear_cache_timer);
+
 	event.type = ctx->ui_event_id;
-	event.user.timestamp = SDL_GetTicks();
-	event.user.windowID = 0;
+	//event.user.windowID = 0;
 	event.user.code = UI_EVENT_CLEAR_CACHE;
 	event.user.data1 = NULL;
 	event.user.data2 = NULL;
 
-	SDL_PushEvent(&event);
+	if(SDL_PushEvent(&event) != 1)
+	{
+		SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION,
+			SDL_LOG_PRIORITY_ERROR,
+			"Unable to create event for cache clearing: %s",
+			SDL_GetError());
+		goto out;
+	}
+
 	SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
 		"Requesting to clear cache after %" PRIu32 "ms", interval);
 
-	return(interval);
+out:
+	return interval;
+}
+
+void init_cache_time(ui_ctx_s *ctx)
+{
+	if(ctx->clear_cache_timer != 0)
+		SDL_RemoveTimer(ctx->clear_cache_timer);
+
+	ctx->clear_cache_timer = SDL_AddTimer(cache_clear_ms,
+		timer_clear_cache, ctx);
+	if(ctx->clear_cache_timer == 0)
+	{
+		SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION,
+			SDL_LOG_PRIORITY_ERROR,
+			"Unable to create clear_cache_timer timer: "
+			"%s", SDL_GetError());
+	}
 }
 
 /**
@@ -332,6 +358,7 @@ static void ui_resize_all(ui_ctx_s *ui, int win_w, int win_h)
 	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
 		"Font sizes changed to %d, %d, %d",
 		icon_pt, header_pt, regular_pt);
+	init_cache_time(ui);
 }
 
 HEDLEY_NON_NULL(1,2)
@@ -405,9 +432,7 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 			ctx->dpi = new_dpi;
 			ctx->dpi_multiply = ctx->dpi / dpi_reference;
 
-			SDL_RemoveTimer(ctx->clear_cache_timer);
-			ctx->clear_cache_timer = SDL_AddTimer(cache_clear_ms,
-				timer_clear_cache, ctx);
+			//init_cache_time(ctx);
 			SDL_GetWindowSize(win, &w, &h);
 			ui_resize_all(ctx, w, h);
 		}
