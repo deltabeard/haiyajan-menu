@@ -36,12 +36,12 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install build-essential
         sudo apt-get install libsdl2-dev libsdl2-ttf-dev libfribidi-dev
 
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v1
+    - name: Build
+      run: |
+        cmake -S . -B build
+        cmake --build build
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
