@@ -8,7 +8,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+#        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
         include:
           - os: windows-latest
             triplet: x64-windows
@@ -16,9 +17,9 @@ jobs:
           - os: ubuntu-latest
             triplet: x64-linux
             vcpkgPackages: 'sdl2 sdl2-ttf'
-          - os: macos-latest
-            triplet: x64-osx
-            vcpkgPackages: 'sdl2 sdl2-ttf'
+#          - os: macos-latest
+#            triplet: x64-osx
+#            vcpkgPackages: 'sdl2 sdl2-ttf'
 
     steps:
       - uses: actions/checkout@v2
