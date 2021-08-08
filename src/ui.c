@@ -15,6 +15,7 @@
 #include <ui.h>
 
 static const float dpi_reference = 96.0f;
+static const Uint32 cache_clear_ms = 1000;
 
 static const SDL_Colour text_colour_light = {
 	0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE
@@ -23,6 +24,9 @@ static const SDL_Colour text_colour_light = {
 struct ui_ctx {
 	/* Required to recreate texture on resizing. */
 	SDL_Renderer *ren;
+
+	/* Custom events defined by this file. */
+	SDL_EventType ui_event_id;
 
 	/* Texture to render user interface on.. */
 	SDL_Texture *tex;
@@ -40,6 +44,8 @@ struct ui_ctx {
 
 	/* Cache of elements. */
 	struct cache_ctx *cache;
+	/* Timer used for clearing cache. */
+	SDL_TimerID clear_cache_timer;
 
 	/* Font context used to draw text on UI elements. */
 	font_ctx_s *font;
@@ -94,6 +100,29 @@ typedef enum {
 	 * Could be used when user presses ENTER. */
 	MENU_INSTR_EXEC_ITEM
 } menu_instruction_e;
+
+typedef enum {
+	UI_EVENT_CLEAR_CACHE = 0,
+} ui_event_code_e;
+
+Uint32 timer_clear_cache(Uint32 interval, void *param)
+{
+	SDL_Event event;
+	const ui_ctx_s *const ctx = param;
+
+	event.type = ctx->ui_event_id;
+	event.user.timestamp = SDL_GetTicks();
+	event.user.windowID = 0;
+	event.user.code = UI_EVENT_CLEAR_CACHE;
+	event.user.data1 = NULL;
+	event.user.data2 = NULL;
+
+	SDL_PushEvent(&event);
+	SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
+		"Requesting to clear cache after %" PRIu32 "ms", interval);
+
+	return(interval);
+}
 
 /**
  * Scrolls the user interface. This function is executed on each from and
@@ -376,6 +405,9 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 			ctx->dpi = new_dpi;
 			ctx->dpi_multiply = ctx->dpi / dpi_reference;
 
+			SDL_RemoveTimer(ctx->clear_cache_timer);
+			ctx->clear_cache_timer = SDL_AddTimer(cache_clear_ms,
+				timer_clear_cache, ctx);
 			SDL_GetWindowSize(win, &w, &h);
 			ui_resize_all(ctx, w, h);
 		}
@@ -525,6 +557,21 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 			"Requesting a scroll of %d pixels",
 			ctx->offset.px_requested_y);
 		return;
+	}
+	else if(e->type == ctx->ui_event_id)
+	{
+		switch(e->user.code)
+		{
+		case UI_EVENT_CLEAR_CACHE:
+			clear_cached_textures(ctx->cache);
+			ctx->redraw = SDL_TRUE;
+			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
+				"Clearing cache");
+			break;
+
+		default:
+			break;
+		}
 	}
 
 	return;
@@ -854,6 +901,7 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 	if(ctx->static_tex == NULL)
 		goto err;
 
+	ctx->ui_event_id = SDL_RegisterEvents(1);
 	ctx->root = ui_elements;
 	ctx->current = ui_elements;
 	ctx->selected = &ui_elements[0];
