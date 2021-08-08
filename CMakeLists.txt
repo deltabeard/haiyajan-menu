@@ -34,7 +34,6 @@ PROJECT(haiyajan-menu
         VERSION ${LAST_TAG}
         DESCRIPTION "User interface library for Haiyajan"
         HOMEPAGE_URL "https://github.com/deltabeard/haiyajan-menu")
-SET(CMAKE_C_STANDARD 99)
 SET(HAIYAJAN_MENU_LICENSE "LGPL-3.0, Mahyar Koshkouei (c) 2021")
 
 # Add dependencies to project.
@@ -116,6 +115,7 @@ IF(MSVC)
     TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE
             Winmm.lib Version.lib Setupapi.lib Imm32.lib)
     SET_PROPERTY(TARGET ${PROJECT_NAME} PROPERTY VS_DPI_AWARE "PerMonitor")
+    TARGET_COMPILE_OPTIONS(${PROJECT_NAME} PRIVATE /W4)
 ELSEIF(NINTENDO_SWITCH)
     # Fix linking with C++ libraries
     TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE stdc++)
@@ -132,14 +132,22 @@ ELSE()
     TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE freetype m dl)
 ENDIF()
 
-IF(MSVC)
-	TARGET_COMPILE_OPTIONS(${PROJECT_NAME} PRIVATE /W4)
-ELSE()
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "DEBUG")
+endif()
+
+IF(${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR
+		${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
 	TARGET_COMPILE_OPTIONS(${PROJECT_NAME} PRIVATE -Wall -Wextra -std=c99 -pedantic)
+	set(CMAKE_C_FLAGS_DEBUG "-Og -g3")
+	set(CMAKE_C_FLAGS_MINSIZEREL "-flto -Os -s")
+	set(CMAKE_C_FLAGS_RELWITHDEBINFO "-flto -O2 -g3")
+	set(CMAKE_C_FLAGS_RELEASE "-flto -Ofast -g3")
+ELSE()
+	set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
 ENDIF()
 
 # Package options
-INCLUDE(GNUInstallDirs)
 INSTALL(TARGETS haiyajan-menu RUNTIME)
 
 INCLUDE(CPack)
