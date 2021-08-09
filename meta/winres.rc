@@ -27,7 +27,7 @@ BLOCK "StringFileInfo"
 		VALUE "FileVersion", QUOTE(VER_MAJOR) "," QUOTE(VER_MINOR) "," QUOTE(VER_PATCH) "," QUOTE(VER_TWEAK)
 		VALUE "LegalCopyright", QUOTE(LICENSE)
 		VALUE "ProductName", QUOTE(NAME)
-		VALUE "ProductVersion", QUOTE(GIT_VER)
+		VALUE "ProductVersion", QUOTE(FULL_VERSION)
 	END
 END
 BLOCK "VarFileInfo"
