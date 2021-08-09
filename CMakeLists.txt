@@ -93,14 +93,15 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
 
     # Disable all external library options in Freetype. Fonts packaged with
     # Haiyajan-UI and OS do not use these features.
-    SET(CMAKE_DISABLE_FIND_PACKAGE_ZLIB TRUE)
-    SET(CMAKE_DISABLE_FIND_PACKAGE_BZip2 TRUE)
-    SET(CMAKE_DISABLE_FIND_PACKAGE_PNG TRUE)
-    SET(CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz TRUE)
-    SET(CMAKE_DISABLE_FIND_PACKAGE_BrotliDec TRUE)
     CPMADDPACKAGE(GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype.git
             NAME freetype
-            GIT_TAG VER-2-11-0)
+            GIT_TAG VER-2-11-0
+            OPTIONS
+            "CMAKE_DISABLE_FIND_PACKAGE_ZLIB TRUE"
+            "CMAKE_DISABLE_FIND_PACKAGE_BZip2 TRUE"
+            "CMAKE_DISABLE_FIND_PACKAGE_PNG TRUE"
+            "CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz TRUE"
+            "CMAKE_DISABLE_FIND_PACKAGE_BrotliDec TRUE")
     IF(freetype_ADDED)
         ADD_LIBRARY(Freetype::Freetype ALIAS freetype)
     ENDIF()
