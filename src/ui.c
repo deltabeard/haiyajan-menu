@@ -7,10 +7,12 @@
  * the Free Software Foundation.
  */
 
+#include <inttypes.h>
+#include <SDL.h>
+
 #include <cache.h>
 #include <font.h>
 #include <hedley.h>
-#include <SDL.h>
 #include <stretchy_buffer.h>
 #include <ui.h>
 
