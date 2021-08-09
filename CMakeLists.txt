@@ -41,23 +41,89 @@ ADD_EXECUTABLE(${PROJECT_NAME})
 TARGET_SOURCES(${PROJECT_NAME} PRIVATE src/main.c src/cache.c src/font.c src/ui.c)
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE inc)
 
+IF(NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE "DEBUG")
+ENDIF()
+
+IF(${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR
+        ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+    TARGET_COMPILE_OPTIONS(${PROJECT_NAME} PRIVATE -Wall -Wextra -std=c99 -pedantic)
+    SET(CMAKE_C_FLAGS_DEBUG "-Og -g3")
+    SET(CMAKE_C_FLAGS_MINSIZEREL "-flto -Os -s")
+    SET(CMAKE_C_FLAGS_RELWITHDEBINFO "-flto -O2 -g3")
+    SET(CMAKE_C_FLAGS_RELEASE "-flto -Ofast -g3")
+ELSEIF(${CMAKE_C_COMPILER_ID} STREQUAL "MSVC")
+    SET(CMAKE_C_FLAGS_RELEASE "/O2 /Gw /GL /fp:fast")
+    IF(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+        TARGET_LINK_OPTIONS(${PROJECT_NAME} PRIVATE "/LTCG /OPT:ICF")
+    ENDIF()
+ELSE()
+    SET_PROPERTY(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
+ENDIF()
+
 # Discover libraries
-#INCLUDE(FindPkgConfig)
-IF(VCPKG)
+set(LIBRARY_DISCOVER_METHOD "CPM" CACHE STRING
+        "Tool to use for discovering dependencies; options are: VCPKG, PKG_CONFIG, CPM")
+
+IF(${LIBRARY_DISCOVER_METHOD} STREQUAL "VCPKG")
+    # If a VCPKG toolchain is specified, use it.
     FIND_PACKAGE(SDL2 CONFIG REQUIRED)
     FIND_PACKAGE(freetype CONFIG REQUIRED)
-    FIND_PACKAGE(SDL2_ttf CONFIG REQUIRED)
+    FIND_PACKAGE(sdl2-ttf CONFIG REQUIRED)
     FIND_PACKAGE(fribidi QUIET)
-#ELSEIF(PKG_CONFIG_FOUND)
-#    PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
-#    PKG_SEARCH_MODULE(SDL2_TTF REQUIRED SDL2_ttf)
-#    PKG_SEARCH_MODULE(FRIBIDI QUIET fribidi)
+ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "PKG_CONFIG")
+    INCLUDE(FindPkgConfig)
+    PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
+    PKG_SEARCH_MODULE(SDL2_TTF REQUIRED SDL2_ttf)
+    PKG_SEARCH_MODULE(FRIBIDI QUIET fribidi)
+ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
+    INCLUDE(ext/cmake/CPM.cmake)
+    CPMADDPACKAGE(GITHUB_REPOSITORY libsdl-org/SDL
+            NAME SDL2
+            GIT_TAG release-2.0.14
+            OPTIONS
+            "SDL_SHARED_ENABLED_BY_DEFAULT OFF"
+            "SDL_STATIC_ENABLED_BY_DEFAULT ON")
+    IF(SDL2_ADDED)
+        # SDL_ttf tries to link to SDL2::SDL2 even in static builds.
+        ADD_LIBRARY(SDL2::SDL2 ALIAS SDL2-static)
+        ADD_LIBRARY(SDL2::SDL2-static ALIAS SDL2-static)
+        ADD_LIBRARY(SDL2::SDL2main ALIAS SDL2main)
+    ENDIF()
+
+    # Disable all external library options in Freetype. Fonts packaged with
+    # Haiyajan-UI and OS do not use these features.
+    CPMADDPACKAGE(GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype.git
+            NAME freetype
+            GIT_TAG VER-2-11-0
+            OPTIONS
+            "CMAKE_DISABLE_FIND_PACKAGE_ZLIB TRUE"
+            "CMAKE_DISABLE_FIND_PACKAGE_BZip2 TRUE"
+            "CMAKE_DISABLE_FIND_PACKAGE_PNG TRUE"
+            "CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz TRUE"
+            "CMAKE_DISABLE_FIND_PACKAGE_BrotliDec TRUE")
+    IF(freetype_ADDED)
+        ADD_LIBRARY(Freetype::Freetype ALIAS freetype)
+    ENDIF()
+
+    CPMADDPACKAGE(GITHUB_REPOSITORY libsdl-org/SDL_ttf
+            NAME SDL2_ttf
+            GIT_TAG release-2.0.15
+            OPTIONS
+            "SDL2_DIR ${SDL2_SOURCE_DIR}"
+            "FREETYPE_LIBRARY ${freetype_SOURCE_DIR}"
+            "FREETYPE_INCLUDE_DIRS ${freetype_SOURCE_DIR}/include")
+    IF(SDL2_ttf_ADDED)
+        #add_library(SDL::SDL_ttf ALIAS SDL2_ttf)
+    ENDIF()
+
+    TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${SDL2_SOURCE_DIR}/include)
+    TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${freetype_SOURCE_DIR}/include)
+    TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${SDL2_ttf_SOURCE_DIR})
+    TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE SDL2-static SDL2_ttf SDL2main)
+    # TODO: Add GNU Fribidi
 ELSE()
-    # Use included FindSDL2 modules as a last resort.
-    LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/ext/cmake")
-    FIND_PACKAGE(SDL2 REQUIRED)
-    FIND_PACKAGE(SDL2_ttf REQUIRED)
-    FIND_PACKAGE(fribidi QUIET)
+    MESSAGE(SEND_ERROR "LIBRARY_DISCOVER_METHOD '${LIBRARY_DISCOVER_METHOD}' is not valid")
 ENDIF()
 
 # Add required dependencies
@@ -132,21 +198,6 @@ ELSE()
     TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE freetype m dl)
 ENDIF()
 
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "DEBUG")
-endif()
-
-IF(${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR
-		${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
-	TARGET_COMPILE_OPTIONS(${PROJECT_NAME} PRIVATE -Wall -Wextra -std=c99 -pedantic)
-	set(CMAKE_C_FLAGS_DEBUG "-Og -g3")
-	set(CMAKE_C_FLAGS_MINSIZEREL "-flto -Os -s")
-	set(CMAKE_C_FLAGS_RELWITHDEBINFO "-flto -O2 -g3")
-	set(CMAKE_C_FLAGS_RELEASE "-flto -Ofast -g3")
-ELSE()
-	set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
-ENDIF()
-
 # Package options
 INSTALL(TARGETS haiyajan-menu RUNTIME)
 
@@ -157,17 +208,17 @@ SET(CPACK_PACKAGE_ICON meta/icon.ico)
 SET(CPACK_RESOURCE_FILE_LICENSE LICENSE)
 
 # The following macro was taken from the SDL2 project.
-macro(message_bool_option _NAME _VALUE)
-    if(${_VALUE})
-        message(STATUS "  ${_NAME}: enabled")
-    else()
-        message(STATUS "  ${_NAME}: disabled")
-    endif()
-endmacro()
+MACRO(MESSAGE_BOOL_OPTION _NAME _VALUE)
+    IF(${_VALUE})
+        MESSAGE(STATUS "  ${_NAME}: enabled")
+    ELSE()
+        MESSAGE(STATUS "  ${_NAME}: disabled")
+    ENDIF()
+ENDMACRO()
 
-message(STATUS "Haiyajan-UI will build with the following options:")
-message_bool_option("GNU FriBidi" USE_FRIBIDI)
+MESSAGE(STATUS "Haiyajan-UI will build with the following options:")
+MESSAGE_BOOL_OPTION("GNU FriBidi" USE_FRIBIDI)
 
-MESSAGE(STATUS "  CC:      ${CMAKE_C_COMPILER}")
+MESSAGE(STATUS "  CC:      ${CMAKE_C_COMPILER} '${CMAKE_C_COMPILER_ID}'")
 MESSAGE(STATUS "  CFLAGS:  ${CMAKE_C_FLAGS}")
 MESSAGE(STATUS "  LDFLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
