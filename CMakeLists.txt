@@ -62,23 +62,22 @@ ELSE()
 ENDIF()
 
 # Discover libraries
-INCLUDE(FindPkgConfig)
-SET(PKG_CONFIG_FOUND ${PKG_CONFIG_FOUND} CACHE BOOL "Use pkg-config")
+set(LIBRARY_DISCOVER_METHOD "CPM" CACHE STRING
+        "Tool to use for discovering dependencies; options are: VCPKG, PKG_CONFIG, CPM")
 
-IF(DEFINED VCPKG_VERBOSE)
+IF(${LIBRARY_DISCOVER_METHOD} STREQUAL "VCPKG")
     # If a VCPKG toolchain is specified, use it.
     FIND_PACKAGE(SDL2 CONFIG REQUIRED)
     FIND_PACKAGE(freetype CONFIG REQUIRED)
     FIND_PACKAGE(sdl2-ttf CONFIG REQUIRED)
     FIND_PACKAGE(fribidi QUIET)
-ELSEIF(PKG_CONFIG_FOUND)
-    # Attempt to use pkg-config if no toolchain is specified.
+ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "PKG_CONFIG")
+    INCLUDE(FindPkgConfig)
     PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
     PKG_SEARCH_MODULE(SDL2_TTF REQUIRED SDL2_ttf)
     PKG_SEARCH_MODULE(FRIBIDI QUIET fribidi)
-ELSE()
+ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
     INCLUDE(ext/cmake/CPM.cmake)
-    SET(SDL_SHARED OFF CACHE BOOL "Turn off shared" FORCE)
     CPMADDPACKAGE(GITHUB_REPOSITORY libsdl-org/SDL
             NAME SDL2
             GIT_TAG release-2.0.14
@@ -86,11 +85,14 @@ ELSE()
             "SDL_SHARED_ENABLED_BY_DEFAULT OFF"
             "SDL_STATIC_ENABLED_BY_DEFAULT ON")
     IF(SDL2_ADDED)
+        # SDL_ttf tries to link to SDL2::SDL2 even in static builds.
         ADD_LIBRARY(SDL2::SDL2 ALIAS SDL2-static)
         ADD_LIBRARY(SDL2::SDL2-static ALIAS SDL2-static)
         ADD_LIBRARY(SDL2::SDL2main ALIAS SDL2main)
     ENDIF()
 
+    # Disable all external library options in Freetype. Fonts packaged with
+    # Haiyajan-UI and OS do not use these features.
     SET(CMAKE_DISABLE_FIND_PACKAGE_ZLIB TRUE)
     SET(CMAKE_DISABLE_FIND_PACKAGE_BZip2 TRUE)
     SET(CMAKE_DISABLE_FIND_PACKAGE_PNG TRUE)
@@ -118,6 +120,9 @@ ELSE()
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${freetype_SOURCE_DIR}/include)
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${SDL2_ttf_SOURCE_DIR})
     TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE SDL2-static SDL2_ttf SDL2main)
+    # TODO: Add GNU Fribidi
+ELSE()
+    MESSAGE(SEND_ERROR "LIBRARY_DISCOVER_METHOD '${LIBRARY_DISCOVER_METHOD}' is not valid")
 ENDIF()
 
 # Add required dependencies
