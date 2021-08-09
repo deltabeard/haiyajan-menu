@@ -42,22 +42,64 @@ TARGET_SOURCES(${PROJECT_NAME} PRIVATE src/main.c src/cache.c src/font.c src/ui.
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE inc)
 
 # Discover libraries
-#INCLUDE(FindPkgConfig)
-IF(VCPKG)
+INCLUDE(FindPkgConfig)
+set(PKG_CONFIG_FOUND ${PKG_CONFIG_FOUND} CACHE BOOL "Use pkg-config")
+
+IF(DEFINED VCPKG_VERBOSE)
+    # If a VCPKG toolchain is specified, use it.
     FIND_PACKAGE(SDL2 CONFIG REQUIRED)
     FIND_PACKAGE(freetype CONFIG REQUIRED)
-    FIND_PACKAGE(SDL2_ttf CONFIG REQUIRED)
+    FIND_PACKAGE(sdl2-ttf CONFIG REQUIRED)
     FIND_PACKAGE(fribidi QUIET)
-#ELSEIF(PKG_CONFIG_FOUND)
-#    PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
-#    PKG_SEARCH_MODULE(SDL2_TTF REQUIRED SDL2_ttf)
-#    PKG_SEARCH_MODULE(FRIBIDI QUIET fribidi)
+ELSEIF(PKG_CONFIG_FOUND)
+    # Attempt to use pkg-config if no toolchain is specified.
+    PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
+    PKG_SEARCH_MODULE(SDL2_TTF REQUIRED SDL2_ttf)
+    PKG_SEARCH_MODULE(FRIBIDI QUIET fribidi)
 ELSE()
     # Use included FindSDL2 modules as a last resort.
-    LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/ext/cmake")
-    FIND_PACKAGE(SDL2 REQUIRED)
-    FIND_PACKAGE(SDL2_ttf REQUIRED)
-    FIND_PACKAGE(fribidi QUIET)
+    #LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/ext/cmake")
+    #FIND_PACKAGE(SDL2 REQUIRED)
+    #FIND_PACKAGE(SDL2_ttf REQUIRED)
+    #FIND_PACKAGE(fribidi QUIET)
+    INCLUDE(ext/cmake/CPM.cmake)
+    CPMAddPackage(GITHUB_REPOSITORY libsdl-org/SDL
+            NAME SDL2
+            GIT_TAG release-2.0.14
+            OPTIONS
+                "SDL_SHARED OFF"
+                "SDL_STATIC ON")
+    if(SDL2_ADDED)
+        add_library(SDL2::SDL2 ALIAS SDL2)
+        add_library(SDL2::SDL2main ALIAS SDL2main)
+    ENDIF()
+
+    CPMAddPackage(GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype.git
+            NAME freetype
+            GIT_TAG VER-2-11-0
+            OPTIONS
+                "CMAKE_DISABLE_FIND_PACKAGE_ZLIB    TRUE"
+                "CMAKE_DISABLE_FIND_PACKAGE_BZip2   TRUE"
+                "CMAKE_DISABLE_FIND_PACKAGE_PNG     TRUE"
+                "CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz TRUE"
+                "CMAKE_DISABLE_FIND_PACKAGE_BrotliDec TRUE")
+    if(freetype_ADDED)
+        #add_library(Freetype::Freetype ALIAS freetype)
+    endif()
+
+    CPMAddPackage(GITHUB_REPOSITORY libsdl-org/SDL_ttf
+            NAME SDL2_ttf
+            GIT_TAG release-2.0.15
+            )#OPTIONS
+             #   "SDL2_DIR ${SDL2_SOURCE_DIR}")
+    if(SDL2_ttf_ADDED)
+        #add_library(SDL::SDL_ttf ALIAS SDL2_ttf)
+    endif()
+
+    TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${SDL2_SOURCE_DIR}/include)
+    TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${freetype_SOURCE_DIR}/include)
+    TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${SDL2_ttf_SOURCE_DIR})
+    TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE SDL2 SDL2main freetype SDL2_ttf)
 ENDIF()
 
 # Add required dependencies
