@@ -41,6 +41,21 @@ ADD_EXECUTABLE(${PROJECT_NAME})
 TARGET_SOURCES(${PROJECT_NAME} PRIVATE src/main.c src/cache.c src/font.c src/ui.c)
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE inc)
 
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "DEBUG")
+endif()
+
+IF(${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR
+		${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+	TARGET_COMPILE_OPTIONS(${PROJECT_NAME} PRIVATE -Wall -Wextra -std=c99 -pedantic)
+	set(CMAKE_C_FLAGS_DEBUG "-Og -g3")
+	set(CMAKE_C_FLAGS_MINSIZEREL "-flto -Os -s")
+	set(CMAKE_C_FLAGS_RELWITHDEBINFO "-flto -O2 -g3")
+	set(CMAKE_C_FLAGS_RELEASE "-flto -Ofast -g3")
+ELSE()
+	set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
+ENDIF()
+
 # Discover libraries
 INCLUDE(FindPkgConfig)
 set(PKG_CONFIG_FOUND ${PKG_CONFIG_FOUND} CACHE BOOL "Use pkg-config")
@@ -57,11 +72,6 @@ ELSEIF(PKG_CONFIG_FOUND)
     PKG_SEARCH_MODULE(SDL2_TTF REQUIRED SDL2_ttf)
     PKG_SEARCH_MODULE(FRIBIDI QUIET fribidi)
 ELSE()
-    # Use included FindSDL2 modules as a last resort.
-    #LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/ext/cmake")
-    #FIND_PACKAGE(SDL2 REQUIRED)
-    #FIND_PACKAGE(SDL2_ttf REQUIRED)
-    #FIND_PACKAGE(fribidi QUIET)
     INCLUDE(ext/cmake/CPM.cmake)
     CPMAddPackage(GITHUB_REPOSITORY libsdl-org/SDL
             NAME SDL2
@@ -70,28 +80,30 @@ ELSE()
                 "SDL_SHARED OFF"
                 "SDL_STATIC ON")
     if(SDL2_ADDED)
-        add_library(SDL2::SDL2 ALIAS SDL2)
-        add_library(SDL2::SDL2main ALIAS SDL2main)
+	add_library(SDL2::SDL2 ALIAS SDL2)
+	add_library(SDL2::SDL2-static ALIAS SDL2-static)
+	add_library(SDL2::SDL2main ALIAS SDL2main)
     ENDIF()
 
+    set(CMAKE_DISABLE_FIND_PACKAGE_ZLIB     TRUE)
+    set(CMAKE_DISABLE_FIND_PACKAGE_BZip2    TRUE)
+    set(CMAKE_DISABLE_FIND_PACKAGE_PNG      TRUE)
+    set(CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz TRUE)
+    set(CMAKE_DISABLE_FIND_PACKAGE_BrotliDec TRUE)
     CPMAddPackage(GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype.git
             NAME freetype
-            GIT_TAG VER-2-11-0
-            OPTIONS
-                "CMAKE_DISABLE_FIND_PACKAGE_ZLIB    TRUE"
-                "CMAKE_DISABLE_FIND_PACKAGE_BZip2   TRUE"
-                "CMAKE_DISABLE_FIND_PACKAGE_PNG     TRUE"
-                "CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz TRUE"
-                "CMAKE_DISABLE_FIND_PACKAGE_BrotliDec TRUE")
+            GIT_TAG VER-2-11-0)
     if(freetype_ADDED)
-        #add_library(Freetype::Freetype ALIAS freetype)
+        add_library(Freetype::Freetype ALIAS freetype)
     endif()
 
     CPMAddPackage(GITHUB_REPOSITORY libsdl-org/SDL_ttf
             NAME SDL2_ttf
             GIT_TAG release-2.0.15
-            )#OPTIONS
-             #   "SDL2_DIR ${SDL2_SOURCE_DIR}")
+            OPTIONS
+               "SDL2_DIR ${SDL2_SOURCE_DIR}"
+	       "FREETYPE_LIBRARY ${freetype_SOURCE_DIR}"
+	       "FREETYPE_INCLUDE_DIRS ${freetype_SOURCE_DIR}/include")
     if(SDL2_ttf_ADDED)
         #add_library(SDL::SDL_ttf ALIAS SDL2_ttf)
     endif()
@@ -99,7 +111,7 @@ ELSE()
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${SDL2_SOURCE_DIR}/include)
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${freetype_SOURCE_DIR}/include)
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${SDL2_ttf_SOURCE_DIR})
-    TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE SDL2 SDL2main freetype SDL2_ttf)
+    TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE SDL2-static SDL2_ttf)
 ENDIF()
 
 # Add required dependencies
@@ -174,21 +186,6 @@ ELSE()
     TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE freetype m dl)
 ENDIF()
 
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "DEBUG")
-endif()
-
-IF(${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR
-		${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
-	TARGET_COMPILE_OPTIONS(${PROJECT_NAME} PRIVATE -Wall -Wextra -std=c99 -pedantic)
-	set(CMAKE_C_FLAGS_DEBUG "-Og -g3")
-	set(CMAKE_C_FLAGS_MINSIZEREL "-flto -Os -s")
-	set(CMAKE_C_FLAGS_RELWITHDEBINFO "-flto -O2 -g3")
-	set(CMAKE_C_FLAGS_RELEASE "-flto -Ofast -g3")
-ELSE()
-	set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
-ENDIF()
-
 # Package options
 INSTALL(TARGETS haiyajan-menu RUNTIME)
 
@@ -210,6 +207,6 @@ endmacro()
 message(STATUS "Haiyajan-UI will build with the following options:")
 message_bool_option("GNU FriBidi" USE_FRIBIDI)
 
-MESSAGE(STATUS "  CC:      ${CMAKE_C_COMPILER}")
+MESSAGE(STATUS "  CC:      ${CMAKE_C_COMPILER} '${CMAKE_C_COMPILER_ID}'")
 MESSAGE(STATUS "  CFLAGS:  ${CMAKE_C_FLAGS}")
 MESSAGE(STATUS "  LDFLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
