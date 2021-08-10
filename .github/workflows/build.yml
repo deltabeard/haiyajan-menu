@@ -45,6 +45,6 @@ jobs:
           cmakeGenerator: 'Ninja'
           cmakeListsOrSettingsJson: 'CMakeListsTxtBasic'
           useVcpkgToolchainFile: true
-          buildWithCMakeArgs: '-- -v'
+          buildWithCMakeArgs: '-DLIBRARY_DISCOVER_METHOD=VCPKG -- -v'
           vcpkgTriplet: '${{ matrix.triplet }}'
           buildDirectory: '${{ runner.workspace }}/b/ninja/'
