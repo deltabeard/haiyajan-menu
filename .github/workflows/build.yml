@@ -24,11 +24,12 @@ jobs:
           
       - name: Build
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           cmake --build build
           
       - name: Upload output
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.os }}-${{ matrix.build_type }}-#${{ github.run_number }}
-          path: ${{ github.workspace }}/build/haiyajan-menu*
+          path: |
+            ${{ github.workspace }}/build/haiyajan-menu*
