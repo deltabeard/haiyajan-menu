@@ -246,7 +246,11 @@ ELSE()
 ENDIF()
 
 # Package options
-INSTALL(TARGETS haiyajan-menu RUNTIME)
+IF(APPLE)
+    INSTALL(TARGETS haiyajan-menu BUNDLE)
+ELSE()
+    INSTALL(TARGETS haiyajan-menu RUNTIME)
+ENDIF()
 
 INCLUDE(CPack)
 SET(CPACK_PACKAGE_VENDOR Deltabeard)
