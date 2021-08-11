@@ -1,5 +1,16 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.19)
 
+# Check user set options.
+IF(NOT CMAKE_BUILD_TYPE)
+    MESSAGE(STATUS "CMAKE_BUILD_TYPE was not set by user; setting build type to Debug")
+    SET(CMAKE_BUILD_TYPE "Debug")
+ELSEIF(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND
+        NOT ${CMAKE_BUILD_TYPE} STREQUAL "Release" AND
+        NOT ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo" AND
+        NOT ${CMAKE_BUILD_TYPE} STREQUAL "MinSizeRel")
+    MESSAGE(FATAL_ERROR "CMAKE_BUILD_TYPE was '${CMAKE_BUILD_TYPE}' but can only be set to one of Debug, Release, RelWithDebInfo, MinSizeRel")
+ENDIF()
+
 # Obtain the version of Haiyajan-menu that is being built.
 FIND_PACKAGE(Git)
 IF(GIT_FOUND)
@@ -19,13 +30,11 @@ IF(GIT_FOUND)
             ERROR_QUIET
             OUTPUT_STRIP_TRAILING_WHITESPACE)
 ENDIF()
-
 IF(NOT GIT_FOUND OR NOT PROC_RESULT EQUAL 0)
     # If git is not available on the build platform, use this as a fallback.
     SET(LAST_TAG 0.1.0)
     SET(FULL_VERSION ${LAST_TAG}-LOCAL)
 ENDIF()
-
 MESSAGE(STATUS "Configuring version ${FULL_VERSION}")
 
 # Initialise project information.
@@ -37,32 +46,57 @@ PROJECT(haiyajan-menu
 SET(HAIYAJAN_MENU_LICENSE "LGPL-3.0, Mahyar Koshkouei (c) 2021")
 
 # Add dependencies to project.
-ADD_EXECUTABLE(${PROJECT_NAME})
+IF(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND APPLE)
+    SET(EXE_TARGET_TYPE MACOSX_BUNDLE)
+    MESSAGE(VERBOSE "Setting EXE type to MACOSX Bundle")
+ELSEIF(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND MSVC)
+    SET(EXE_TARGET_TYPE WIN32)
+    MESSAGE(VERBOSE "Setting EXE type to WIN32")
+ENDIF()
+ADD_EXECUTABLE(${PROJECT_NAME} ${EXE_TARGET_TYPE})
 TARGET_SOURCES(${PROJECT_NAME} PRIVATE src/main.c src/cache.c src/font.c src/ui.c)
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE inc)
 
-IF(NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE "DEBUG")
-ENDIF()
-
-IF(${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR
-        ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+# Set compile options based upon build type.
+SET_PROPERTY(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
+IF(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR
+        CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    # Enable warnings and use C99
+    # "C_STANDARD 99" sets gnu99 which is unacceptable.
     TARGET_COMPILE_OPTIONS(${PROJECT_NAME} PRIVATE -Wall -Wextra -std=c99 -pedantic)
     SET(CMAKE_C_FLAGS_DEBUG "-Og -g3")
     SET(CMAKE_C_FLAGS_MINSIZEREL "-flto -Os -s")
     SET(CMAKE_C_FLAGS_RELWITHDEBINFO "-flto -O2 -g3")
     SET(CMAKE_C_FLAGS_RELEASE "-flto -Ofast -g3")
-ELSEIF(${CMAKE_C_COMPILER_ID} STREQUAL "MSVC")
-    SET(CMAKE_C_FLAGS_RELEASE "/O2 /Gw /GL /fp:fast")
-    IF(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-        TARGET_LINK_OPTIONS(${PROJECT_NAME} PRIVATE "/LTCG /OPT:ICF")
+ELSEIF(MSVC)
+    SET(CMAKE_C_FLAGS_DEBUG "/Od /Zi /diagnostics:caret")
+    # /Od Turn off all optimisations.
+    # /Zi Create debugging information.
+
+    SET(CMAKE_C_FLAGS_MINSIZEREL "/O1 /Os /Gw /GL /fp:fast /Ob1 /GT /MD /GS- /arch:AVX2")
+    # /O1 Use maximum optimisation for size.
+    # /Os Favour size over speed.
+
+    SET(CMAKE_C_FLAGS_RELEASE "/O2 /Gw /GL /fp:fast /Ob2 /Oi /Ot /GT /MD /GS- /arch:AVX2")
+    # /O2 Use maximum optimisation for speed.
+    # /Gw Optimise global data.
+    # /GL Whole program optimisation.
+    # /fp:fast Optimise floating-point code for speed and space.
+    # /Ob2 Inline function expansion.
+    # /Oi Enable intrinsic functions.
+    # /Ot Favour fast code.
+    # /GT Optimise fibers.
+    # /MD Use multi-threaded DLL runtime.
+    # /GS- Disable security checking.
+    # /arch:AVX2 Enable AVX2 instructions.
+
+    IF(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        TARGET_LINK_OPTIONS(${PROJECT_NAME} PRIVATE /LTCG /OPT:ICF)
     ENDIF()
-ELSE()
-    SET_PROPERTY(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
 ENDIF()
 
 # Discover libraries
-set(LIBRARY_DISCOVER_METHOD "CPM" CACHE STRING
+SET(LIBRARY_DISCOVER_METHOD "CPM" CACHE STRING
         "Tool to use for discovering dependencies; options are: VCPKG, PKG_CONFIG, CPM")
 
 IF(${LIBRARY_DISCOVER_METHOD} STREQUAL "VCPKG")
@@ -80,15 +114,20 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
     INCLUDE(ext/cmake/CPM.cmake)
     CPMADDPACKAGE(GITHUB_REPOSITORY libsdl-org/SDL
             NAME SDL2
-            GIT_TAG release-2.0.14
+            GIT_TAG release-2.0.16
             OPTIONS
             "SDL_SHARED_ENABLED_BY_DEFAULT OFF"
-            "SDL_STATIC_ENABLED_BY_DEFAULT ON")
+            "SDL_STATIC_ENABLED_BY_DEFAULT ON"
+            "OPT_DEF_LIBC TRUE"
+            "CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG}"
+            "CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL}"
+            "CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO}"
+            "CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE}")
     IF(SDL2_ADDED)
         # SDL_ttf tries to link to SDL2::SDL2 even in static builds.
         ADD_LIBRARY(SDL2::SDL2 ALIAS SDL2-static)
-        ADD_LIBRARY(SDL2::SDL2-static ALIAS SDL2-static)
-        ADD_LIBRARY(SDL2::SDL2main ALIAS SDL2main)
+        #ADD_LIBRARY(SDL2::SDL2-static ALIAS SDL2-static)
+        #ADD_LIBRARY(SDL2::SDL2main ALIAS SDL2main)
     ENDIF()
 
     # Disable all external library options in Freetype. Fonts packaged with
@@ -101,7 +140,11 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
             "CMAKE_DISABLE_FIND_PACKAGE_BZip2 TRUE"
             "CMAKE_DISABLE_FIND_PACKAGE_PNG TRUE"
             "CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz TRUE"
-            "CMAKE_DISABLE_FIND_PACKAGE_BrotliDec TRUE")
+            "CMAKE_DISABLE_FIND_PACKAGE_BrotliDec TRUE"
+            "CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG}"
+            "CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL}"
+            "CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO}"
+            "CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE}")
     IF(freetype_ADDED)
         ADD_LIBRARY(Freetype::Freetype ALIAS freetype)
     ENDIF()
@@ -112,7 +155,11 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
             OPTIONS
             "SDL2_DIR ${SDL2_SOURCE_DIR}"
             "FREETYPE_LIBRARY ${freetype_SOURCE_DIR}"
-            "FREETYPE_INCLUDE_DIRS ${freetype_SOURCE_DIR}/include")
+            "FREETYPE_INCLUDE_DIRS ${freetype_SOURCE_DIR}/include"
+            "CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG}"
+            "CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL}"
+            "CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO}"
+            "CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE}")
     IF(SDL2_ttf_ADDED)
         #add_library(SDL::SDL_ttf ALIAS SDL2_ttf)
     ENDIF()
