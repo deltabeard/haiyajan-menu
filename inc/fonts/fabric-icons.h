@@ -2,7 +2,7 @@
  * Generated from fabric-icons.ttf
  * Font generated from https://uifabricicons.azurewebsites.net/
  *
- * © 2017 Microsoft Corporation. All Rights Reserved.
+ * Â© 2017 Microsoft Corporation. All Rights Reserved.
  * Microsoft supplied font. You may use this font to create, display, and print
  * content as permitted by the license terms or terms of use, of the Microsoft
  * product, service, or content in which this font was included. You may only:
