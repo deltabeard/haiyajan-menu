@@ -47,3 +47,5 @@ jobs:
           name: ${{ matrix.os }}${{ matrix.arch}}-${{ matrix.build_type }}-#${{ github.run_number }}
           path: |
             ${{ github.workspace }}/build/haiyajan-menu*
+            ${{ github.workspace }}/build/**/haiyajan-menu.exe
+            ${{ github.workspace }}/build/**/haiyajan-menu.pdb
