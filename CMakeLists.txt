@@ -1,15 +1,17 @@
 # vim: ts=4:sw=4:expandtab
 CMAKE_MINIMUM_REQUIRED(VERSION 3.19)
 
-# Check user set options.
+## Check user set options.
 IF(NOT CMAKE_BUILD_TYPE)
     MESSAGE(STATUS "CMAKE_BUILD_TYPE was not set by user; setting build type to Debug")
     SET(CMAKE_BUILD_TYPE "Debug")
-ELSEIF(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND
-        NOT ${CMAKE_BUILD_TYPE} STREQUAL "Release" AND
-        NOT ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo" AND
-        NOT ${CMAKE_BUILD_TYPE} STREQUAL "MinSizeRel")
-    MESSAGE(FATAL_ERROR "CMAKE_BUILD_TYPE was '${CMAKE_BUILD_TYPE}' but can only be set to one of Debug, Release, RelWithDebInfo, MinSizeRel")
+ELSE()
+    # List of valid build types
+    SET(VALID_BUILD_TYPES Debug Release RelWithDebInfo MinSizeRel)
+    LIST(FIND VALID_BUILD_TYPES ${CMAKE_BUILD_TYPE} IS_VALID_BUILD_TYPE)
+    IF(IS_VALID_BUILD_TYPE EQUAL -1)
+        MESSAGE(FATAL_ERROR "CMAKE_BUILD_TYPE was '${CMAKE_BUILD_TYPE}' but can only be set to one of ${VALID_BUILD_TYPES}")
+    ENDIF()
 ENDIF()
 
 # Obtain the version of Haiyajan-menu that is being built.
@@ -75,11 +77,11 @@ ELSEIF(MSVC)
     # /Od Turn off all optimisations.
     # /Zi Create debugging information.
 
-    SET(CMAKE_C_FLAGS_MINSIZEREL "/O1 /Os /Gw /GL /fp:fast /Ob1 /GT /MD /GS- /arch:AVX2")
+    SET(CMAKE_C_FLAGS_MINSIZEREL "/O1 /Os /Gw /GL /fp:fast /Ob1 /GT /MD /GS-")
     # /O1 Use maximum optimisation for size.
     # /Os Favour size over speed.
 
-    SET(CMAKE_C_FLAGS_RELEASE "/O2 /Gw /GL /fp:fast /Ob2 /Oi /Ot /GT /MD /GS- /arch:AVX2")
+    SET(CMAKE_C_FLAGS_RELEASE "/O2 /Gw /GL /fp:fast /Ob2 /Oi /Ot /GT /MD /GS-")
     # /O2 Use maximum optimisation for speed.
     # /Gw Optimise global data.
     # /GL Whole program optimisation.
@@ -128,8 +130,6 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
     IF(SDL2_ADDED)
         # SDL_ttf tries to link to SDL2::SDL2 even in static builds.
         ADD_LIBRARY(SDL2::SDL2 ALIAS SDL2-static)
-        #ADD_LIBRARY(SDL2::SDL2-static ALIAS SDL2-static)
-        #ADD_LIBRARY(SDL2::SDL2main ALIAS SDL2main)
     ENDIF()
 
     # Disable all external library options in Freetype. Fonts packaged with
@@ -162,9 +162,6 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
             "CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL}"
             "CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO}"
             "CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE}")
-    IF(SDL2_ttf_ADDED)
-        #add_library(SDL::SDL_ttf ALIAS SDL2_ttf)
-    ENDIF()
 
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${SDL2_SOURCE_DIR}/include)
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${freetype_SOURCE_DIR}/include)
@@ -250,14 +247,14 @@ ENDIF()
 # Package options
 IF(APPLE)
     SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
-        MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
-        MACOSX_BUNDLE_BUNDLE_VERSION ${LAST_TAG}
-        MACOSX_BUNDLE_COPYRIGHT ${HAIYAJAN_MENU_LICENSE}
-        MACOSX_BUNDLE_INFO_STRING ${PROJECT_DESCRIPTION}
-        MACOSX_BUNDLE_SHORT_VERSION_STRING ${FULL_VERSION}
-        MACOSX_BUNDLE_LONG_VERSION_STRING ${FULL_VERSION})
+            MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
+            MACOSX_BUNDLE_BUNDLE_VERSION ${LAST_TAG}
+            MACOSX_BUNDLE_COPYRIGHT ${HAIYAJAN_MENU_LICENSE}
+            MACOSX_BUNDLE_INFO_STRING ${PROJECT_DESCRIPTION}
+            MACOSX_BUNDLE_SHORT_VERSION_STRING ${FULL_VERSION}
+            MACOSX_BUNDLE_LONG_VERSION_STRING ${FULL_VERSION})
     INSTALL(TARGETS haiyajan-menu BUNDLE DESTINATION
-        ${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME})
+            ${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME})
 ELSE()
     INSTALL(TARGETS haiyajan-menu RUNTIME)
 ENDIF()
