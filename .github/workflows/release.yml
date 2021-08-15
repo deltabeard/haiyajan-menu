@@ -1,0 +1,95 @@
+# Compile builds for new release
+name: release
+on: 
+  push:
+    tags:
+    - '*'
+
+jobs:
+  build:
+    name: ${{ matrix.os_label }}_${{ matrix.arch_label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            build_type: Release
+            generator: Ninja
+            os_label: Linux
+            arch_label: x86_64
+            
+          - os: macos-latest
+            build_type: Release
+            generator: Ninja
+            os_label: macOS
+            arch_label: x86_64
+            
+          - os: windows-latest
+            build_type: Release
+            generator: "Visual Studio 16 2019"
+            arch: amd64
+            toolset: -T v142
+            os_label: Windows
+            arch_label: x86_64
+            
+          - os: windows-latest
+            build_type: Release
+            generator: "Visual Studio 16 2019"
+            arch: amd64_x86
+            toolset: -T v141_xp
+            os_label: Windows
+            arch_label: x86_32
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          
+      - name: Initialise MSVC environment
+        if: "contains(matrix.os, 'windows')"
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.msvc_arch }}
+
+      - uses: lukka/get-cmake@v3.21.1
+          
+      - name: Build
+        run: |
+          cmake -S . -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.toolset }}
+          cmake --build build
+          
+      - name: Tar output on Unix systems
+        if: "contains(matrix.os, 'windows') == false"
+        run: |
+          cd ${{ github.workspace }}/build
+          tar cf haiyajan-menu.tar haiyajan-menu*
+          
+      - name: Upload output
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.os_label }}-${{ matrix.arch_label }}
+          path: |
+            ${{ github.workspace }}/build/haiyajan-menu.tar
+            ${{ github.workspace }}/build/Release/haiyajan-menu.exe
+            ${{ github.workspace }}/build/Release/haiyajan-menu.pdb
+
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build files
+        uses: actions/download-artifact@v2
+      
+      - name: Create release files
+        run: |
+          tar cJf Linux-x86_64.tar.xz Linux-x86_64/*
+          tar cJf macOS-x86_64.tar.xz macOS-x86_64/*
+          zip -9 Windows-x86_64.zip Windows-x86_64/*.exe
+          zip -9 Windows-x86_32.zip Windows-x86_32/*.exe
+        
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: |
+           Linux-x86_64.tar.xz
+           macOS-x86_64.tar.xz
+           Windows-x86_64.zip
+           Windows-x86_32.zip
