@@ -24,7 +24,7 @@ struct ui_ctx {
 	/* Required to recreate texture on resizing. */
 	SDL_Renderer *ren;
 
-	/* Texture to render user interface on.. */
+	/* Texture to render user interface on. */
 	SDL_Texture *tex;
 	/* Texture for static elements that do not change on each frame. */
 	SDL_Texture *static_tex;
@@ -625,6 +625,18 @@ static void ui_draw_selection(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		outline.y++;
 		outline.h -= 2;
 		outline.w -= 2;
+	}
+
+	/* Check if hit box is offscreen. */
+	{
+		SDL_Rect screen;
+		screen.x = 0;
+		screen.y = 0;
+		SDL_GetRendererOutputSize(ctx->ren, &screen.w, &screen.h);
+		if(outline.y + outline.h > screen.h)
+			ctx->offset.px_requested_y = -(ctx->ref_tile_size);
+		else if(outline.y < 0)
+			ctx->offset.px_requested_y = ctx->ref_tile_size;
 	}
 
 	return;
