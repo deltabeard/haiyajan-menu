@@ -27,6 +27,7 @@ jobs:
             generator: "Visual Studio 16 2019"
             arch: amd64
             toolset: -T v142
+            config: --config Release
             arch_label: x86_64
             
           - os: windows-latest
@@ -34,7 +35,7 @@ jobs:
             generator: "Visual Studio 16 2019"
             arch: amd64_x86
             toolset: -T v141_xp
-            os_label: Windows
+            config: --config Release
             arch_label: x86_32
 
     steps:
@@ -53,19 +54,19 @@ jobs:
       - name: Build
         run: |
           cmake -S . -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.toolset }}
-          cmake --build build
+          cmake --build build ${{ matrix.config }}
           
       - name: Tar output on Unix systems
         if: "contains(matrix.os, 'windows') == false"
         working-directory: ${{ github.workspace }}/build
-        run: tar cf haiyajan-menu-${{ env.GITHUB_REF }}.tar haiyajan-menu*
+        run: tar cf haiyajan-menu-${GITHUB_REF#refs/tags/}.tar haiyajan-menu*
           
       - name: Upload output
         uses: actions/upload-artifact@v2
         with:
           name: ${{ runner.os }}-${{ matrix.arch_label }}
           path: |
-            ${{ github.workspace }}/build/haiyajan-menu-${{ env.GITHUB_REF }}.tar
+            ${{ github.workspace }}/build/haiyajan-menu-${GITHUB_REF#refs/tags/}.tar
             ${{ github.workspace }}/build/**/haiyajan-menu.exe
             ${{ github.workspace }}/build/**/haiyajan-menu.pdb
 
@@ -82,15 +83,15 @@ jobs:
         working-directory: ${{ github.workspace }}/artifacts
         run: |
           find ./
-          tar cJf Haiyajan-menu-${{ env.GITHUB_REF }}-Linux-x86_64.tar.xz Linux-x86_64/*
-          tar cJf Haiyajan-menu-${{ env.GITHUB_REF }}-macOS-x86_64.tar.xz macOS-x86_64/*
-          zip -Rj9 Haiyajan-menu-${{ env.GITHUB_REF }}-Windows-x86_64.zip Windows-x86_64/*.exe
-          zip -Rj9 Haiyajan-menu-${{ env.GITHUB_REF }}-Windows-x86_32.zip Windows-x86_32/*.exe
+          tar cJf Haiyajan-menu-${GITHUB_REF}-Linux-x86_64.tar.xz Linux-x86_64/haiyajan-menu
+          tar cJf Haiyajan-menu-${GITHUB_REF}-macOS-x86_64.tar.xz macOS-x86_64/haiyajan-menu.app
+          zip -Rj9 Haiyajan-menu-${GITHUB_REF}-Windows-x86_64.zip Windows-x86_64/Release/haiyajan-menu.exe
+          zip -Rj9 Haiyajan-menu-${GITHUB_REF}-Windows-x86_32.zip Windows-x86_32/Release/haiyajan-menu.exe
         
       - uses: softprops/action-gh-release@v1
         with:
           files: |
-           Haiyajan-menu-${{ env.GITHUB_REF }}-Linux-x86_64.tar.xz
-           Haiyajan-menu-${{ env.GITHUB_REF }}-macOS-x86_64.tar.xz
-           Haiyajan-menu-${{ env.GITHUB_REF }}-Windows-x86_64.zip
-           Haiyajan-menu-${{ env.GITHUB_REF }}-Windows-x86_32.zip
+           Haiyajan-menu-${GITHUB_REF}-Linux-x86_64.tar.xz
+           Haiyajan-menu-${GITHUB_REF}-macOS-x86_64.tar.xz
+           Haiyajan-menu-${GITHUB_REF}-Windows-x86_64.zip
+           Haiyajan-menu-${GITHUB_REF}-Windows-x86_32.zip
