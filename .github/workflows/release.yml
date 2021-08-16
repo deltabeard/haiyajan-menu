@@ -85,7 +85,7 @@ jobs:
       - name: Create release files
         working-directory: ${{ github.workspace }}/artifacts
         run: |
-          ls -aslh
+          find ./
           tar cJf Linux-x86_64.tar.xz Linux-x86_64/*
           tar cJf macOS-x86_64.tar.xz macOS-x86_64/*
           zip -9 Windows-x86_64.zip Windows-x86_64/*.exe
