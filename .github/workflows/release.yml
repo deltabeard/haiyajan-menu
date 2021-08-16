@@ -83,15 +83,15 @@ jobs:
         working-directory: ${{ github.workspace }}/artifacts
         run: |
           find ./
-          tar cJf Haiyajan-menu-${GITHUB_REF}-Linux-x86_64.tar.xz Linux-x86_64/haiyajan-menu
-          tar cJf Haiyajan-menu-${GITHUB_REF}-macOS-x86_64.tar.xz macOS-x86_64/haiyajan-menu.app
-          zip -Rj9 Haiyajan-menu-${GITHUB_REF}-Windows-x86_64.zip Windows-x86_64/Release/haiyajan-menu.exe
-          zip -Rj9 Haiyajan-menu-${GITHUB_REF}-Windows-x86_32.zip Windows-x86_32/Release/haiyajan-menu.exe
+          tar cJf Haiyajan-menu-${GITHUB_REF#refs/tags/}-Linux-x86_64.tar.xz Linux-x86_64/haiyajan-menu
+          tar cJf Haiyajan-menu-${GITHUB_REF#refs/tags/}-macOS-x86_64.tar.xz macOS-x86_64/haiyajan-menu.app
+          zip -Rj9 Haiyajan-menu-${GITHUB_REF#refs/tags/}-Windows-x86_64.zip Windows-x86_64/Release/haiyajan-menu.exe
+          zip -Rj9 Haiyajan-menu-${GITHUB_REF#refs/tags/}-Windows-x86_32.zip Windows-x86_32/Release/haiyajan-menu.exe
         
       - uses: softprops/action-gh-release@v1
         with:
           files: |
-           Haiyajan-menu-${GITHUB_REF}-Linux-x86_64.tar.xz
-           Haiyajan-menu-${GITHUB_REF}-macOS-x86_64.tar.xz
-           Haiyajan-menu-${GITHUB_REF}-Windows-x86_64.zip
-           Haiyajan-menu-${GITHUB_REF}-Windows-x86_32.zip
+           Haiyajan-menu-${GITHUB_REF#refs/tags/}-Linux-x86_64.tar.xz
+           Haiyajan-menu-${GITHUB_REF#refs/tags/}-macOS-x86_64.tar.xz
+           Haiyajan-menu-${GITHUB_REF#refs/tags/}-Windows-x86_64.zip
+           Haiyajan-menu-${GITHUB_REF#refs/tags/}-Windows-x86_32.zip
