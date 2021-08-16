@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: ${{ env.RUNNER_OS }}_${{ matrix.arch_label }}
+    name: ${{ runner.os }}_${{ matrix.arch_label }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -57,14 +57,13 @@ jobs:
           
       - name: Tar output on Unix systems
         if: "contains(matrix.os, 'windows') == false"
-        run: |
-          cd ${{ github.workspace }}/build
-          tar cf haiyajan-menu-${{ env.GITHUB_REF }}.tar haiyajan-menu*
+        working-directory: ${{ github.workspace }}/build
+        run: tar cf haiyajan-menu-${{ env.GITHUB_REF }}.tar haiyajan-menu*
           
       - name: Upload output
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.RUNNER_OS }}-${{ matrix.arch_label }}
+          name: ${{ runner.os }}-${{ matrix.arch_label }}
           path: |
             ${{ github.workspace }}/build/haiyajan-menu-${{ env.GITHUB_REF }}.tar
             ${{ github.workspace }}/build/**/haiyajan-menu.exe
