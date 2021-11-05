@@ -216,9 +216,8 @@ FILE(READ ${SRC_ARCHIVE} filedata HEX)
 STRING(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," filedata ${filedata})
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/src.c
         "/* This file is required for LGPLv3 compliance. */\n\n"
-        "#include <stddef.h>\n\n"
-        "const volatile unsigned char src[] = {${filedata}};\n"
-        "const size_t src_sz = sizeof(src);\n")
+        "static const volatile unsigned char src[] = {${filedata}};\n"
+        "static const unsigned long src_sz = sizeof(src);\n")
 TARGET_SOURCES(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src.c)
 
 # Platform specific options
