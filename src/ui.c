@@ -518,12 +518,10 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 	}
 	else if(e->type == SDL_MOUSEWHEEL)
 	{
-		Sint32 px_y = e->wheel.y * -1 * (Sint32)ctx->ref_tile_size;
-		ctx->offset.px_requested_y = 0;
-		ctx->offset.px_requested_y += px_y;
-		SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
-			"Requesting a scroll of %d pixels",
-			ctx->offset.px_requested_y);
+		if(e->wheel.y > 0)
+			ui_input(ctx, MENU_INSTR_PREV_ITEM);
+		else if(e->wheel.y < 0)
+			ui_input(ctx, MENU_INSTR_NEXT_ITEM);
 		return;
 	}
 
