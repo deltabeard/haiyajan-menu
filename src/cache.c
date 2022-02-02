@@ -53,25 +53,39 @@ out:
 	return NULL;
 }
 
-cache_ctx_s *store_cached_texture(cache_ctx_s *ctx, const void *dat, size_t len, SDL_Texture *tex)
+void store_cached_texture(cache_ctx_s *ctx, const void *dat, size_t len, SDL_Texture *tex)
 {
 	struct textures new_entry;
 
-	if(ctx == NULL)
-	{
-		ctx = SDL_calloc(1, sizeof(struct cache_ctx));
-		if(ctx == NULL)
-			return NULL;
-	}
-
 	new_entry.hash = HASH_FN(dat, len, 0);
 	new_entry.tex = tex;
+	/* FIXME: does not error on out of memory exception. */
 	sb_push(ctx->textures, new_entry);
 
+	return;
+}
+
+cache_ctx_s *init_cached_texture(void)
+{
+	cache_ctx_s *ctx;
+	ctx = SDL_calloc(1, sizeof(struct cache_ctx));
 	return ctx;
 }
 
 void clear_cached_textures(cache_ctx_s *ctx)
 {
-	sb_free(ctx->textures);
+	SDL_assert_paranoid(ctx->textures != NULL);
+	SDL_assert_paranoid(ctx != NULL);
+
+	if(ctx->textures != NULL)
+	{
+		sb_free(ctx->textures);
+		ctx->textures = NULL;
+	}
+
+	if(ctx != NULL)
+	{
+		SDL_free(ctx);
+		ctx = NULL;
+	}
 }

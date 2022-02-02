@@ -676,7 +676,7 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		icon_tex = font_render_icon(ctx->font, el->elem.tile.icon,
 				el->elem.tile.fg);
 		/* FIXME: Missing checks. */
-		ctx->cache = store_cached_texture(ctx->cache, &el->elem.tile.icon,
+		store_cached_texture(ctx->cache, &el->elem.tile.icon,
 				sizeof(el->elem.tile.icon), icon_tex);
 	}
 	SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
@@ -707,7 +707,7 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 					FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
 					text_colour_light);
 		/* FIXME: Missing checks. */
-		ctx->cache = store_cached_texture(ctx->cache, el->elem.tile.label,
+		store_cached_texture(ctx->cache, el->elem.tile.label,
 					SDL_strlen(el->elem.tile.label), text_tex);
 	}
 	SDL_QueryTexture(text_tex, NULL, NULL, &text_dim.w, &text_dim.h);
@@ -741,7 +741,6 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		el->elem.tile.fg.b);
 
 	SDL_RenderCopy(ctx->ren, text_tex, NULL, &text_dim);
-	//SDL_DestroyTexture(text_tex);
 
 	/* Add hitbox for mouse and touch input. */
 	{
@@ -871,6 +870,8 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 	ctx->hit_boxes = NULL;
 	ctx->dpi = dpi;
 	ctx->dpi_multiply = dpi / dpi_reference;
+
+	ctx->cache = init_cached_texture();
 
 	ctx->font = font_init(rend);
 	if(ctx->font == NULL)
