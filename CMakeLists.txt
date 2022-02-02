@@ -118,7 +118,7 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
     INCLUDE(ext/cmake/CPM.cmake)
     CPMADDPACKAGE(GITHUB_REPOSITORY libsdl-org/SDL
             NAME SDL2
-            GIT_TAG release-2.0.16
+            GIT_TAG release-2.0.20
             OPTIONS
             "SDL_SHARED_ENABLED_BY_DEFAULT OFF"
             "SDL_STATIC_ENABLED_BY_DEFAULT ON"
@@ -136,7 +136,7 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
     # Haiyajan-UI and OS do not use these features.
     CPMADDPACKAGE(GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype.git
             NAME freetype
-            GIT_TAG VER-2-11-0
+            GIT_TAG VER-2-11-1
             OPTIONS
             "CMAKE_DISABLE_FIND_PACKAGE_ZLIB TRUE"
             "CMAKE_DISABLE_FIND_PACKAGE_BZip2 TRUE"
@@ -153,7 +153,7 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
 
     CPMADDPACKAGE(GITHUB_REPOSITORY libsdl-org/SDL_ttf
             NAME SDL2_ttf
-            GIT_TAG release-2.0.15
+            GIT_TAG release-2.0.18
             OPTIONS
             "SDL2_DIR ${SDL2_SOURCE_DIR}"
             "FREETYPE_LIBRARY ${freetype_SOURCE_DIR}"
