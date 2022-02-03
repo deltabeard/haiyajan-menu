@@ -35,8 +35,7 @@ SDL_Texture *get_cached_texture(cache_ctx_s *ctx, const void *dat, size_t len)
 	Hash hash;
 	unsigned count;
 
-	if(ctx == NULL)
-		goto out;
+	SDL_assert_paranoid(ctx != NULL);
 
 	count = sb_count(ctx->textures);
 	hash = HASH_FN(dat, len, 0);
@@ -49,7 +48,6 @@ SDL_Texture *get_cached_texture(cache_ctx_s *ctx, const void *dat, size_t len)
 		return ctx->textures[i].tex;
 	}
 
-out:
 	return NULL;
 }
 
@@ -77,15 +75,9 @@ void clear_cached_textures(cache_ctx_s *ctx)
 	SDL_assert_paranoid(ctx->textures != NULL);
 	SDL_assert_paranoid(ctx != NULL);
 
-	if(ctx->textures != NULL)
-	{
-		sb_free(ctx->textures);
-		ctx->textures = NULL;
-	}
+	sb_free(ctx->textures);
+	ctx->textures = NULL;
 
-	if(ctx != NULL)
-	{
-		SDL_free(ctx);
-		ctx = NULL;
-	}
+	SDL_free(ctx);
+	ctx = NULL;
 }
