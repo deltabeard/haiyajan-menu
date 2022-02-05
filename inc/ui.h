@@ -1,6 +1,6 @@
 /**
  * UI toolkit for SDL2.
- * Copyright (C) 2020 Mahyar Koshkouei
+ * Copyright (C) 2020-2022 Mahyar Koshkouei
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 3, as published by
@@ -14,6 +14,8 @@
 
 #define UI_MIN_WINDOW_WIDTH	160
 #define UI_MIN_WINDOW_HEIGHT	144
+#define UI_DEFAULT_WINDOW_WIDTH 640
+#define UI_DEFAULT_WINDOW_HEIGHT 480
 
 enum {
 	HAIYAJAN_LOG_CATEGORY_MAIN = SDL_LOG_CATEGORY_CUSTOM,

@@ -1,6 +1,6 @@
 /**
  * Renders UI for Haiyajan.
- * Copyright (c) 2020 Mahyar Koshkouei
+ * Copyright (c) 2020-2022 Mahyar Koshkouei
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version 3,
@@ -170,7 +170,9 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 
 	ui_tex = ui_render_frame(ui);
 	SDL_SetRenderTarget(ren, NULL);
-	SDL_RenderClear(ren);
+	/* The UI texture is copied to the entire screen, so a RenderClear is
+	 * not required. */
+	//SDL_RenderClear(ren);
 	SDL_RenderCopy(ren, ui_tex, NULL, NULL);
 	SDL_RenderPresent(ren);
 
@@ -180,6 +182,35 @@ static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
 void onclick_function_debug(const struct ui_element *element)
 {
 	SDL_Log("Element %p clicked", (void *)element);
+}
+
+void print_fps(void)
+{
+	static unsigned frames = 0;
+	static unsigned tim = 0;
+	unsigned now;
+
+	if(tim == 0)
+	{
+		tim = SDL_GetTicks();
+		return;
+	}
+
+	frames++;
+	now = SDL_GetTicks();
+
+	/* Print FPS every second. */
+	if(now - tim > 1000)
+	{
+		float fps;
+		fps = ((float)frames/(float)(now - tim)) * 1000.0f;
+		SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
+				"FPS: %.2f", fps);
+		frames = 0;
+		tim = now;
+	}
+
+	return;
 }
 
 /**
@@ -206,7 +237,7 @@ int main(int argc, char *argv[])
 
 	win = SDL_CreateWindow("Haiyajan UI",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		1280, 720,
+		UI_DEFAULT_WINDOW_WIDTH, UI_DEFAULT_WINDOW_HEIGHT,
 		SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI |
 		SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED);
 	if(win == NULL)
@@ -229,7 +260,10 @@ int main(int argc, char *argv[])
 		goto err;
 
 	while(SDL_QuitRequested() == SDL_FALSE && quit == 0)
+	{
 		loop(ren, ui);
+		print_fps();
+	}
 
 	ui_exit(ui);
 
