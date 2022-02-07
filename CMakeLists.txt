@@ -115,6 +115,7 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "PKG_CONFIG")
     PKG_SEARCH_MODULE(SDL2_TTF REQUIRED SDL2_ttf)
     PKG_SEARCH_MODULE(FRIBIDI QUIET fribidi)
 ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
+    SET(CPM_USE_NAMED_CACHE_DIRECTORIES)
     INCLUDE(ext/cmake/CPM.cmake)
     CPMADDPACKAGE(GITHUB_REPOSITORY libsdl-org/SDL
             NAME SDL2
@@ -123,6 +124,8 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
             "SDL_SHARED_ENABLED_BY_DEFAULT OFF"
             "SDL_STATIC_ENABLED_BY_DEFAULT ON"
             "OPT_DEF_LIBC TRUE"
+            "SDL_DISKAUDIO OFF"
+            "EXTRA_CFLAGS -DSDL_LEAN_AND_MEAN"
             "CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG}"
             "CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL}"
             "CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO}"
@@ -212,13 +215,15 @@ FILE(GLOB PROJ_FILES LIST_DIRECTORIES false
 FILE(ARCHIVE_CREATE OUTPUT ${SRC_ARCHIVE}
         PATHS ${PROJ_FILES}
         FORMAT gnutar COMPRESSION XZ COMPRESSION_LEVEL 6)
-FILE(READ ${SRC_ARCHIVE} filedata HEX)
-STRING(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," filedata ${filedata})
-FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/src.c
-        "/* This file is required for LGPLv3 compliance. */\n\n"
-        "static const volatile unsigned char src[] = {${filedata}};\n"
-        "static const unsigned long src_sz = sizeof(src);\n")
-TARGET_SOURCES(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src.c)
+IF(!MSVC)
+    FILE(READ ${SRC_ARCHIVE} filedata HEX)
+    STRING(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," filedata ${filedata})
+    FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/src.c
+            "/* This file is required for LGPLv3 compliance. */\n\n"
+            "static const volatile unsigned char src[] = {${filedata}};\n"
+            "static const unsigned long src_sz = sizeof(src);\n")
+    TARGET_SOURCES(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src.c)
+ENDIF()
 
 # Platform specific options
 IF(MSVC)
@@ -239,6 +244,8 @@ ELSEIF(NINTENDO_SWITCH)
     NX_CREATE_NRO(${PROJECT_NAME}
             NACP ${PROJECT_NAME}.nacp
             ICON "${PROJECT_SOURCE_DIR}/meta/icon.jpg")
+ELSEIF(MINGW)
+    TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE freetype m)
 ELSE()
     TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE freetype m dl)
 ENDIF()
