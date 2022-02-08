@@ -1,6 +1,9 @@
 name: build
 on: [push]
 
+env:
+  CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm-cache
+
 jobs:
   build:
     name: ${{ matrix.os }}-${{ matrix.build_type }}
@@ -36,18 +39,17 @@ jobs:
 
       - uses: lukka/get-cmake@latest
 
-      - run: mkdir ${{ github.workspace }}/cache
+      - run: mkdir ${{ env.CPM_SOURCE_CACHE }}
 
       - name: Cache multiple paths
         uses: actions/cache@v2
         with:
-          path: |
-            ${{ github.workspace }}/cache
-          key: ${{ runner.os }}-${{ hashFiles('CMakeLists.txt','.github/workflows/build.yml') }}
+          path: ${{ env.CPM_SOURCE_CACHE }}
+          key: ${{ hashFiles('CMakeLists.txt','.github/workflows/build.yml') }}
           
       - name: Build
         run: |
-          cmake -S . -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.toolset }} -DCPM_SOURCE_CACHE=${{ github.workspace }}/cache
+          cmake -S . -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.toolset }}
           cmake --build build
           
       - name: Tar output on Unix systems
@@ -55,11 +57,15 @@ jobs:
         run: |
           cd ${{ github.workspace }}/build
           tar cf haiyajan-menu.tar haiyajan-menu*
-          
+
+      - name: Get Short SHA
+        id: vars
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
       - name: Upload output
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.os }}${{ matrix.arch}}-${{ matrix.build_type }}-${{ github.sha }}
+          name: ${{ matrix.os }}${{ matrix.arch}}-${{ matrix.build_type }}-${{ steps.vars.outputs.sha_short }}
           path: |
             ${{ github.workspace }}/build/haiyajan-menu.tar
             ${{ github.workspace }}/build/**/haiyajan-menu.exe
