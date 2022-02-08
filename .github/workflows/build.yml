@@ -44,8 +44,11 @@ jobs:
       - name: Cache multiple paths
         uses: actions/cache@v2
         with:
-          path: ${{ env.CPM_SOURCE_CACHE }}
-          key: ${{ hashFiles('CMakeLists.txt','.github/workflows/build.yml') }}
+          path: |
+            ${{ env.CPM_SOURCE_CACHE }}
+            ${{ github.workspace }}/build/_deps
+            ${{ github.workspace }}/build/**/cmake_pch.*
+          key: ${{ matrix.os }}-${{ hashFiles('CMakeLists.txt','.github/workflows/build.yml') }}
           
       - name: Build
         run: |
