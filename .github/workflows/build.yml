@@ -12,12 +12,12 @@ jobs:
         build_type: [RelWithDebInfo]
         generator: [Ninja]
         include:
-          - os: windows-latest
+          - os: windows-2022
             build_type: RelWithDebInfo
-            generator: "Visual Studio 16 2019"
+            generator: "Visual Studio 17 2022"
             arch: amd64
-            toolset: -T v142
-          - os: windows-latest
+            toolset: -T v143
+          - os: windows-2019
             build_type: RelWithDebInfo
             generator: "Visual Studio 16 2019"
             arch: amd64_x86
@@ -34,7 +34,7 @@ jobs:
         with:
           arch: ${{ matrix.msvc_arch }}
 
-      - uses: lukka/get-cmake@v3.21.1
+      - uses: lukka/get-cmake@latest
           
       - name: Build
         run: |
