@@ -10,7 +10,6 @@
 #include <signal.h>
 #include <SDL.h>
 #include <ui.h>
-//#include <win_dirent.h>
 
 void onclick_function_debug(const struct ui_element *element);
 

@@ -209,7 +209,7 @@ ADD_COMPILE_DEFINITIONS(VER_MINOR=${haiyajan-menu_VERSION_MINOR})
 ADD_COMPILE_DEFINITIONS(VER_PATCH=${haiyajan-menu_VERSION_PATCH})
 ADD_COMPILE_DEFINITIONS(VER_TWEAK=0)
 
-TARGET_PRECOMPILE_HEADERS(${PROJECT_NAME} PUBLIC inc/cache.h inc/font.h inc/hedley.h inc/ui.h inc/win_dirent.h)
+TARGET_PRECOMPILE_HEADERS(${PROJECT_NAME} PUBLIC inc/cache.h inc/font.h inc/hedley.h inc/ui.h)
 
 # Collect source files and compress them
 SET(SRC_ARCHIVE ${CMAKE_CURRENT_BINARY_DIR}/src.tar.xz)
