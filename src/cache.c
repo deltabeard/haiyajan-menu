@@ -70,14 +70,16 @@ cache_ctx_s *init_cached_texture(void)
 	return ctx;
 }
 
+void deinit_cached_texture(cache_ctx_s *ctx)
+{
+	SDL_assert_paranoid(ctx != NULL);
+	SDL_free(ctx);
+	ctx = NULL;
+}
+
 void clear_cached_textures(cache_ctx_s *ctx)
 {
 	SDL_assert_paranoid(ctx->textures != NULL);
-	SDL_assert_paranoid(ctx != NULL);
-
 	sb_free(ctx->textures);
 	ctx->textures = NULL;
-
-	SDL_free(ctx);
-	ctx = NULL;
 }

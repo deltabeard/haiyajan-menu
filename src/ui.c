@@ -303,6 +303,7 @@ static void ui_resize_all(ui_ctx_s *ui, int win_w, int win_h)
 	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
 		"Font sizes changed to %d, %d, %d",
 		icon_pt, header_pt, regular_pt);
+	clear_cached_textures(ui->cache);
 }
 
 HEDLEY_NON_NULL(1,2)
@@ -942,6 +943,7 @@ void ui_exit(ui_ctx_s *ctx)
 	font_exit(ctx->font);
 
 	clear_cached_textures(ctx->cache);
+	deinit_cached_texture(ctx->cache);
 	SDL_DestroyTexture(ctx->tex);
 	SDL_DestroyTexture(ctx->static_tex);
 	sb_free(ctx->hit_boxes);

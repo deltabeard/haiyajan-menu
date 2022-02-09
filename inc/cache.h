@@ -19,4 +19,6 @@ void store_cached_texture(cache_ctx_s *ctx, const void *dat, size_t len, SDL_Tex
 
 cache_ctx_s *init_cached_texture(void);
 
+void deinit_cached_texture(cache_ctx_s *ctx);
+
 void clear_cached_textures(cache_ctx_s *ctx);
