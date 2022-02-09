@@ -201,7 +201,7 @@ static void font_close_ttf(font_ctx_s *ctx)
  * \param ctx Font context.
  * \param dpi Requested DPI to scale fonts to.
 */
-void font_change_pt(font_ctx_s *ctx,
+void font_change_pt(font_ctx_s *ctx, unsigned hdpi, unsigned vdpi,
 		int icon_pt, int header_pt, int regular_pt)
 {
 	font_close_ttf(ctx);
@@ -211,7 +211,8 @@ void font_change_pt(font_ctx_s *ctx,
 		SDL_RWops *hdr_font_mem;
 		hdr_font_mem = SDL_RWFromConstMem(NotoSansDisplay_SemiCondensedLight_Latin_ttf,
 			NotoSansDisplay_SemiCondensedLight_Latin_ttf_len);
-		ctx->ui_header = TTF_OpenFontRW(hdr_font_mem, 1, header_pt);
+		ctx->ui_header = TTF_OpenFontDPIRW(hdr_font_mem, 1, header_pt,
+			hdpi, vdpi);
 	}
 
 	/* Load built-in icon font. */
@@ -219,7 +220,8 @@ void font_change_pt(font_ctx_s *ctx,
 		SDL_RWops *icon_font_mem;
 		icon_font_mem = SDL_RWFromConstMem(fabric_icons_ttf,
 			fabric_icons_ttf_len);
-		ctx->ui_icons = TTF_OpenFontRW(icon_font_mem, 1, icon_pt);
+		ctx->ui_icons = TTF_OpenFontDPIRW(icon_font_mem, 1, icon_pt,
+			hdpi, vdpi);
 	}
 
 	/* Load built-in regular font in-case platform dependant fonts cannot
@@ -228,7 +230,8 @@ void font_change_pt(font_ctx_s *ctx,
 		SDL_RWops *font_mem;
 		font_mem = SDL_RWFromConstMem(NotoSansDisplay_Regular_Latin_ttf,
 			NotoSansDisplay_Regular_Latin_ttf_len);
-		ctx->ui_regular[0] = TTF_OpenFontRW(font_mem, 1, regular_pt);
+		ctx->ui_regular[0] = TTF_OpenFontDPIRW(font_mem, 1,
+			regular_pt, hdpi, vdpi);
 	}
 
 #if defined(__WINDOWS__)
@@ -258,7 +261,8 @@ void font_change_pt(font_ctx_s *ctx,
 			ui_regular_locs[i]);
 
 		/* Errors are ignored. */
-		ctx->ui_regular[s] = TTF_OpenFont(loc, regular_pt);
+		ctx->ui_regular[s] = TTF_OpenFontDPI(loc, regular_pt,
+			hdpi, vdpi);
 		if(ctx->ui_regular[s] == NULL)
 			continue;
 

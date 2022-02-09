@@ -55,6 +55,7 @@ struct ui_ctx {
 
 	/* DPI that tex texture is rendered for. */
 	float dpi;
+	unsigned hdpi, vdpi;
 	float dpi_multiply;
 
 	/* Vertical screen offset in pixels, used for scrolling elements. */
@@ -293,15 +294,14 @@ static void ui_resize_all(ui_ctx_s *ui, int win_w, int win_h)
 	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
 		"Reference tile size changed to %d", ui->ref_tile_size);
 
-	icon_pt = (int)(icon_size_reference * ui->dpi_multiply);
-	header_pt = (int)(header_size_ref * (ui->dpi_multiply +
-		(1.0f - ui->dpi_multiply) / 2.0f));
-	regular_pt = (int)(regular_size_ref * ui->dpi_multiply);
+	icon_pt = (int)(icon_size_reference);
+	header_pt = (int)(header_size_ref);
+	regular_pt = (int)(regular_size_ref);
 
 	SDL_assert(ui->font != NULL);
-	font_change_pt(ui->font, icon_pt, header_pt, regular_pt);
-	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
-		"Font sizes changed to %d, %d, %d",
+	font_change_pt(ui->font,
+		(float)ui->hdpi * ui->dpi_multiply,
+		(float)ui->vdpi * ui->dpi_multiply,
 		icon_pt, header_pt, regular_pt);
 	clear_cached_textures(ui->cache);
 }
@@ -365,16 +365,23 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 		case SDL_WINDOWEVENT_MOVED:
 		{
 			int display_id = SDL_GetWindowDisplayIndex(win);
-			float new_dpi;
+			float new_dpi, new_hdpi, new_vdpi;
 			int h, w;
 
-			if(SDL_GetDisplayDPI(display_id, &new_dpi, NULL, NULL) < 0)
+			if(SDL_GetDisplayDPI(display_id,
+					&new_dpi, &new_hdpi, &new_vdpi) < 0)
+			{
 				new_dpi = dpi_reference;
+				new_hdpi = dpi_reference;
+				new_vdpi = dpi_reference;
+			}
 
 			if(new_dpi == ctx->dpi)
 				break;
 
 			ctx->dpi = new_dpi;
+			ctx->hdpi = (unsigned)SDL_ceilf(new_hdpi);
+			ctx->vdpi = (unsigned)SDL_ceilf(new_vdpi);
 			ctx->dpi_multiply = ctx->dpi / dpi_reference;
 
 			SDL_GetWindowSize(win, &w, &h);
@@ -838,7 +845,7 @@ out:
 HEDLEY_NON_NULL(1,4)
 HEDLEY_MALLOC
 static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
-		float dpi, Uint32 format,
+		float dpi, float hdpi, float vdpi, Uint32 format,
 		const struct ui_element *HEDLEY_RESTRICT ui_elements)
 {
 	int w, h;
@@ -870,6 +877,8 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 	ctx->redraw = SDL_TRUE;
 	ctx->hit_boxes = NULL;
 	ctx->dpi = dpi;
+	ctx->hdpi = (unsigned)SDL_ceilf(hdpi);
+	ctx->vdpi = (unsigned)SDL_ceilf(vdpi);
 	ctx->dpi_multiply = dpi / dpi_reference;
 
 	ctx->cache = init_cached_texture();
@@ -904,7 +913,7 @@ ui_ctx_s *ui_init(SDL_Window *HEDLEY_RESTRICT win,
 	Uint32 format;
 	int display_id;
 	SDL_Renderer *rend;
-	float dpi;
+	float dpi, hdpi, vdpi;
 
 	rend = SDL_GetRenderer(win);
 	if(rend == NULL)
@@ -919,16 +928,18 @@ ui_ctx_s *ui_init(SDL_Window *HEDLEY_RESTRICT win,
 	if(display_id < 0)
 		goto err;
 
-	if(SDL_GetDisplayDPI(display_id, &dpi, NULL, NULL) != 0)
+	if(SDL_GetDisplayDPI(display_id, &dpi, &hdpi, &vdpi) != 0)
 	{
 		dpi = dpi_reference;
+		hdpi = dpi_reference;
+		vdpi = dpi_reference;
 		SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
 			"Unable to determine display DPI: %s",
 			SDL_GetError());
 	}
 
 	format = SDL_GetWindowPixelFormat(win);
-	ctx = ui_init_renderer(rend, dpi, format, ui_elements);
+	ctx = ui_init_renderer(rend, dpi, hdpi, vdpi, format, ui_elements);
 
 out:
 	return ctx;
