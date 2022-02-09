@@ -258,28 +258,56 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 
 static void ui_resize_all(ui_ctx_s *ui, int win_w, int win_h)
 {
-	const float icon_size_reference = 46.0f;
-	const float header_size_ref = 30.0f;
-	const float regular_size_ref = 20.0f;
+	const float icon_size_reference = 40.0f;
+	const float header_size_ref = 28.0f;
+	const float regular_size_ref = 16.0f;
 	int icon_pt, header_pt, regular_pt;
+	float dpi_multiply_h = ui->dpi_multiply,
+		dpi_multiply_w = ui->dpi_multiply;
 
-	const Sint32 dpi_scale_thresh = UI_MIN_WINDOW_HEIGHT * 2;
+	const Sint32 dpi_scale_thresh_h = UI_MIN_WINDOW_HEIGHT * 2;
+	const Sint32 dpi_scale_thresh_w = UI_MIN_WINDOW_WIDTH * 2;
 
 	SDL_assert(ui->dpi > 0.0f);
 	SDL_assert(ui->dpi_multiply > 0.0f);
 	SDL_assert(win_h >= UI_MIN_WINDOW_HEIGHT);
+	SDL_assert(win_w >= UI_MIN_WINDOW_WIDTH);
 
 	/* Limit minimum tile size. */
 	if(win_h <= UI_MIN_WINDOW_HEIGHT)
 		win_h = UI_MIN_WINDOW_HEIGHT;
 
+	if(win_w <= UI_MIN_WINDOW_WIDTH)
+		win_w = UI_MIN_WINDOW_WIDTH;
+
 	/* Reduce effect of DPI scaling if window is very small. */
-	if(win_h <= dpi_scale_thresh)
+	if(win_h <= dpi_scale_thresh_h)
 	{
-		const Sint32 min_height_scale = UI_MIN_WINDOW_HEIGHT / 2;
+		const Sint32 min_height_scale = UI_MIN_WINDOW_HEIGHT / 4;
 		float dpi_scale = (float)(win_h - min_height_scale) /
-			(float)(dpi_scale_thresh - min_height_scale);
-		ui->dpi_multiply *= dpi_scale;
+			(float)(dpi_scale_thresh_h - min_height_scale);
+		dpi_multiply_h = ui->dpi_multiply * dpi_scale;
+	}
+
+	if(win_w <= dpi_scale_thresh_w)
+	{
+		const Sint32 min_width_scale = UI_MIN_WINDOW_WIDTH / 4;
+		float dpi_scale = (float)(win_w - min_width_scale) /
+			(float)(dpi_scale_thresh_w - min_width_scale);
+		dpi_multiply_w = ui->dpi_multiply * dpi_scale;
+	}
+
+	if(dpi_multiply_h != ui->dpi_multiply ||
+			dpi_multiply_w != ui->dpi_multiply)
+	{
+		if(dpi_multiply_h < dpi_multiply_w)
+		{
+			ui->dpi_multiply = dpi_multiply_h;
+		}
+		else
+		{
+			ui->dpi_multiply = dpi_multiply_w;
+		}
 		SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
 			"DPI scaling changed to %f", ui->dpi_multiply);
 	}
