@@ -72,6 +72,7 @@ struct ui_ctx {
 
 	struct
 	{
+		Uint8 label;
 		Uint8 tile;
 	} padding;
 
@@ -95,6 +96,33 @@ typedef enum {
 	 * Could be used when user presses ENTER. */
 	MENU_INSTR_EXEC_ITEM
 } menu_instruction_e;
+
+static const char *elem_type_str[] = {
+	"End", "Label", "Tile", "Bar"
+};
+
+/**
+ * Find the next selectable UI element. Currently, this finds the next tile
+ * element, as that is the only interactable element currently implemented.
+ * \param ui_elements Element to start looking from.
+ * \return Returns the next UI element of type tile. If there is no next tile,
+ *	then ui_elements is returned.
+ */
+HEDLEY_NON_NULL(1)
+static const struct ui_element *get_first_selectable_ui_element(
+	const struct ui_element	*ui_elements);
+
+/**
+ * Find the previous selectable UI element.
+ * \param ui_start The first element in the menu.
+ * \param ui_reference The element to start looking back from.
+ * \return Returns the previous UI element of type tile. If there is no
+ *	previous tile, then ui_reference is returned.
+ */
+HEDLEY_NON_NULL(1,2)
+static const struct ui_element *get_prev_selectable_ui_element(
+	const struct ui_element	*ui_start,
+	const struct ui_element *ui_reference);
 
 /**
  * Scrolls the user interface. This function is executed on each from and
@@ -200,13 +228,15 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 	switch(instr)
 	{
 	case MENU_INSTR_PREV_ITEM:
-		if(ctx->selected > ctx->current)
-			ctx->selected--;
+		/* Only select previous item if it isn't the first. */
+		ctx->selected = get_prev_selectable_ui_element(ctx->current,
+			ctx->selected);
+		SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Selected item %s",
+			elem_type_str[ctx->selected->type]);
 		break;
 
 	case MENU_INSTR_NEXT_ITEM:
-		if((ctx->selected + 1)->type != UI_ELEM_TYPE_END)
-			ctx->selected++;
+		ctx->selected = get_first_selectable_ui_element(ctx->selected);
 		break;
 
 #if 0
@@ -313,6 +343,7 @@ static void ui_resize_all(ui_ctx_s *ui, int win_w, int win_h)
 	}
 
 	/* Set reference padding between elements. */
+	ui->padding.label = (Uint8)(8.0f * ui->dpi_multiply);
 	ui->padding.tile = (Uint8)(16.0f * ui->dpi_multiply);
 	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
 		"Tile padding changed to %d", ui->padding.tile);
@@ -677,6 +708,45 @@ static void ui_draw_selection(ui_ctx_s *HEDLEY_RESTRICT ctx,
 }
 
 /**
+ * Draw label element 'el' at point 'p'.
+ *
+ * \param ctx	UI context.
+ * \param el	UI element parameters.
+ * \param p	The top left point of the UI element to draw.
+*/
+HEDLEY_NON_NULL(1,2,3)
+static void ui_draw_label(ui_ctx_s *HEDLEY_RESTRICT ctx,
+	const struct ui_element *HEDLEY_RESTRICT el,
+	SDL_Point *HEDLEY_RESTRICT p)
+{
+	SDL_Texture *label_tex;
+	SDL_Rect dim = {
+		.x = p->x, .y = p->y
+	};
+
+	/* Render text. */
+	label_tex = get_cached_texture(ctx->cache,
+		&el->elem.label, sizeof(el->elem.label));
+	if(label_tex == NULL)
+	{
+		label_tex = font_render_text(ctx->font, el->elem.label.label,
+			el->elem.label.style, FONT_QUALITY_HIGH,
+			text_colour_light);
+		/* FIXME: Missing checks. */
+		store_cached_texture(ctx->cache, &el->elem.label,
+			sizeof(el->elem.label), label_tex);
+	}
+
+	SDL_QueryTexture(label_tex, NULL, NULL, &dim.w, &dim.h);
+	SDL_RenderCopy(ctx->ren, label_tex, NULL, &dim);
+
+	/* Increment coordinates to next element. */
+	p->y += dim.h + ctx->padding.label;
+
+	return;
+}
+
+/**
  * Draw tile element 'el' at point 'p'.
  *
  * \param ctx	UI context.
@@ -841,6 +911,10 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 	{
 		switch(el->type)
 		{
+		case UI_ELEM_TYPE_LABEL:
+			ui_draw_label(ctx, el, &vert);
+			break;
+
 		case UI_ELEM_TYPE_TILE:
 			ui_draw_tile(ctx, el, &vert);
 			break;
@@ -869,6 +943,46 @@ out:
 
 	return ctx->tex;
 }
+
+HEDLEY_NON_NULL(1)
+static const struct ui_element *get_first_selectable_ui_element(
+	const struct ui_element	*ui_elements)
+{
+	const struct ui_element *e = ui_elements;
+
+	if(e[1].type == UI_ELEM_TYPE_END)
+		return e;
+
+	do {
+		e++;
+	} while(e->type != UI_ELEM_TYPE_TILE && e->type != UI_ELEM_TYPE_END);
+
+	if(e->type == UI_ELEM_TYPE_END)
+		e = ui_elements;
+
+	return e;
+}
+
+HEDLEY_NON_NULL(1,2)
+static const struct ui_element *get_prev_selectable_ui_element(
+	const struct ui_element	*ui_start, const struct ui_element
+		*ui_reference)
+{
+	const struct ui_element *e = ui_reference;
+
+	if(e == ui_start)
+		return e;
+
+	do {
+		e--;
+	} while(e->type != UI_ELEM_TYPE_TILE && e > ui_start);
+
+	if(e->type != UI_ELEM_TYPE_TILE)
+		e = ui_reference;
+
+	return e;
+}
+
 
 HEDLEY_NON_NULL(1,4)
 HEDLEY_MALLOC
@@ -901,7 +1015,7 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 
 	ctx->root = ui_elements;
 	ctx->current = ui_elements;
-	ctx->selected = &ui_elements[0];
+	ctx->selected = get_first_selectable_ui_element(ui_elements);
 	ctx->redraw = SDL_TRUE;
 	ctx->hit_boxes = NULL;
 	ctx->dpi = dpi;

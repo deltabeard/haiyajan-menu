@@ -65,6 +65,13 @@ static const struct ui_element sub_menu_1[] = {
 
 const struct ui_element ui_elements[] = {
 	{
+		.type = UI_ELEM_TYPE_LABEL,
+		.elem.label = {
+			.label = "Main Menu",
+			.style = LABEL_STYLE_HEADER
+		}
+	},
+	{
 		.type = UI_ELEM_TYPE_TILE,
 		.elem.tile = {
 			.label = "Label",

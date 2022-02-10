@@ -31,9 +31,9 @@ typedef enum
  */
 typedef enum
 {
-	FONT_STYLE_HEADER = 0,
-	FONT_STYLE_ICON,
-	FONT_STYLE_REGULAR,
+	FONT_STYLE_REGULAR = 0,
+	FONT_STYLE_HEADER = 1,
+	FONT_STYLE_ICON = 2,
 
 	FONT_STYLE_MAX
 } font_style_e;

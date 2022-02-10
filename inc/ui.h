@@ -60,9 +60,9 @@ typedef enum
 
 typedef enum
 {
-	LABEL_STYLE_NORMAL = 0,
-	LABEL_STYLE_SUBHEADER,
-	LABEL_STYLE_HEADER,
+	LABEL_STYLE_REGULAR = 0,
+	LABEL_STYLE_HEADER = 1,
+	LABEL_STYLE_RESERVED = 2,
 
 	LABEL_STYLE_MAX
 } label_style_e;
@@ -144,6 +144,10 @@ struct ui_tile {
 	void *user;
 };
 
+/**
+ * Displays a label.
+ * Not selectable by the user.
+ */
 struct ui_label
 {
 	/* Label associated with the element. */
