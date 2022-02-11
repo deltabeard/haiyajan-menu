@@ -8,6 +8,8 @@
  */
 
 #include <signal.h>
+
+#define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <ui.h>
 
@@ -233,6 +235,7 @@ int main(int argc, char *argv[])
 	(void)argc;
 	(void)argv;
 
+	SDL_SetMainReady();
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
 	ret = SDL_Init(
