@@ -99,6 +99,12 @@ ELSEIF(MSVC)
     ENDIF()
 ENDIF()
 
+IF(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    ADD_COMPILE_DEFINITIONS(SDL_ASSERT_LEVEL=3)
+ELSE()
+    ADD_COMPILE_DEFINITIONS(NDEBUG)
+ENDIF()
+
 # Discover libraries
 SET(LIBRARY_DISCOVER_METHOD "CPM" CACHE STRING
         "Tool to use for discovering dependencies; options are: VCPKG, PKG_CONFIG, CPM")
