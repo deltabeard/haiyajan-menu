@@ -219,6 +219,25 @@ void print_fps(void)
 	return;
 }
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <shellscalingapi.h>
+void set_dpi_awareness(void)
+{
+#if (_WIN32_WINNT >= 0x0605)
+	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+#elif (_WIN32_WINNT >= 0x0603)
+	SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+#elif (_WIN32_WINNT >= 0x0600)
+	SetProcessDPIAware();
+#else defined(__MINGW64__)
+	SetProcessDPIAware();
+#endif
+	return;
+}
+#endif
+
 /**
  * Process input arguments and initialise libraries.
 */
@@ -232,6 +251,10 @@ int main(int argc, char *argv[])
 	/* Input arguments are currently unused. */
 	(void)argc;
 	(void)argv;
+
+#ifdef _WIN32
+	set_dpi_awareness();
+#endif
 
 	SDL_SetMainReady();
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
