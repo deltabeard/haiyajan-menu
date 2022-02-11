@@ -231,7 +231,7 @@ void set_dpi_awareness(void)
 	SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 #elif (_WIN32_WINNT >= 0x0600)
 	SetProcessDPIAware();
-#else defined(__MINGW64__)
+#elif defined(__MINGW64__)
 	SetProcessDPIAware();
 #endif
 	return;
