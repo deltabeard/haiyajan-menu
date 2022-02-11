@@ -220,20 +220,24 @@ void print_fps(void)
 }
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <shellscalingapi.h>
+# define WIN32_LEAN_AND_MEAN
+# include <Windows.h>
+
+# if (_WIN32_WINNT >= 0x0603)
+#  include <shellscalingapi.h>
+# endif
+
 void set_dpi_awareness(void)
 {
-#if (_WIN32_WINNT >= 0x0605)
+# if (_WIN32_WINNT >= 0x0605)
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-#elif (_WIN32_WINNT >= 0x0603)
+# elif (_WIN32_WINNT >= 0x0603)
 	SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
-#elif (_WIN32_WINNT >= 0x0600)
+# elif (_WIN32_WINNT >= 0x0600)
 	SetProcessDPIAware();
-#elif defined(__MINGW64__)
+# elif defined(__MINGW64__)
 	SetProcessDPIAware();
-#endif
+# endif
 	return;
 }
 #endif
