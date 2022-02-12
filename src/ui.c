@@ -103,14 +103,21 @@ static const char *elem_type_str[] = {
 
 /**
  * Find the next selectable UI element. Currently, this finds the next tile
- * element, as that is the only interactable element currently implemented.
- * \param ui_elements Element to start looking from.
- * \return Returns the next UI element of type tile. If there is no next tile,
- *	then ui_elements is returned.
+ * element, as that is the only interactable element currently implemented. If
+ * there are no selectable elements after and including the reference element,
+ * then a previous element will be returned. Otherwise, ui_reference is
+ * returned.
+ * \param ui_start First element in menu.
+ * \param ui_reference Element to start looking from.
+ * \return Returns the next UI element of type tile. If there is no next tile:
+ *	then ui_reference is returned if it is a tile,
+ *	else a previous UI element of type tile is returned,
+ *	else ui_reference is returned regardless of its type.
  */
 HEDLEY_NON_NULL(1)
 static const struct ui_element *get_first_selectable_ui_element(
-	const struct ui_element	*ui_elements);
+	const struct ui_element	*ui_start,
+	const struct ui_element	*ui_reference);
 
 /**
  * Find the previous selectable UI element.
@@ -231,12 +238,12 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 		/* Only select previous item if it isn't the first. */
 		ctx->selected = get_prev_selectable_ui_element(ctx->current,
 			ctx->selected);
-		SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Selected item %s",
-			elem_type_str[ctx->selected->type]);
 		break;
 
 	case MENU_INSTR_NEXT_ITEM:
-		ctx->selected = get_first_selectable_ui_element(ctx->selected);
+		ctx->selected++;
+		ctx->selected = get_first_selectable_ui_element(ctx->current,
+				ctx->selected);
 		break;
 
 #if 0
@@ -254,8 +261,10 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 		case UI_EVENT_GOTO_ELEMENT:
 			ctx->current = ctx->selected->elem.tile.onclick.action_data.goto_element.element;
 
-			/* Set the selected item as the first item in the new menu. */
-			ctx->selected = ctx->current;
+			/* Set the selected item as the first selectable item
+			 * in the new menu. */
+			ctx->selected = get_first_selectable_ui_element(ctx->current,
+					ctx->current);
 			break;
 
 		case UI_EVENT_EXECUTE_FUNCTION:
@@ -282,6 +291,8 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 	}
 	}
 
+	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Selected item %s",
+			elem_type_str[ctx->selected->type]);
 	ctx->redraw = SDL_TRUE;
 	return;
 }
@@ -946,20 +957,22 @@ out:
 
 HEDLEY_NON_NULL(1)
 static const struct ui_element *get_first_selectable_ui_element(
-	const struct ui_element	*ui_elements)
+	const struct ui_element	*ui_start,
+	const struct ui_element	*ui_reference)
 {
-	const struct ui_element *e = ui_elements;
+	const struct ui_element *e = ui_reference;
 
-	if(e[1].type == UI_ELEM_TYPE_END)
-		return e;
-
-	do {
+	while(e->type != UI_ELEM_TYPE_TILE && e->type != UI_ELEM_TYPE_END)
 		e++;
-	} while(e->type != UI_ELEM_TYPE_TILE && e->type != UI_ELEM_TYPE_END);
 
-	if(e->type == UI_ELEM_TYPE_END)
-		e = ui_elements;
+	/* If selectable element, return. */
+	if(e->type == UI_ELEM_TYPE_TILE)
+		goto out;
 
+	/* No selectable elements remain, so traverse backwards. */
+	e = get_prev_selectable_ui_element(ui_start, ui_reference);
+
+out:
 	return e;
 }
 
@@ -984,7 +997,7 @@ static const struct ui_element *get_prev_selectable_ui_element(
 }
 
 
-HEDLEY_NON_NULL(1,4)
+HEDLEY_NON_NULL(1,6)
 HEDLEY_MALLOC
 static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 		float dpi, float hdpi, float vdpi, Uint32 format,
@@ -1015,7 +1028,7 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 
 	ctx->root = ui_elements;
 	ctx->current = ui_elements;
-	ctx->selected = get_first_selectable_ui_element(ui_elements);
+	ctx->selected = get_first_selectable_ui_element(ui_elements, ui_elements);
 	ctx->redraw = SDL_TRUE;
 	ctx->hit_boxes = NULL;
 	ctx->dpi = dpi;
