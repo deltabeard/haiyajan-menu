@@ -9,13 +9,17 @@
 
 #pragma once
 
+#include <hedley.h>
 #include <SDL.h>
 
 typedef struct cache_ctx cache_ctx_s;
 
-SDL_Texture *get_cached_texture(cache_ctx_s *ctx, const void *dat, size_t len);
+SDL_Texture *get_cached_texture(cache_ctx_s *HEDLEY_RESTRICT ctx,
+		const void *HEDLEY_RESTRICT dat, size_t len);
 
-void store_cached_texture(cache_ctx_s *ctx, const void *dat, size_t len, SDL_Texture *tex);
+void store_cached_texture(cache_ctx_s *HEDLEY_RESTRICT ctx,
+		const void *HEDLEY_RESTRICT dat, size_t len,
+		SDL_Texture *HEDLEY_RESTRICT tex);
 
 cache_ctx_s *init_cached_texture(void);
 

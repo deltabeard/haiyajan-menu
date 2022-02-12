@@ -20,8 +20,8 @@ extern const struct ui_element ui_elements[];
 static const struct ui_element sub_menu_1[] = {
 	{
 		.type = UI_ELEM_TYPE_TILE,
+		.label = "First sub-menu tile",
 		.elem.tile = {
-			.label = "First sub-menu tile",
 			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 			.tile_size = TILE_SIZE_LARGE,
 			.icon = 0xE8B7,
@@ -40,8 +40,8 @@ static const struct ui_element sub_menu_1[] = {
 	},
 	{
 		.type = UI_ELEM_TYPE_TILE,
+		.label = "Back",
 		.elem.tile = {
-			.label = "Back",
 			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 			.tile_size = TILE_SIZE_LARGE,
 			.icon = 0xE8B7,
@@ -66,15 +66,15 @@ static const struct ui_element sub_menu_1[] = {
 const struct ui_element ui_elements[] = {
 	{
 		.type = UI_ELEM_TYPE_LABEL,
+		.label = "Main Menu",
 		.elem.label = {
-			.label = "Main Menu",
 			.style = LABEL_STYLE_HEADER
 		}
 	},
 	{
 		.type = UI_ELEM_TYPE_TILE,
+		.label = "Label",
 		.elem.tile = {
-			.label = "Label",
 			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 			.tile_size = TILE_SIZE_LARGE,
 			.icon = 0xE768,
@@ -94,8 +94,8 @@ const struct ui_element ui_elements[] = {
 	},
 	{
 		.type = UI_ELEM_TYPE_TILE,
+		.label = "Second Label",
 		.elem.tile = {
-			.label = "Second Label",
 			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 			.tile_size = TILE_SIZE_LARGE,
 			.icon = 0xE8B7,
@@ -115,8 +115,8 @@ const struct ui_element ui_elements[] = {
 	},
 	{
 		.type = UI_ELEM_TYPE_TILE,
+		.label = "Exit",
 		.elem.tile = {
-			.label = "Exit",
 			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 			.tile_size = TILE_SIZE_LARGE,
 			.icon = 0xE7E8,
@@ -137,8 +137,8 @@ const struct ui_element ui_elements[] = {
 	},
 	{
 		.type = UI_ELEM_TYPE_TILE,
+		.label = "Go to sub-menu",
 		.elem.tile = {
-			.label = "Go to sub-menu",
 			.label_placement = LABEL_PLACEMENT_OUTSIDE_RIGHT_BOTTOM,
 			.tile_size = TILE_SIZE_LARGE,
 			.icon = 0xE8B7,

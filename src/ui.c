@@ -291,8 +291,9 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 	}
 	}
 
-	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Selected item %s",
-			elem_type_str[ctx->selected->type]);
+	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Selected item %s '%s'",
+			elem_type_str[ctx->selected->type],
+			ctx->selected->label);
 	ctx->redraw = SDL_TRUE;
 	return;
 }
@@ -737,15 +738,15 @@ static void ui_draw_label(ui_ctx_s *HEDLEY_RESTRICT ctx,
 
 	/* Render text. */
 	label_tex = get_cached_texture(ctx->cache,
-		&el->elem.label, sizeof(el->elem.label));
+		&el, sizeof(el));
 	if(label_tex == NULL)
 	{
-		label_tex = font_render_text(ctx->font, el->elem.label.label,
+		label_tex = font_render_text(ctx->font, el->label,
 			el->elem.label.style, FONT_QUALITY_HIGH,
 			text_colour_light);
 		/* FIXME: Missing checks. */
-		store_cached_texture(ctx->cache, &el->elem.label,
-			sizeof(el->elem.label), label_tex);
+		store_cached_texture(ctx->cache, &el,
+			sizeof(el), label_tex);
 	}
 
 	SDL_QueryTexture(label_tex, NULL, NULL, &dim.w, &dim.h);
@@ -816,16 +817,16 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	//SDL_DestroyTexture(icon_tex);
 
 	/* Render tile label. */
-	text_tex = get_cached_texture(ctx->cache, el->elem.tile.label,
-				      SDL_strlen(el->elem.tile.label));
+	text_tex = get_cached_texture(ctx->cache, el->label,
+				      SDL_strlen(el->label));
 	if(text_tex == NULL)
 	{
-		text_tex = font_render_text(ctx->font, el->elem.tile.label,
+		text_tex = font_render_text(ctx->font, el->label,
 					FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
 					text_colour_light);
 		/* FIXME: Missing checks. */
-		store_cached_texture(ctx->cache, el->elem.tile.label,
-					SDL_strlen(el->elem.tile.label), text_tex);
+		store_cached_texture(ctx->cache, el->label,
+					SDL_strlen(el->label), text_tex);
 	}
 	SDL_QueryTexture(text_tex, NULL, NULL, &text_dim.w, &text_dim.h);
 

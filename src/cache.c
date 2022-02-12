@@ -8,6 +8,7 @@
  */
 
 #include <cache.h>
+#include <hedley.h>
 #include <SDL.h>
 #include <stretchy_buffer.h>
 
@@ -30,7 +31,8 @@ struct cache_ctx {
 	struct textures *textures;
 };
 
-SDL_Texture *get_cached_texture(cache_ctx_s *ctx, const void *dat, size_t len)
+SDL_Texture *get_cached_texture(cache_ctx_s *HEDLEY_RESTRICT ctx,
+		const void *HEDLEY_RESTRICT dat, size_t len)
 {
 	Hash hash;
 	unsigned count;
@@ -51,7 +53,9 @@ SDL_Texture *get_cached_texture(cache_ctx_s *ctx, const void *dat, size_t len)
 	return NULL;
 }
 
-void store_cached_texture(cache_ctx_s *ctx, const void *dat, size_t len, SDL_Texture *tex)
+void store_cached_texture(cache_ctx_s *HEDLEY_RESTRICT ctx,
+		const void *HEDLEY_RESTRICT dat, size_t len,
+		SDL_Texture *HEDLEY_RESTRICT tex)
 {
 	struct textures new_entry;
 

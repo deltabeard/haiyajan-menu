@@ -111,9 +111,6 @@ struct ui_event
  * A tile element.
  */
 struct ui_tile {
-	/* Label associated with the element. */
-	const char *label;
-
 	/* Placement of label on the tile. This may affect the font colour. */
 	label_placement_e label_placement;
 
@@ -150,23 +147,21 @@ struct ui_tile {
  */
 struct ui_label
 {
-	/* Label associated with the element. */
-	const char *label;
-
 	label_style_e style;
 };
 
 struct ui_bar
 {
-	/* Label associated with the element. */
-	const char *label;
-
 	/* Bar fill between 0 to SDL_MAX_UINT16. */
 	Uint16 value;
 };
 
 struct ui_element {
 	ui_elem_type_e type;
+
+	/* Label associated with the element. */
+	const char *label;
+
 	union {
 		struct ui_label label;
 		struct ui_tile tile;
