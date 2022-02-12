@@ -9,3 +9,7 @@ tags
 
 # Clion
 .idea/
+
+# Clangd
+compile_commands.json
+.cache
