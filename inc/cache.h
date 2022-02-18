@@ -14,6 +14,8 @@
 
 typedef struct cache_ctx cache_ctx_s;
 
+void dump_cache(cache_ctx_s *ctx, SDL_Renderer *r);
+
 SDL_Texture *get_cached_texture(cache_ctx_s *HEDLEY_RESTRICT ctx,
 		const void *HEDLEY_RESTRICT dat, size_t len);
 

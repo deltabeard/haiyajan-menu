@@ -547,8 +547,8 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 				ctx->redraw = SDL_TRUE;
 				ctx->selected = this_box->ui_element;
 				SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
-					"Selected item %p using motion",
-					(void *)ctx->selected);
+					"Selected item '%s' using motion",
+					ctx->selected->label);
 			}
 
 			break;
@@ -583,14 +583,14 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 				ctx->redraw = SDL_TRUE;
 				ctx->selected = this_box->ui_element;
 				SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
-					"Selected item %p using button",
-					(void *)ctx->selected);
+					"Selected item '%s' using button",
+					ctx->selected->label);
 			}
 
 			ui_input(ctx, MENU_INSTR_EXEC_ITEM);
 			SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,
-				"Executed item %p using button",
-				(void *)ctx->selected);
+				"Executed item '%s' using button",
+				ctx->selected->label);
 
 			break;
 		}
@@ -738,15 +738,15 @@ static void ui_draw_label(ui_ctx_s *HEDLEY_RESTRICT ctx,
 
 	/* Render text. */
 	label_tex = get_cached_texture(ctx->cache,
-		&el, sizeof(el));
+		el->label, SDL_strlen(el->label));
 	if(label_tex == NULL)
 	{
 		label_tex = font_render_text(ctx->font, el->label,
 			el->elem.label.style, FONT_QUALITY_HIGH,
 			text_colour_light);
 		/* FIXME: Missing checks. */
-		store_cached_texture(ctx->cache, &el,
-			sizeof(el), label_tex);
+		store_cached_texture(ctx->cache, el->label,
+				     SDL_strlen(el->label), label_tex);
 	}
 
 	SDL_QueryTexture(label_tex, NULL, NULL, &dim.w, &dim.h);
@@ -1107,6 +1107,10 @@ err:
 HEDLEY_NON_NULL(1)
 void ui_exit(ui_ctx_s *ctx)
 {
+#if SDL_ASSERT_LEVEL == 3
+	dump_cache(ctx->cache, ctx->ren);
+#endif
+
 	font_exit(ctx->font);
 
 	clear_cached_textures(ctx->cache);
