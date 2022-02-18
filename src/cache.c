@@ -93,7 +93,15 @@ void dump_cache(cache_ctx_s *ctx, SDL_Renderer *rend)
 
 		t = &ctx->textures[i];
 		s = tex_to_surf(rend, t->tex);
-		SDL_assert_paranoid(s != NULL);
+		if(s == NULL)
+		{
+			char errstr[128];
+			SDL_GetErrorMsg(errstr, sizeof(errstr));
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+				     "Unable to convert texture to surface for cache dump: %s",
+				     errstr);
+			continue;
+		}
 
 		SDL_LockSurface(s);
 		qd.width = s->w;
@@ -170,7 +178,12 @@ void deinit_cached_texture(cache_ctx_s *ctx)
 
 void clear_cached_textures(cache_ctx_s *ctx)
 {
+	unsigned count;
 	SDL_assert_paranoid(ctx->textures != NULL);
+
+	count = sb_count(ctx->textures);
 	sb_free(ctx->textures);
 	ctx->textures = NULL;
+	SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
+		     "Cleared %d cached textures", count);
 }

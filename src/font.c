@@ -276,7 +276,7 @@ void font_change_pt(font_ctx_s *ctx, unsigned hdpi, unsigned vdpi,
 #else
 #endif
 
-	/* Supresses unused goto on certain configurations. */
+	/* Suppresses unused goto on certain configurations. */
 	goto out;
 out:
 	return;
