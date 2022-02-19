@@ -68,7 +68,7 @@ const struct ui_element ui_elements[] = {
 		.type = UI_ELEM_TYPE_LABEL,
 		.label = "Main Menu",
 		.elem.label = {
-			.style = LABEL_STYLE_HEADER
+			.style = FONT_STYLE_HEADER
 		}
 	},
 	{

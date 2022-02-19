@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <font.h>
 #include <hedley.h>
 #include <SDL.h>
 
@@ -57,15 +58,6 @@ typedef enum
 	UI_EVENT_SET_SIGNED_VARIABLE,
 	UI_EVENT_SET_UNSIGNED_VARIABLE,
 } ui_event_action_e;
-
-typedef enum
-{
-	LABEL_STYLE_REGULAR = 0,
-	LABEL_STYLE_HEADER = 1,
-	LABEL_STYLE_RESERVED = 2,
-
-	LABEL_STYLE_MAX
-} label_style_e;
 
 typedef enum
 {
@@ -147,7 +139,7 @@ struct ui_tile {
  */
 struct ui_label
 {
-	label_style_e style;
+	font_style_e style;
 };
 
 struct ui_bar

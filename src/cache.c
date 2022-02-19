@@ -179,7 +179,14 @@ void deinit_cached_texture(cache_ctx_s *ctx)
 void clear_cached_textures(cache_ctx_s *ctx)
 {
 	unsigned count;
-	SDL_assert_paranoid(ctx->textures != NULL);
+
+	if(ctx->textures == NULL)
+	{
+		SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
+				"Attempted to clear cache when cache wasn't "
+				"initialised.");
+		return;
+	}
 
 	count = sb_count(ctx->textures);
 	sb_free(ctx->textures);

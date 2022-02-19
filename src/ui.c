@@ -1007,8 +1007,6 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 	int w, h;
 	ui_ctx_s *ctx;
 
-	SDL_assert_paranoid(rend != NULL);
-
 	ctx = SDL_calloc(1, sizeof(ui_ctx_s));
 	if(ctx == NULL)
 		goto err;
