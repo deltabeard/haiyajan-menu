@@ -144,16 +144,13 @@ struct ui_dynamic
 	 * Returning 0 hides this menu. */
 	unsigned (*number_of_elements)(void *user_ctx);
 
-	/* Fill array elements with nmemb number of elements. Returns number
-	 * of elements actually stored within input buffer.
-	 * The last element is always UI_ELEM_TYPE_END. If nmemb is 1, then
-	 * the only element stored in the buffer is UI_ELEM_TYPE_END.
-	 * Returning 0 hides this menu. */
-	unsigned (*get_elements)(unsigned *nmemb,
-		struct ui_element *elements, void *user_ctx);
-
-	/* Cached ui_elements array. Must be set to NULL in initialisation. */
-	struct ui_element *cache;
+	/* Get element number memb.
+	 * Returns 0 to hide menu, negative on error.
+	 * Type of element is UI_ELEM_TYPE_END for no further dynamic
+	 * elements. */
+	int (*get_elements)(unsigned memb,
+		struct ui_element *element, char *label, unsigned label_sz,
+		void *user_ctx);
 
 	/* User context that is passed to the above functions (optional). */
 	void *user_ctx;

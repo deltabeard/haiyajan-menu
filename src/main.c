@@ -15,6 +15,54 @@ void onclick_function_debug(const struct ui_element *element);
 
 static Uint32 quit = 0;
 
+static unsigned power_element_num(void *user_ctx)
+{
+	return 1;
+}
+
+static int power_elemen_get(unsigned memb,
+	struct ui_element *element, char *label, unsigned label_sz,
+		void *user_ctx)
+{
+	int secs, pct;
+	SDL_PowerState state;
+
+	if(memb != 0)
+	{
+		return 0;
+	}
+
+	state = SDL_GetPowerInfo(&secs, &pct);
+
+	switch(state)
+	{
+	case SDL_POWERSTATE_ON_BATTERY:
+		SDL_snprintf(label, label_sz, "Running on battery with %d%% "
+					      "remaining", pct);
+		break;
+	case SDL_POWERSTATE_NO_BATTERY:
+		SDL_strlcpy(label, "Running on external power", label_sz);
+		break;
+	case SDL_POWERSTATE_CHARGING:
+		SDL_snprintf(label, label_sz, "Charging battery at %d%%", pct);
+		break;
+	case SDL_POWERSTATE_CHARGED:
+		SDL_strlcpy(label, "Battery fully charged", label_sz);
+		break;
+	case SDL_POWERSTATE_UNKNOWN:
+	default:
+		SDL_strlcpy(label, "Unknown power state", label_sz);
+		break;
+
+	}
+
+	element->type = UI_ELEM_TYPE_LABEL;
+	element->label = label;
+	element->elem.label.style = FONT_STYLE_HEADER;
+
+	return memb;
+}
+
 extern const struct ui_element ui_elements[];
 
 static const struct ui_element sub_menu_1[] = {
@@ -35,6 +83,14 @@ static const struct ui_element sub_menu_1[] = {
 				},
 			},
 			.user = NULL
+		}
+	},
+	{
+		.type = UI_ELEM_TYPE_DYNAMIC,
+		.label = NULL, // FIXME
+		.elem.dynamic = {
+			.number_of_elements = power_element_num,
+			.get_elements = power_elemen_get
 		}
 	},
 	{
