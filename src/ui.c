@@ -371,8 +371,8 @@ static void ui_resize_all(ui_ctx_s *ui, int win_w, int win_h)
 
 	SDL_assert(ui->font != NULL);
 	font_change_pt(ui->font,
-		(float)ui->hdpi * ui->dpi_multiply,
-		(float)ui->vdpi * ui->dpi_multiply,
+		(unsigned)((float)ui->hdpi * ui->dpi_multiply),
+		(unsigned)((float)ui->vdpi * ui->dpi_multiply),
 		icon_pt, header_pt, regular_pt);
 	clear_cached_textures(ui->cache);
 }
