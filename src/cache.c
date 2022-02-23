@@ -23,9 +23,11 @@
 #if SIZEOF_VOIDP == 8
 typedef Uint64 Hash;
 # define HASH_FN(dat, len, seed) wyhash64(dat, len, seed)
+# define PRIhashX "016" SDL_PRIX64
 #else
 typedef Uint32 Hash;
 # define HASH_FN(dat, len, seed) wyhash32(dat, len, seed)
+# define PRIhashX "08" SDL_PRIX32
 #endif
 
 struct textures {
@@ -114,9 +116,10 @@ void dump_cache(cache_ctx_s *ctx, SDL_Renderer *rend)
 
 		{
 			SDL_RWops *rw;
-			char filename[128];
+			char filename[32];
 
-			SDL_snprintf(filename, sizeof(filename), "%016X.qoi", t->hash);
+			SDL_snprintf(filename, sizeof(filename),
+				"%" PRIhashX ".qoi", t->hash);
 			rw = SDL_RWFromFile(filename, "wb");
 			SDL_RWwrite(rw, qoi_img, 1, out_len);
 			SDL_RWclose(rw);
