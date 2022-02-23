@@ -142,12 +142,28 @@ static inline void _wymix32(uint32_t* A, uint32_t* B) {
 // This version is vulnerable when used with a few bad seeds, which should be skipped beforehand:
 // 0x429dacdd, 0xd637dbf3
 static inline uint32_t wyhash32(const void* key, size_t len, uint32_t seed) {
-	const uint8_t* p = (const uint8_t*)key; uint64_t i = len;
-	uint32_t see1 = (uint32_t)len; seed ^= (uint32_t)(len >> 32); _wymix32(&seed, &see1);
-	for (; i > 8; i -= 8, p += 8) { seed ^= _wyr32(p); see1 ^= _wyr32(p + 4); _wymix32(&seed, &see1); }
-	if (i >= 4) { seed ^= _wyr32(p); see1 ^= _wyr32(p + i - 4); }
-	else if (i) seed ^= _wyr24(p, (uint32_t)i);
-	_wymix32(&seed, &see1); _wymix32(&seed, &see1); return seed ^ see1;
+	const uint8_t* p = (const uint8_t*)key;
+	uint64_t i = len;
+	uint32_t see1 = (uint32_t)len;
+
+	seed ^= (uint32_t)(len >> 32);
+	_wymix32(&seed, &see1);
+	for (; i > 8; i -= 8, p += 8) {
+		seed ^= _wyr32(p);
+		see1 ^= _wyr32(p + 4);
+		_wymix32(&seed, &see1);
+	}
+	if (i >= 4) {
+		seed ^= _wyr32(p);
+		see1 ^= _wyr32(p + i - 4);
+	}
+	else if (i) {
+		seed ^= _wyr24(p, (uint32_t)i);
+	}
+
+	_wymix32(&seed, &see1);
+	_wymix32(&seed, &see1);
+	return seed ^ see1;
 }
 
 #endif
