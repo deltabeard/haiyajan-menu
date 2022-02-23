@@ -43,15 +43,6 @@ typedef enum
 
 typedef enum
 {
-	TILE_SIZE_SMALL = 0,
-	TILE_SIZE_MEDIUM,
-	TILE_SIZE_LARGE,
-
-	TILE_SIZE_MAX
-} tile_size_e;
-
-typedef enum
-{
 	UI_EVENT_NOP,
 	UI_EVENT_GOTO_ELEMENT,
 	UI_EVENT_EXECUTE_FUNCTION,
@@ -105,8 +96,6 @@ struct ui_event
 struct ui_tile {
 	/* Placement of label on the tile. This may affect the font colour. */
 	label_placement_e label_placement;
-
-	tile_size_e tile_size;
 
 	/* Icon in UTF-16 */
 	const Uint16 icon;
