@@ -55,6 +55,7 @@ typedef enum
 	UI_ELEM_TYPE_END,
 	UI_ELEM_TYPE_LABEL,
 	UI_ELEM_TYPE_TILE,
+	UI_ELEM_TYPE_DYNAMIC,
 	UI_ELEM_TYPE_BAR
 } ui_elem_type_e;
 
@@ -137,6 +138,27 @@ struct ui_bar
 	Uint16 value;
 };
 
+struct ui_dynamic
+{
+	/* Returns the number of elements in menu.
+	 * Returning 0 hides this menu. */
+	unsigned (*number_of_elements)(void *user_ctx);
+
+	/* Fill array elements with nmemb number of elements. Returns number
+	 * of elements actually stored within input buffer.
+	 * The last element is always UI_ELEM_TYPE_END. If nmemb is 1, then
+	 * the only element stored in the buffer is UI_ELEM_TYPE_END.
+	 * Returning 0 hides this menu. */
+	unsigned (*get_elements)(unsigned *nmemb,
+		struct ui_element *elements, void *user_ctx);
+
+	/* Cached ui_elements array. Must be set to NULL in initialisation. */
+	struct ui_element *cache;
+
+	/* User context that is passed to the above functions (optional). */
+	void *user_ctx;
+};
+
 struct ui_element {
 	ui_elem_type_e type;
 
@@ -144,6 +166,7 @@ struct ui_element {
 	const char *label;
 
 	union {
+		struct ui_dynamic dynamic;
 		struct ui_label label;
 		struct ui_tile tile;
 		struct ui_bar bar;
