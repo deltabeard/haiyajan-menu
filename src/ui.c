@@ -788,7 +788,8 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	SDL_RenderFillRect(ctx->ren, &dim);
 
 	/* Render icon on tile. */
-	icon_tex = get_cached_texture(ctx->cache, &el->elem.tile.icon, sizeof(el->elem.tile.icon));
+	icon_tex = get_cached_texture(ctx->cache, &el->elem.tile.icon,
+			sizeof(el->elem.tile.icon));
 	if(icon_tex == NULL)
 	{
 		icon_tex = font_render_icon(ctx->font, el->elem.tile.icon,
@@ -814,7 +815,6 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		el->elem.tile.fg.r, el->elem.tile.fg.g,
 		el->elem.tile.fg.b);
 	SDL_RenderCopy(ctx->ren, icon_tex, NULL, &icon_dim);
-	//SDL_DestroyTexture(icon_tex);
 
 	/* Render tile label. */
 	text_tex = get_cached_texture(ctx->cache, el->label,
