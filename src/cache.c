@@ -1,6 +1,6 @@
 /**
  * Cache common components of UI.
- * Copyright (c) 2021 Mahyar Koshkouei
+ * Copyright (c) 2021-2022 Mahyar Koshkouei
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 3, as published by
@@ -45,7 +45,6 @@ static SDL_Surface *tex_to_surf(SDL_Renderer *rend, SDL_Texture *tex)
 	SDL_Texture *core_tex;
 	SDL_Rect rect = { 0 };
 	int fmt = SDL_PIXELFORMAT_ARGB8888;
-	/* TODO: Use native format of renderer. */
 
 	SDL_QueryTexture(tex, NULL, NULL, &rect.w, &rect.h);
 	core_tex = SDL_CreateTexture(rend, fmt, SDL_TEXTUREACCESS_TARGET,
@@ -59,7 +58,6 @@ static SDL_Surface *tex_to_surf(SDL_Renderer *rend, SDL_Texture *tex)
 	SDL_SetRenderDrawColor(rend, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
 	SDL_RenderClear(rend);
 
-	//SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
 	if(SDL_RenderCopy(rend, tex, NULL, &rect) != 0)
 		goto err;
 
@@ -100,7 +98,8 @@ void dump_cache(cache_ctx_s *ctx, SDL_Renderer *rend)
 			char errstr[128];
 			SDL_GetErrorMsg(errstr, sizeof(errstr));
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-				     "Unable to convert texture to surface for cache dump: %s",
+				     "Unable to convert texture to surface for "
+				     "cache dump: %s",
 				     errstr);
 			continue;
 		}
