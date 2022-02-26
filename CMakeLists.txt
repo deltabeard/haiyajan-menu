@@ -1,5 +1,5 @@
 # vim: ts=4:sw=4:expandtab
-CMAKE_MINIMUM_REQUIRED(VERSION 3.19)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.18...3.23)
 
 ## Check user set options.
 IF(NOT CMAKE_BUILD_TYPE)
