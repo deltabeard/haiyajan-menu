@@ -277,6 +277,9 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 			 * in the new menu. */
 			ctx->selected = get_first_selectable_ui_element(ctx->current,
 					ctx->current);
+
+			/* Clear textures of previous menu. */
+			clear_cached_textures(ctx->cache);
 			break;
 
 		case UI_EVENT_EXECUTE_FUNCTION:
