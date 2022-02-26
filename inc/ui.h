@@ -153,6 +153,7 @@ struct ui_dynamic
 		void *user_ctx);
 
 	/* User context that is passed to the above functions (optional). */
+	// FIXME: in a const structure, this user context may be unusable.
 	void *user_ctx;
 };
 

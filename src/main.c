@@ -17,6 +17,7 @@ static Uint32 quit = 0;
 
 static unsigned power_element_num(void *user_ctx)
 {
+	(void) user_ctx;
 	return 1;
 }
 
@@ -27,10 +28,11 @@ static int power_elemen_get(unsigned memb,
 	int secs, pct;
 	SDL_PowerState state;
 
+	(void) user_ctx;
+
+	/* There is only one member in this dynamic entry. */
 	if(memb != 0)
-	{
 		return 0;
-	}
 
 	state = SDL_GetPowerInfo(&secs, &pct);
 
@@ -58,9 +60,9 @@ static int power_elemen_get(unsigned memb,
 
 	element->type = UI_ELEM_TYPE_LABEL;
 	element->label = label;
-	element->elem.label.style = FONT_STYLE_HEADER;
+	element->elem.label.style = FONT_STYLE_REGULAR;
 
-	return memb;
+	return 1;
 }
 
 extern const struct ui_element ui_elements[];
@@ -87,7 +89,7 @@ static const struct ui_element sub_menu_1[] = {
 	},
 	{
 		.type = UI_ELEM_TYPE_DYNAMIC,
-		.label = NULL, // FIXME
+		.label = "Battery Status",
 		.elem.dynamic = {
 			.number_of_elements = power_element_num,
 			.get_elements = power_elemen_get
