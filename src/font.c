@@ -59,60 +59,49 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 	SDL_Texture *ret = NULL;
 	TTF_Font *font = NULL;
 	SDL_Surface *(*TTF_Render_fn)(TTF_Font *, const char *, SDL_Colour);
-	size_t unicode_len = 0;
 
 	SDL_assert(ctx != NULL);
 	SDL_assert(str != NULL);
 
 	switch(s)
 	{
-		case FONT_STYLE_HEADER:
-			font = ctx->ui_header;
+	case FONT_STYLE_HEADER:
+		font = ctx->ui_header;
+		break;
+
+	case FONT_STYLE_ICON:
+		font = ctx->ui_icons;
+		break;
+
+	case FONT_STYLE_REGULAR:
+	default:
+		for(unsigned i = 0; i < SDL_arraysize(ctx->ui_regular); i++)
+		{
+			int is_prov;
+			TTF_Font *test;
+
+			test = ctx->ui_regular[i];
+			/* It is possible that the font is not available
+			 * on the running platform. */
+			if(test == NULL)
+				continue;
+
+			is_prov = TTF_GlyphIsProvided(test, str[0]);
+			if(is_prov == 0)
+				continue;
+
+			font = test;
 			break;
+		}
 
-		case FONT_STYLE_ICON:
-			font = ctx->ui_icons;
-			break;
-
-		case FONT_STYLE_REGULAR:
-		default:
-			for(unsigned i = 0; str[i] != '\0' && i < 4; i++)
-			{
-				unicode_len++;
-			}
-
+		if(font == NULL)
+		{
+			/* Select any available font if unable to select a suitable one. */
 			for(unsigned i = 0; i < SDL_arraysize(ctx->ui_regular); i++)
-			{
-				Uint16 *unicode;
-				int is_prov;
-				TTF_Font *test;
+				font = ctx->ui_regular[i];
+		}
 
-				test = ctx->ui_regular[i];
-				/* It is possible that the font is not available
-				 * on the running platform. */
-				if(test == NULL)
-					continue;
-
-				unicode = (Uint16 *)SDL_iconv_string("UCS-2-INTERNAL",
-					"UTF-8", str, unicode_len + 1);
-				is_prov = TTF_GlyphIsProvided(test, unicode[0]);
-				SDL_free(unicode);
-
-				if(is_prov == 0)
-					continue;
-
-				font = test;
-				break;
-			}
-
-			if(font == NULL)
-			{
-				/* Select any available font if unable to select a suitable one. */
-				for(unsigned i = 0; i < SDL_arraysize(ctx->ui_regular); i++)
-					font = ctx->ui_regular[i];
-			}
-
-			break;
+		break;
 	}
 
 	/* If we still can't select a font, don't render any text. */
