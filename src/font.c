@@ -1,19 +1,19 @@
 /**
  * Font management for SDL2.
- * Copyright (C) 2020 Mahyar Koshkouei
+ * Copyright (C) 2020-2022 Mahyar Koshkouei
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 3, as published by
  * the Free Software Foundation.
  */
 
-#include <fonts/fabric-icons.h>
-#include <fonts/NotoSansDisplay-Regular-Latin.h>
-#include <fonts/NotoSansDisplay-SemiCondensedLight-Latin.h>
+#include "fonts/fabric-icons.h"
+#include "fonts/NotoSansDisplay-Regular-Latin.h"
+#include "fonts/NotoSansDisplay-SemiCondensedLight-Latin.h"
 
-#include <font.h>
-#include <SDL.h>
-#include <SDL_ttf.h>
+#include "font.h"
+#include "SDL.h"
+#include "SDL_ttf.h"
 
 #ifndef NO_FRIBIDI
 # define DONT_HAVE_FRIBIDI_CONFIG_H

@@ -13,13 +13,13 @@
 #define QOI_FREE(p)	SDL_free(p)
 #define QOI_ZEROARR(a)	SDL_memset((a),0,sizeof(a))
 
-#include <cache.h>
-#include <hedley.h>
-#include <qoi.h>
-#include <SDL.h>
+#include "cache.h"
+#include "hedley.h"
+#include "qoi.h"
+#include "SDL.h"
 #define STB_LIB_IMPLEMENTATION
-#include <stb_arr.h>
-#include <wyhash.h>
+#include "stb_arr.h"
+#include "wyhash.h"
 
 #if SIZEOF_VOIDP == 8
 typedef Uint64 Hash;

@@ -2,14 +2,14 @@
  * Renders UI for Haiyajan.
  * Copyright (c) 2020-2022 Mahyar Koshkouei
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 3,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License version 3, as published by
+ * the Free Software Foundation.
  */
 
-#include <signal.h>
-#include <SDL.h>
-#include <ui.h>
+#include "signal.h"
+#include "SDL.h"
+#include "ui.h"
 
 void onclick_function_debug(const struct ui_element *element);
 

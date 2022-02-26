@@ -1,6 +1,6 @@
 /**
  * Font management for SDL2.
- * Copyright (C) 2020 Mahyar Koshkouei
+ * Copyright (C) 2020-2022 Mahyar Koshkouei
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 3, as published by
@@ -10,7 +10,7 @@
 #pragma once
 
 /* Required for SDL_Colour */
-#include <SDL.h>
+#include "SDL.h"
 
 /**
  * Opaque font context.
@@ -41,7 +41,7 @@ typedef enum
 /**
  * Renders a single UTF-16 glyph with the embedded Fabric UI font.
  * The rendering is slow but high quality, so should be cached by the user.
- * 
+ *
  * \param ctx	Font context.
  * \param icon	UTF-16 glyph.
  * \param fg	Colour of glyph to render.
@@ -52,7 +52,7 @@ SDL_Texture *font_render_icon(font_ctx_s *ctx, Uint16 icon, SDL_Colour fg);
 /**
  * Renders the UTF-8 string str given the font style s, rendering quality q,
  * and the font colour fg.
- * 
+ *
  * \param ctx	Font context.
  * \param str	UTF-8 string.
  * \param s	Style of font.
@@ -74,7 +74,7 @@ void font_change_pt(font_ctx_s *ctx, unsigned hdpi, unsigned vdpi,
 
 /**
  * Initialise a new font context.
- * 
+ *
  * \param rend		SDL Renderer
  * \return		Font context or NULL on error (check SDL_GetError()).
 */
@@ -82,7 +82,7 @@ font_ctx_s *font_init(SDL_Renderer *rend);
 
 /**
  * Frees a font context.
- * 
+ *
  * \param ctx	Font context to free.
  */
 void font_exit(font_ctx_s *ctx);

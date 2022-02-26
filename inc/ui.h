@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <font.h>
-#include <hedley.h>
-#include <SDL.h>
+#include "font.h"
+#include "hedley.h"
+#include "SDL.h"
 
 #define UI_MIN_WINDOW_WIDTH	160
 #define UI_MIN_WINDOW_HEIGHT	144

@@ -1,6 +1,6 @@
 /**
  * Cache common components of UI.
- * Copyright (c) 2021 Mahyar Koshkouei
+ * Copyright (c) 2021-2022 Mahyar Koshkouei
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 3, as published by
@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <hedley.h>
-#include <SDL.h>
+#include "hedley.h"
+#include "SDL.h"
 
 typedef struct cache_ctx cache_ctx_s;
 
