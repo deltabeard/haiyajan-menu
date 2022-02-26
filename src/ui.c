@@ -956,6 +956,7 @@ static void ui_draw_dynamic(ui_ctx_s *HEDLEY_RESTRICT ctx,
 			break;
 		}
 
+		SDL_assert_paranoid(new.type != UI_ELEM_TYPE_DYNAMIC);
 		ui_draw_element(ctx, &new, p);
 	}
 }
