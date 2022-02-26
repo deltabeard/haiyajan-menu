@@ -92,7 +92,7 @@ static const struct ui_element sub_menu_1[] = {
 		.label = "Battery Status",
 		.elem.dynamic = {
 			.number_of_elements = power_element_num,
-			.get_elements = power_elemen_get
+			.get_element = power_elemen_get
 		}
 	},
 	{

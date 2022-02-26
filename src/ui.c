@@ -10,8 +10,8 @@
 #include <cache.h>
 #include <font.h>
 #include <hedley.h>
+#include <stb_arr.h>
 #include <SDL.h>
-#include <stretchy_buffer.h>
 #include <ui.h>
 
 static const float dpi_reference = 96.0f;
@@ -216,7 +216,7 @@ static void ui_handle_offset(ui_ctx_s *ctx)
 	else
 	{
 		/* Make sure that user doesn't scroll past last element. */
-		const struct hit_box h = sb_last(ctx->hit_boxes);
+		const struct hit_box h = stb_arr_last(ctx->hit_boxes);
 		int y_thresh;
 		int disp_height;
 
@@ -543,7 +543,7 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 			.x = e->motion.x,
 			.y = e->motion.y
 		};
-		int boxes_n = sb_count(ctx->hit_boxes);
+		int boxes_n = stb_arr_len(ctx->hit_boxes);
 
 		for(int box = 0; box < boxes_n; box++)
 		{
@@ -573,7 +573,7 @@ void ui_process_event(ui_ctx_s *HEDLEY_RESTRICT ctx, SDL_Event *HEDLEY_RESTRICT 
 			.y = e->button.y
 		};
 
-		Uint32 boxes_n = sb_count(ctx->hit_boxes);
+		Uint32 boxes_n = stb_arr_len(ctx->hit_boxes);
 
 		if(e->button.button != SDL_BUTTON_LEFT)
 			return;
@@ -761,7 +761,7 @@ static void ui_draw_label(ui_ctx_s *HEDLEY_RESTRICT ctx,
 
 		/* FIXME: Missing checks. */
 		store_cached_texture(ctx->cache, el->label,
-				     SDL_strlen(el->label), label_tex);
+				     SDL_strlen(el->label), el, label_tex);
 	}
 
 	SDL_QueryTexture(label_tex, NULL, NULL, &dim.w, &dim.h);
@@ -811,7 +811,7 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 				el->elem.tile.fg);
 		/* FIXME: Missing checks. */
 		store_cached_texture(ctx->cache, &el->elem.tile.icon,
-				sizeof(el->elem.tile.icon), icon_tex);
+				sizeof(el->elem.tile.icon), el, icon_tex);
 	}
 	SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
 
@@ -845,7 +845,7 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 
 		/* FIXME: Missing checks. */
 		store_cached_texture(ctx->cache, el->label,
-					SDL_strlen(el->label), text_tex);
+					SDL_strlen(el->label), el, text_tex);
 	}
 	SDL_QueryTexture(text_tex, NULL, NULL, &text_dim.w, &text_dim.h);
 
@@ -884,7 +884,7 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		struct hit_box i;
 		i.hit_box = dim;
 		i.ui_element = el;
-		sb_push(ctx->hit_boxes, i);
+		stb_arr_push(ctx->hit_boxes, i);
 
 		SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO,
 			"Hit box generated for tile at (%d, %d)(%d, %d)",
@@ -933,7 +933,7 @@ static void ui_draw_dynamic(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
 			"Obtaining dynamic elements for '%s' menu entry",
 			el->label);
-		ret = el->elem.dynamic.get_elements(i, &new, label,
+		ret = el->elem.dynamic.get_element(i, &new, label,
 			sizeof(label), user_ctx);
 		if(new.type == UI_ELEM_TYPE_END)
 		{
@@ -1002,7 +1002,7 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 	/* Initialise a new hitbox array. */
 	if(ctx->hit_boxes != NULL)
 	{
-		sb_free(ctx->hit_boxes);
+		stb_arr_free(ctx->hit_boxes);
 		ctx->hit_boxes = NULL;
 	}
 
@@ -1199,6 +1199,6 @@ void ui_exit(ui_ctx_s *ctx)
 	deinit_cached_texture(ctx->cache);
 	SDL_DestroyTexture(ctx->tex);
 	SDL_DestroyTexture(ctx->static_tex);
-	sb_free(ctx->hit_boxes);
+	stb_arr_setlen(ctx->hit_boxes, 0);
 	SDL_free(ctx);
 }

@@ -17,7 +17,8 @@
 #include <hedley.h>
 #include <qoi.h>
 #include <SDL.h>
-#include <stretchy_buffer.h>
+#define STB_LIB_IMPLEMENTATION
+#include <stb_arr.h>
 #include <wyhash.h>
 
 #if SIZEOF_VOIDP == 8
@@ -32,6 +33,7 @@ typedef Uint32 Hash;
 
 struct textures {
 	Hash hash;
+	const void *reference;
 	SDL_Texture *tex;
 };
 
@@ -81,7 +83,7 @@ err:
 void dump_cache(cache_ctx_s *ctx, SDL_Renderer *rend)
 {
 	unsigned count;
-	count = sb_count(ctx->textures);
+	count = stb_arr_len(ctx->textures);
 
 	for(unsigned i = 0; i < count; i++)
 	{
@@ -129,15 +131,15 @@ void dump_cache(cache_ctx_s *ctx, SDL_Renderer *rend)
 }
 
 SDL_Texture *get_cached_texture(cache_ctx_s *HEDLEY_RESTRICT ctx,
-		const void *HEDLEY_RESTRICT dat, size_t len)
+		const void *HEDLEY_RESTRICT key, size_t len)
 {
 	Hash hash;
 	unsigned count;
 
 	SDL_assert_paranoid(ctx != NULL);
 
-	count = sb_count(ctx->textures);
-	hash = HASH_FN(dat, len, 0);
+	count = stb_arr_len(ctx->textures);
+	hash = HASH_FN(key, len, 0);
 
 	for(unsigned i = 0; i < count; i++)
 	{
@@ -152,14 +154,16 @@ SDL_Texture *get_cached_texture(cache_ctx_s *HEDLEY_RESTRICT ctx,
 
 void store_cached_texture(cache_ctx_s *HEDLEY_RESTRICT ctx,
 		const void *HEDLEY_RESTRICT dat, size_t len,
+		const void *reference,
 		SDL_Texture *HEDLEY_RESTRICT tex)
 {
 	struct textures new_entry;
 
 	new_entry.hash = HASH_FN(dat, len, 0);
+	new_entry.reference = reference;
 	new_entry.tex = tex;
 	/* FIXME: does not error on out of memory exception. */
-	sb_push(ctx->textures, new_entry);
+	stb_arr_push(ctx->textures, new_entry);
 
 	return;
 }
@@ -190,8 +194,8 @@ void clear_cached_textures(cache_ctx_s *ctx)
 		return;
 	}
 
-	count = sb_count(ctx->textures);
-	sb_free(ctx->textures);
+	count = stb_arr_len(ctx->textures);
+	stb_arr_free(ctx->textures);
 	ctx->textures = NULL;
 	SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
 		     "Cleared %d cached textures", count);

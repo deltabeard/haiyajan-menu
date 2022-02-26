@@ -148,7 +148,7 @@ struct ui_dynamic
 	 * Returns 0 to hide menu, negative on error.
 	 * Type of element is UI_ELEM_TYPE_END for no further dynamic
 	 * elements. */
-	int (*get_elements)(unsigned memb,
+	int (*get_element)(unsigned memb,
 		struct ui_element *element, char *label, unsigned label_sz,
 		void *user_ctx);
 
