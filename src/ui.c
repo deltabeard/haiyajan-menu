@@ -132,6 +132,18 @@ static const struct ui_element *get_prev_selectable_ui_element(
 	const struct ui_element *ui_reference);
 
 /**
+ * Draw UI element.
+ *
+ * \param ctx	UI context.
+ * \param el	UI element parameters.
+ * \param p	The top left point of the UI element to draw.
+*/
+HEDLEY_NON_NULL(1,2,3)
+static void ui_draw_element(ui_ctx_s *HEDLEY_RESTRICT ctx,
+	const struct ui_element *HEDLEY_RESTRICT el,
+	SDL_Point *HEDLEY_RESTRICT p);
+
+/**
  * Scrolls the user interface. This function is executed on each from and
  * modifies the vertical offset when the value of ctx->offset.px_requested_y is
  * non-zero.
@@ -744,6 +756,9 @@ static void ui_draw_label(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		label_tex = font_render_text(ctx->font, el->label,
 			el->elem.label.style, FONT_QUALITY_HIGH,
 			text_colour_light);
+		if(label_tex == NULL)
+			return;
+
 		/* FIXME: Missing checks. */
 		store_cached_texture(ctx->cache, el->label,
 				     SDL_strlen(el->label), label_tex);
@@ -824,6 +839,10 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		text_tex = font_render_text(ctx->font, el->label,
 					FONT_STYLE_HEADER, FONT_QUALITY_HIGH,
 					text_colour_light);
+		/* TODO: possible fatal error. */
+		if(text_tex == NULL)
+			return;
+
 		/* FIXME: Missing checks. */
 		store_cached_texture(ctx->cache, el->label,
 					SDL_strlen(el->label), text_tex);
@@ -885,6 +904,87 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	p->y += len + tile_padding.y;
 }
 
+/**
+ * Process and draw dynamic elements. Elements in this menu are never cached,
+ * and so their contents are refreshed every time the menu this dynamic
+ * element resides in is opened.
+ *
+ * \param ctx	UI context.
+ * \param el	UI element parameters.
+ * \param p	The top left point of the UI element to draw.
+*/
+HEDLEY_NON_NULL(1,2,3)
+static void ui_draw_dynamic(ui_ctx_s *HEDLEY_RESTRICT ctx,
+	const struct ui_element *HEDLEY_RESTRICT el,
+	SDL_Point *HEDLEY_RESTRICT p)
+{
+	unsigned number_of_elements;
+	void *user_ctx;
+
+	user_ctx = el->elem.dynamic.user_ctx;
+	number_of_elements = el->elem.dynamic.number_of_elements(user_ctx);
+
+	for(unsigned i = 0; i < number_of_elements; i++)
+	{
+		int ret;
+		struct ui_element new;
+		char label[64];
+
+		SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
+			"Obtaining dynamic elements for '%s' menu entry",
+			el->label);
+		ret = el->elem.dynamic.get_elements(i, &new, label,
+			sizeof(label), user_ctx);
+		if(new.type == UI_ELEM_TYPE_END)
+		{
+			break;
+		}
+		else if(ret == 0)
+		{
+			/* Hide menu. */
+			continue;
+		}
+		else if(ret < 0)
+		{
+			/* An error occurred getting the UI element. */
+			SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+				"Unable to get dynamic element %d of menu '%s'",
+				i, el->label);
+			break;
+		}
+
+		ui_draw_element(ctx, &new, p);
+	}
+}
+
+HEDLEY_NON_NULL(1,2,3)
+static void ui_draw_element(ui_ctx_s *HEDLEY_RESTRICT ctx,
+	const struct ui_element *HEDLEY_RESTRICT el,
+	SDL_Point *HEDLEY_RESTRICT p)
+{
+	switch(el->type)
+	{
+	case UI_ELEM_TYPE_LABEL:
+		ui_draw_label(ctx, el, p);
+		break;
+
+	case UI_ELEM_TYPE_TILE:
+		ui_draw_tile(ctx, el, p);
+		break;
+
+	case UI_ELEM_TYPE_DYNAMIC:
+		ui_draw_dynamic(ctx, el, p);
+		break;
+
+	default:
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+			"The requested UI element %d '%s' is not "
+			"implemented.",
+			el->type, el->label);
+		break;
+	}
+}
+
 HEDLEY_NON_NULL(1)
 SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 {
@@ -921,23 +1021,7 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 	for(const struct ui_element *el = ctx->current;
 			el->type != UI_ELEM_TYPE_END; el++)
 	{
-		switch(el->type)
-		{
-		case UI_ELEM_TYPE_LABEL:
-			ui_draw_label(ctx, el, &vert);
-			break;
-
-		case UI_ELEM_TYPE_TILE:
-			ui_draw_tile(ctx, el, &vert);
-			break;
-
-		default:
-			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-				"The requested UI element %d is not implemented.",
-				el->type);
-			break;
-		}
-
+		ui_draw_element(ctx, el, &vert);
 	}
 
 	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "UI Rendered");

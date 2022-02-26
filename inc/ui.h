@@ -55,6 +55,7 @@ typedef enum
 	UI_ELEM_TYPE_END,
 	UI_ELEM_TYPE_LABEL,
 	UI_ELEM_TYPE_TILE,
+	UI_ELEM_TYPE_DYNAMIC,
 	UI_ELEM_TYPE_BAR
 } ui_elem_type_e;
 
@@ -137,6 +138,25 @@ struct ui_bar
 	Uint16 value;
 };
 
+struct ui_dynamic
+{
+	/* Returns the number of elements in menu.
+	 * Returning 0 hides this menu. */
+	unsigned (*number_of_elements)(void *user_ctx);
+
+	/* Get element number memb.
+	 * Returns 0 to hide menu, negative on error.
+	 * Type of element is UI_ELEM_TYPE_END for no further dynamic
+	 * elements. */
+	int (*get_elements)(unsigned memb,
+		struct ui_element *element, char *label, unsigned label_sz,
+		void *user_ctx);
+
+	/* User context that is passed to the above functions (optional). */
+	// FIXME: in a const structure, this user context may be unusable.
+	void *user_ctx;
+};
+
 struct ui_element {
 	ui_elem_type_e type;
 
@@ -144,6 +164,7 @@ struct ui_element {
 	const char *label;
 
 	union {
+		struct ui_dynamic dynamic;
 		struct ui_label label;
 		struct ui_tile tile;
 		struct ui_bar bar;
