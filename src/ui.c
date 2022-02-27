@@ -35,6 +35,9 @@ struct ui_ctx {
 	/* Currently rendered menu. */
 	const struct ui_element *current;
 
+	/* Parent of current menu. */
+	//const struct ui_element *parent;
+
 	/* Currently selected menu item. */
 	const struct ui_element *selected;
 
@@ -141,7 +144,7 @@ static const struct ui_element *get_prev_selectable_ui_element(
 HEDLEY_NON_NULL(1,2,3)
 static void ui_draw_element(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	const struct ui_element *HEDLEY_RESTRICT el,
-	SDL_Point *HEDLEY_RESTRICT p);
+	SDL_Point *HEDLEY_RESTRICT p, unsigned seed);
 
 /**
  * Scrolls the user interface. This function is executed on each from and
@@ -259,11 +262,11 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 		break;
 
 #if 0
-		case MENU_INSTR_PARENT_MENU:
-			if(ctx->selected->parent != NULL)
-				ctx->selected = ctx->selected->parent;
+	case MENU_INSTR_PARENT_MENU:
+		if(ctx->selected->parent != NULL)
+			ctx->selected = ctx->selected->parent;
 
-			break;
+		break;
 #endif
 
 	case MENU_INSTR_EXEC_ITEM:
@@ -277,9 +280,6 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 			 * in the new menu. */
 			ctx->selected = get_first_selectable_ui_element(ctx->current,
 					ctx->current);
-
-			/* Clear textures of previous menu. */
-			clear_cached_textures(ctx->cache);
 			break;
 
 		case UI_EVENT_EXECUTE_FUNCTION:
@@ -306,10 +306,11 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 	}
 	}
 
+	ctx->redraw = SDL_TRUE;
 	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "Selected item %s '%s'",
 			elem_type_str[ctx->selected->type],
 			ctx->selected->label);
-	ctx->redraw = SDL_TRUE;
+
 	return;
 }
 
@@ -744,16 +745,18 @@ static void ui_draw_selection(ui_ctx_s *HEDLEY_RESTRICT ctx,
 HEDLEY_NON_NULL(1,2,3)
 static void ui_draw_label(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	const struct ui_element *HEDLEY_RESTRICT el,
-	SDL_Point *HEDLEY_RESTRICT p)
+	SDL_Point *HEDLEY_RESTRICT p, unsigned seed)
 {
 	SDL_Texture *label_tex;
 	SDL_Rect dim = {
 		.x = p->x, .y = p->y
 	};
+	Hash label_hash;
 
 	/* Render text. */
-	label_tex = get_cached_texture(ctx->cache,
-		el->label, SDL_strlen(el->label));
+	label_hash = HASH_FN(el->label, SDL_strlen(el->label), seed);
+	label_tex = get_cached_texture(ctx->cache, UI_TEXTURE_PART_LABEL,
+		label_hash, el);
 	if(label_tex == NULL)
 	{
 		label_tex = font_render_text(ctx->font, el->label,
@@ -763,8 +766,8 @@ static void ui_draw_label(ui_ctx_s *HEDLEY_RESTRICT ctx,
 			return;
 
 		/* FIXME: Missing checks. */
-		store_cached_texture(ctx->cache, el->label,
-				     SDL_strlen(el->label), el, label_tex);
+		store_cached_texture(ctx->cache, UI_TEXTURE_PART_LABEL,
+			label_hash, el, label_tex);
 	}
 
 	SDL_QueryTexture(label_tex, NULL, NULL, &dim.w, &dim.h);
@@ -786,7 +789,7 @@ static void ui_draw_label(ui_ctx_s *HEDLEY_RESTRICT ctx,
 HEDLEY_NON_NULL(1,2,3)
 static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		const struct ui_element *HEDLEY_RESTRICT el,
-		SDL_Point *HEDLEY_RESTRICT p)
+		SDL_Point *HEDLEY_RESTRICT p, unsigned seed)
 {
 	const Uint16 len = ctx->ref_tile_size;
 	const SDL_Rect dim = {
@@ -798,6 +801,7 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		.x = ctx->padding.tile,
 		.y = ctx->padding.tile
 	};
+	Hash label_hash;
 
 	/* Draw tile background. */
 	SDL_SetRenderDrawColor(ctx->ren,
@@ -806,15 +810,17 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	SDL_RenderFillRect(ctx->ren, &dim);
 
 	/* Render icon on tile. */
-	icon_tex = get_cached_texture(ctx->cache, &el->elem.tile.icon,
-			sizeof(el->elem.tile.icon));
+	label_hash = HASH_FN(&el->elem.tile.icon,
+		sizeof(el->elem.tile.icon), seed);
+	icon_tex = get_cached_texture(ctx->cache, UI_TEXTURE_PART_ICON,
+		label_hash, el);
 	if(icon_tex == NULL)
 	{
 		icon_tex = font_render_icon(ctx->font, el->elem.tile.icon,
 				el->elem.tile.fg);
 		/* FIXME: Missing checks. */
-		store_cached_texture(ctx->cache, &el->elem.tile.icon,
-				sizeof(el->elem.tile.icon), el, icon_tex);
+		store_cached_texture(ctx->cache, UI_TEXTURE_PART_ICON,
+			label_hash, el, icon_tex);
 	}
 	SDL_QueryTexture(icon_tex, NULL, NULL, &icon_dim.w, &icon_dim.h);
 
@@ -835,8 +841,9 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	SDL_RenderCopy(ctx->ren, icon_tex, NULL, &icon_dim);
 
 	/* Render tile label. */
-	text_tex = get_cached_texture(ctx->cache, el->label,
-				      SDL_strlen(el->label));
+	label_hash = HASH_FN(el->label, SDL_strlen(el->label), seed);
+	text_tex = get_cached_texture(ctx->cache, UI_TEXTURE_PART_LABEL,
+		label_hash, el);
 	if(text_tex == NULL)
 	{
 		text_tex = font_render_text(ctx->font, el->label,
@@ -847,8 +854,8 @@ static void ui_draw_tile(ui_ctx_s *HEDLEY_RESTRICT ctx,
 			return;
 
 		/* FIXME: Missing checks. */
-		store_cached_texture(ctx->cache, el->label,
-					SDL_strlen(el->label), el, text_tex);
+		store_cached_texture(ctx->cache, UI_TEXTURE_PART_LABEL,
+			label_hash, el, text_tex);
 	}
 	SDL_QueryTexture(text_tex, NULL, NULL, &text_dim.w, &text_dim.h);
 
@@ -957,23 +964,25 @@ static void ui_draw_dynamic(ui_ctx_s *HEDLEY_RESTRICT ctx,
 		}
 
 		SDL_assert_paranoid(new.type != UI_ELEM_TYPE_DYNAMIC);
-		ui_draw_element(ctx, &new, p);
+
+		/* Using the element number as the hash seed. */
+		ui_draw_element(ctx, &new, p, i);
 	}
 }
 
 HEDLEY_NON_NULL(1,2,3)
 static void ui_draw_element(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	const struct ui_element *HEDLEY_RESTRICT el,
-	SDL_Point *HEDLEY_RESTRICT p)
+	SDL_Point *HEDLEY_RESTRICT p, unsigned seed)
 {
 	switch(el->type)
 	{
 	case UI_ELEM_TYPE_LABEL:
-		ui_draw_label(ctx, el, p);
+		ui_draw_label(ctx, el, p, seed);
 		break;
 
 	case UI_ELEM_TYPE_TILE:
-		ui_draw_tile(ctx, el, p);
+		ui_draw_tile(ctx, el, p, seed);
 		break;
 
 	case UI_ELEM_TYPE_DYNAMIC:
@@ -1025,7 +1034,7 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 	for(const struct ui_element *el = ctx->current;
 			el->type != UI_ELEM_TYPE_END; el++)
 	{
-		ui_draw_element(ctx, el, &vert);
+		ui_draw_element(ctx, el, &vert, 0);
 	}
 
 	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "UI Rendered");

@@ -20,7 +20,8 @@
 
 enum {
 	HAIYAJAN_LOG_CATEGORY_MAIN = SDL_LOG_CATEGORY_CUSTOM,
-	HAIYAJAN_LOG_CATEGORY_UI
+	HAIYAJAN_LOG_CATEGORY_UI,
+	HAIYAJAN_LOG_CATEGORY_CACHE
 };
 
 /* Private UI Context. */
@@ -99,11 +100,11 @@ struct ui_tile {
 	label_placement_e label_placement;
 
 	/* Icon in UTF-16 */
-	const Uint16 icon;
+	Uint16 icon;
 
 	/* Help text to display when the element is highlighted.
 	 * May be set to NULL if no help is available. */
-	const char *help;
+	char *help;
 
 	/* Background colour of tile. */
 	SDL_Colour bg;

@@ -19,26 +19,22 @@
 #include "SDL.h"
 #define STB_LIB_IMPLEMENTATION
 #include "stb_arr.h"
-#include "wyhash.h"
-
-#if SIZEOF_VOIDP == 8
-typedef Uint64 Hash;
-# define HASH_FN(dat, len, seed) wyhash64(dat, len, seed)
-# define PRIhashX "016" SDL_PRIX64
-#else
-typedef Uint32 Hash;
-# define HASH_FN(dat, len, seed) wyhash32(dat, len, seed)
-# define PRIhashX "08" SDL_PRIX32
-#endif
+#include "ui.h"
 
 struct textures {
-	Hash hash;
-	const void *reference;
+	ui_texture_part_e part;
+	Hash label_hash;
+	const void *data_origin;
+	struct ui_element el;
 	SDL_Texture *tex;
 };
 
 struct cache_ctx {
-	struct textures *textures;
+	struct textures *cached_ui;
+};
+
+static const char *part_str[] = {
+	"label", "icon"
 };
 
 static SDL_Surface *tex_to_surf(SDL_Renderer *rend, SDL_Texture *tex)
@@ -83,7 +79,7 @@ err:
 void dump_cache(cache_ctx_s *ctx, SDL_Renderer *rend)
 {
 	unsigned count;
-	count = stb_arr_len(ctx->textures);
+	count = stb_arr_len(ctx->cached_ui);
 
 	for(unsigned i = 0; i < count; i++)
 	{
@@ -93,7 +89,7 @@ void dump_cache(cache_ctx_s *ctx, SDL_Renderer *rend)
 		qoi_desc qd;
 		void *qoi_img;
 
-		t = &ctx->textures[i];
+		t = &ctx->cached_ui[i];
 		s = tex_to_surf(rend, t->tex);
 		if(s == NULL)
 		{
@@ -120,7 +116,7 @@ void dump_cache(cache_ctx_s *ctx, SDL_Renderer *rend)
 			char filename[32];
 
 			SDL_snprintf(filename, sizeof(filename),
-				"%" PRIhashX ".qoi", t->hash);
+				"%" PRIhashX ".qoi", t->label_hash);
 			rw = SDL_RWFromFile(filename, "wb");
 			SDL_RWwrite(rw, qoi_img, 1, out_len);
 			SDL_RWclose(rw);
@@ -130,42 +126,99 @@ void dump_cache(cache_ctx_s *ctx, SDL_Renderer *rend)
 	}
 }
 
-SDL_Texture *get_cached_texture(cache_ctx_s *HEDLEY_RESTRICT ctx,
-		const void *HEDLEY_RESTRICT key, size_t len)
+static void delete_cached_texture_loc(cache_ctx_s *HEDLEY_RESTRICT ctx,
+	unsigned loc)
 {
-	Hash hash;
+	SDL_LogDebug(HAIYAJAN_LOG_CATEGORY_CACHE,
+		"Deleting texture at location %u", loc);
+	stb_arr_fastdelete(ctx->cached_ui, loc);
+}
+
+HEDLEY_NON_NULL(1,4)
+SDL_Texture *get_cached_texture(cache_ctx_s *HEDLEY_RESTRICT ctx,
+	ui_texture_part_e part,
+	Hash label_hash, const struct ui_element *HEDLEY_RESTRICT el)
+{
 	unsigned count;
 
-	SDL_assert_paranoid(ctx != NULL);
+	SDL_assert_paranoid(el->label != NULL);
+	SDL_LogDebug(HAIYAJAN_LOG_CATEGORY_CACHE,
+		"Looking up %s texture for label '%s' ( %" PRIhashX " %p)",
+		part_str[part], el->label, label_hash, (void *)el);
 
-	count = stb_arr_len(ctx->textures);
-	hash = HASH_FN(key, len, 0);
+	count = stb_arr_len(ctx->cached_ui);
 
 	for(unsigned i = 0; i < count; i++)
 	{
-		if(hash != ctx->textures[i].hash)
+		if(el != ctx->cached_ui[i].data_origin)
 			continue;
 
-		return ctx->textures[i].tex;
+		if(part != ctx->cached_ui[i].part)
+			continue;
+
+		if(label_hash != ctx->cached_ui[i].label_hash)
+		{
+			SDL_LogDebug(HAIYAJAN_LOG_CATEGORY_CACHE,
+				"Found %s texture for %p at location %u, "
+				"but label hash changed from %" PRIhashX " "
+				"to %" PRIhashX,
+				part_str[part], (void *)el, i,
+				ctx->cached_ui[i].label_hash, label_hash);
+			delete_cached_texture_loc(ctx, i);
+			break;
+		}
+
+		/* TODO: Check for any differences in the two elements. */
+
+		SDL_LogDebug(HAIYAJAN_LOG_CATEGORY_CACHE,
+			"Successfully found %s texture for %p",
+			part_str[part], (void *)el);
+		return ctx->cached_ui[i].tex;
 	}
+
+	SDL_LogDebug(HAIYAJAN_LOG_CATEGORY_CACHE,
+		"No texture found for %" PRIhashX " %p",
+		label_hash, (void *)el);
 
 	return NULL;
 }
 
+HEDLEY_NON_NULL(1,4,5)
 void store_cached_texture(cache_ctx_s *HEDLEY_RESTRICT ctx,
-		const void *HEDLEY_RESTRICT dat, size_t len,
-		const void *reference,
+		ui_texture_part_e part,
+		Hash label_hash, const struct ui_element *HEDLEY_RESTRICT el,
 		SDL_Texture *HEDLEY_RESTRICT tex)
 {
 	struct textures new_entry;
 
-	new_entry.hash = HASH_FN(dat, len, 0);
-	new_entry.reference = reference;
-	new_entry.tex = tex;
-	/* FIXME: does not error on out of memory exception. */
-	stb_arr_push(ctx->textures, new_entry);
+	SDL_assert_paranoid(el->label != NULL);
 
-	return;
+	/* Part of the UI element that the texture represents. */
+	new_entry.part = part;
+	/* A hash of the label. If this is a label of a dynamic element, then
+	 * the seed is the member number of that label within the dynamic
+	 * array. If this hash is different when fetching the texture from
+	 * cache, then we know that the cached texture is stale. */
+	new_entry.label_hash = label_hash;
+	/* Pointer to where the ui_element data is held. Used as a reference
+	 * to find out whether data from the same UI element has changed or
+	 * not. */
+	new_entry.data_origin = el;
+	/* Holding a copy of the element data to compare with the element
+	 * data when fetching the texture from cache. If any of this data has
+	 * changed, then we know that the cached texture is stale. This is
+	 * useful in case the label doesn't change, but other parameters of
+	 * the element do. */
+	SDL_memcpy(&new_entry.el, el, sizeof(*el));
+	/* The rendered texture to store into the cache. */
+	new_entry.tex = tex;
+
+	SDL_LogDebug(HAIYAJAN_LOG_CATEGORY_CACHE,
+		"Stored %s texture: '%s' (%" PRIhashX " %p)",
+		part_str[part], el->label, label_hash, (void *)el);
+
+	/* FIXME: does not error on out of memory exception. */
+	stb_arr_push(ctx->cached_ui, new_entry);
 }
 
 cache_ctx_s *init_cached_texture(void)
@@ -186,7 +239,7 @@ void clear_cached_textures(cache_ctx_s *ctx)
 {
 	unsigned count;
 
-	if(ctx->textures == NULL)
+	if(ctx->cached_ui == NULL)
 	{
 		SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
 				"Attempted to clear cache when cache wasn't "
@@ -194,9 +247,9 @@ void clear_cached_textures(cache_ctx_s *ctx)
 		return;
 	}
 
-	count = stb_arr_len(ctx->textures);
-	stb_arr_free(ctx->textures);
-	ctx->textures = NULL;
+	count = stb_arr_len(ctx->cached_ui);
+	stb_arr_free(ctx->cached_ui);
+	ctx->cached_ui = NULL;
 	SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
 		     "Cleared %d cached textures", count);
 }
