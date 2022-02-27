@@ -72,5 +72,5 @@ The [devkitPro toolchain](https://devkitpro.org/wiki/Getting_Started) with devki
 
 ## License
 
-Copyright (c) 2020 Mahyar Koshkouei<br/>
+Copyright (c) 2020-2022 Mahyar Koshkouei<br/>
 Licensed under GNU LGPL Version 3.
