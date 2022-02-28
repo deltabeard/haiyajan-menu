@@ -7,6 +7,11 @@
  * the Free Software Foundation.
  */
 
+#ifdef __EMSCRIPTEN__
+# include <emscripten.h>
+# include <emscripten/html5.h>
+#endif
+
 #include "signal.h"
 #include "SDL.h"
 #include "ui.h"
@@ -167,6 +172,7 @@ const struct ui_element ui_elements[] = {
 			.user = NULL
 		}
 	},
+#ifndef __EMSCRIPTEN__
 	{
 		.type = UI_ELEM_TYPE_TILE,
 		.label = "Exit",
@@ -188,6 +194,7 @@ const struct ui_element ui_elements[] = {
 			.user = NULL
 		}
 	},
+#endif
 	{
 		.type = UI_ELEM_TYPE_TILE,
 		.label = "Go to sub-menu",
@@ -213,8 +220,17 @@ const struct ui_element ui_elements[] = {
 	}
 };
 
-static void loop(SDL_Renderer *ren, ui_ctx_s *ui)
+struct loop_ctx
 {
+	SDL_Renderer *ren;
+	ui_ctx_s *ui;
+};
+
+static void loop(void *userdata)
+{
+	struct loop_ctx *ctx = userdata;
+	SDL_Renderer *ren = ctx->ren;
+	ui_ctx_s *ui = ctx->ui;
 	SDL_Event e;
 	SDL_Texture *ui_tex;
 
@@ -345,11 +361,13 @@ int main(int argc, char *argv[])
 	if(ui == NULL)
 		goto err;
 
+	struct loop_ctx loop_ctx = { .ren = ren, .ui = ui };
+#ifdef __EMSCRIPTEN__
+	emscripten_set_main_loop_arg(loop, &loop_ctx, 0, 1);
+#else
 	while(SDL_QuitRequested() == SDL_FALSE && quit == 0)
-	{
-		loop(ren, ui);
-		print_fps();
-	}
+		loop(&loop_ctx);
+#endif
 
 	ui_exit(ui);
 
