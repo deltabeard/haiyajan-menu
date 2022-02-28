@@ -147,6 +147,16 @@ static void ui_draw_element(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	SDL_Point *HEDLEY_RESTRICT p, unsigned seed);
 
 /**
+ * Scrolls to the top of the menu immediately.
+ * @param ctx 	UI Context.
+ */
+HEDLEY_INLINE
+static void ui_scroll_to_top_immediately(ui_ctx_s *ctx)
+{
+	ctx->offset.px_y = 0;
+}
+
+/**
  * Scrolls the user interface. This function is executed on each from and
  * modifies the vertical offset when the value of ctx->offset.px_requested_y is
  * non-zero.
@@ -280,6 +290,7 @@ static void ui_input(ui_ctx_s *ctx, menu_instruction_e instr)
 			 * in the new menu. */
 			ctx->selected = get_first_selectable_ui_element(ctx->current,
 					ctx->current);
+			ui_scroll_to_top_immediately(ctx);
 			break;
 
 		case UI_EVENT_EXECUTE_FUNCTION:
