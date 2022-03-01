@@ -20,6 +20,31 @@ void onclick_function_debug(const struct ui_element *element);
 
 static Uint32 quit = 0;
 
+static unsigned ticks_element_num(void *user_ctx)
+{
+	(void) user_ctx;
+	return 1;
+}
+
+static int ticks_elemen_get(unsigned memb,
+	struct ui_element *element, char *label, unsigned label_sz,
+	void *user_ctx)
+{
+	(void) user_ctx;
+
+	/* There is only one member in this dynamic entry. */
+	if(memb != 0)
+		return 0;
+
+	SDL_snprintf(label, label_sz, "Ticks: %" SDL_PRIu64, SDL_GetTicks64());
+
+	element->type = UI_ELEM_TYPE_LABEL;
+	element->label = label;
+	element->elem.label.style = FONT_STYLE_REGULAR;
+
+	return 1;
+}
+
 static unsigned power_element_num(void *user_ctx)
 {
 	(void) user_ctx;
@@ -98,6 +123,14 @@ static const struct ui_element sub_menu_1[] = {
 		.elem.dynamic = {
 			.number_of_elements = power_element_num,
 			.get_element = power_elemen_get
+		}
+	},
+	{
+		.type = UI_ELEM_TYPE_DYNAMIC,
+		.label = "Ticks",
+		.elem.dynamic = {
+			.number_of_elements = ticks_element_num,
+			.get_element = ticks_elemen_get
 		}
 	},
 	{
