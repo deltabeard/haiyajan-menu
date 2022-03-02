@@ -43,22 +43,32 @@ The following toolchains are tested regularly:
 - [Visual Studio Build Tools](https://aka.ms/buildtools)
 - [w64devkit](https://github.com/skeeto/w64devkit)
 
-#### Instructions
+#### Build using VCPKG
 
 1. Download the latest release of [vcpkg](https://vcpkg.io/).
 2. Install the required dependencies within vcpkg, making sure that the target triplet is set.
     - For example, the command `vcpkg install --triplet=x64-windows-static sdl2 sdl2-ttf fribidi` installs all dependencies for a static 64-bit build.
     - Use `vcpkg help triplet` to list supported triplets.
 3. Within one of the supported toolchain environments, use CMake to configure the project with
-   `cmake -S <source directory> -B <build directory> -DCMAKE_TOOLCHAIN_FILE=<path to vcpkg>/vcpkg/scripts/buildsystems/vcpkg.cmake`
+   `cmake -S <source directory> -B <build directory> -DLIBRARY_DISCOVER_METHOD=VCPKG -DCMAKE_TOOLCHAIN_FILE=<path to vcpkg>/vcpkg/scripts/buildsystems/vcpkg.cmake`
 4. Start the build by executing `cmake --build <build directory>`
 
+#### Build using CPM
+
+[CPM](https://github.com/cpm-cmake/CPM.cmake) is already included with the respository. However, during the build CPM will download required dependencies. See [this guide](https://github.com/cpm-cmake/CPM.cmake#cpm_source_cache) on how to cache downloaded dependencies to speed up subsequent builds.
+
+1. Within the Visual Studio Native Tools Command Prompt, use CMake to configure the project with
+   `cmake -S <source directory> -B <build directory> -DLIBRARY_DISCOVER_METHOD=CPM`
+2. Start the build by executing `cmake --build <build directory>`
+
 ### Linux, MacOS, BSD, and other Unix-like
+
+These instructions use pkg-config to link with dependencies already installed on you system. You may alternatively build using CPM by specifying `-DLIBRARY_DISCOVER_METHOD=CPM` when configuring.
 
 1. Install the dependecies listed above.
    - On Debian for example, the following command can be executed as root to install the required dependencies: `apt-get install gcc cmake libsdl2-dev libsdl2-ttf-dev libfribidi-dev pkg-config`.
 2. Use CMake to configure the project with
-   `cmake -S <source directory> -B <build directory> -DCMAKE_TOOLCHAIN_FILE=<path to vcpkg>/vcpkg/scripts/buildsystems/vcpkg.cmake`
+   `cmake -S <source directory> -B <build directory> -DLIBRARY_DISCOVER_METHOD=PKG_CONFIG`
 3. Start the build by executing `cmake --build <build directory>`
 
 ### Nintendo Switch
@@ -72,7 +82,7 @@ The [devkitPro toolchain](https://devkitpro.org/wiki/Getting_Started) with devki
 
 ### Web Browser
 
-[Emscripten](https://emscripten.org/index.html) is required to build for modern web browsers that support [Web Assembly](https://webassembly.org/). See 
+[Emscripten](https://emscripten.org/index.html) is required to build for modern web browsers that support [Web Assembly](https://webassembly.org/).
 
 1. [Download and Install Emscripten](https://emscripten.org/docs/getting_started/downloads.html)
 2. Within an Emscripten environment, configure the project using cmake with
