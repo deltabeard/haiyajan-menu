@@ -70,6 +70,15 @@ The [devkitPro toolchain](https://devkitpro.org/wiki/Getting_Started) with devki
    `cmake -S <source directory> -B <build directory> -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake`
 3. Start the build by executing `cmake --build <build directory>`
 
+### Web Browser
+
+[Emscripten](https://emscripten.org/index.html) is required to build for modern web browsers that support [Web Assembly](https://webassembly.org/). See 
+
+1. [Download and Install Emscripten](https://emscripten.org/docs/getting_started/downloads.html)
+2. Within an Emscripten environment, configure the project using cmake with
+    `emcmake cmake -S <source directory> -B <build directory>`
+3. Start the build by executing `cmake --build <build directory>`
+
 ## License
 
 Copyright (c) 2020-2022 Mahyar Koshkouei<br/>
