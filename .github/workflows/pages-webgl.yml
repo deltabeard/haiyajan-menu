@@ -1,0 +1,48 @@
+name: Deploy WebGL Build
+on:
+  push:
+    branches: [ master, pages-test ]
+
+env:
+  EM_VERSION: 3.1.6
+  EM_CACHE_FOLDER: 'emsdk-cache'
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Setup cache
+      id: cache-system-libraries
+      uses: actions/cache@v2
+      with:
+        path: ${{env.EM_CACHE_FOLDER}}
+        key: ${{env.EM_VERSION}}-${{ runner.os }}
+
+    - uses: mymindstorm/setup-emsdk@v11
+      with:
+        version: ${{env.EM_VERSION}}
+        actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
+
+    - name: Configure CMake
+      run: emcmake cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      run: |
+        cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        mkdir build/deploy/
+        cp build/*.html build/deploy/
+        cp build/*.js build/deploy/
+        cp build/*.wasm build/deploy/
+
+    - name: Deploy
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        branch: gh-pages
+        folder: build/deploy
+        target-folder: webgl
