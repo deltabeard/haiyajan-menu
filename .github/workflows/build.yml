@@ -3,6 +3,8 @@ on: [push]
 
 env:
   CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm-cache
+  EM_VERSION: 3.1.6
+  EM_CACHE_FOLDER: 'emsdk-cache'
 
 jobs:
   build:
@@ -73,3 +75,42 @@ jobs:
             ${{ github.workspace }}/build/haiyajan-menu.tar
             ${{ github.workspace }}/build/**/haiyajan-menu.exe
             ${{ github.workspace }}/build/**/haiyajan-menu.pdb
+
+  emscripten:
+    name: Build for Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup cache
+        id: cache-system-libraries
+        uses: actions/cache@v2
+        with:
+          path: ${{env.EM_CACHE_FOLDER}}
+          key: ${{env.EM_VERSION}}-${{ runner.os }}
+
+      - uses: mymindstorm/setup-emsdk@v11
+        with:
+          version: ${{env.EM_VERSION}}
+          actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
+
+      - name: Build
+        run: |
+          emcmake cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
+          
+      - name: Get Short SHA
+        id: vars
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+      - name: Upload output
+        uses: actions/upload-artifact@v2
+        with:
+          name: emscripten-${{ steps.vars.outputs.sha_short }}
+          path: |
+            ${{ github.workspace }}/build/*.html
+            ${{ github.workspace }}/build/*.js
+            ${{ github.workspace }}/build/*.wasm
+          
