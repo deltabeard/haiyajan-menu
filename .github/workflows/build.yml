@@ -1,5 +1,11 @@
 name: build
-on: [push]
+on:
+  push:
+    branches-ignore:
+      - '**pages**'
+  pull_request:
+    branches-ignore:
+      - '**pages**'
 
 env:
   CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm-cache
