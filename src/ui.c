@@ -14,6 +14,11 @@
 #include "SDL.h"
 #include "ui.h"
 
+#ifdef __EMSCRIPTEN__
+/* Required for DPI reporting. */
+# include <emscripten.h>
+#endif
+
 static const float dpi_reference = 96.0f;
 
 static const SDL_Colour text_colour_light = {
@@ -1190,6 +1195,14 @@ ui_ctx_s *ui_init(SDL_Window *HEDLEY_RESTRICT win,
 	if(display_id < 0)
 		goto err;
 
+#ifdef __EMSCRIPTEN__
+	{
+		float pixel_ratio = (float)emscripten_get_device_pixel_ratio();
+		dpi = dpi_reference * pixel_ratio;
+		hdpi = dpi;
+		vdpi = dpi;
+	};
+#else
 	if(SDL_GetDisplayDPI(display_id, &dpi, &hdpi, &vdpi) != 0)
 	{
 		dpi = dpi_reference;
@@ -1199,6 +1212,7 @@ ui_ctx_s *ui_init(SDL_Window *HEDLEY_RESTRICT win,
 			"Unable to determine display DPI: %s",
 			SDL_GetError());
 	}
+#endif
 
 	format = SDL_GetWindowPixelFormat(win);
 	ctx = ui_init_renderer(rend, dpi, hdpi, vdpi, format, ui_elements);
