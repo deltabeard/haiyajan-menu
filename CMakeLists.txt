@@ -122,7 +122,8 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     set(USE_FLAGS "-s USE_SDL=2 -s USE_SDL_TTF=2")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${USE_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS} \
+        --shell-file ${PROJECT_SOURCE_DIR}/meta/emscripten_shell.html")
     set(CMAKE_EXECUTABLE_SUFFIX .html)
 ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "VCPKG")
     # If a VCPKG toolchain is specified, use it.
