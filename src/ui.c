@@ -1129,6 +1129,33 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 	if(SDL_GetRendererOutputSize(ctx->ren, &w, &h) != 0)
 		goto err;
 
+	SDL_LogDebug(HAIYAJAN_LOG_CATEGORY_UI,
+		     "Renderer output size is %ux%u", w, h);
+
+	{
+		SDL_RendererInfo rend_info;
+		if(SDL_GetRendererInfo(rend, &rend_info) < 0)
+		{
+			SDL_LogWarn(HAIYAJAN_LOG_CATEGORY_UI,
+				     "Unable to get Renderer info");
+		}
+		else if(w > rend_info.max_texture_width ||
+				h > rend_info.max_texture_height)
+		{
+			const char fmt[] = "Renderer target (%ux%u) is larger "
+					   "than the maximum texture size (%dx%d)";
+			SDL_LogError(HAIYAJAN_LOG_CATEGORY_UI, fmt,
+				    rend_info.max_texture_width,
+				    rend_info.max_texture_height,
+				    w, h);
+			SDL_SetError(fmt,
+				     rend_info.max_texture_width,
+				     rend_info.max_texture_height,
+				     w, h);
+			goto err;
+		}
+	}
+
 	ctx->tex = SDL_CreateTexture(ctx->ren, format,
 		SDL_TEXTUREACCESS_TARGET, w, h);
 	if(ctx->tex == NULL)

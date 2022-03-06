@@ -33,6 +33,7 @@
 struct font_ctx
 {
 	SDL_Renderer *rend;
+	int tex_min_w, tex_min_h;
 	TTF_Font *ui_header;
 	TTF_Font *ui_icons;
 	TTF_Font *ui_regular[MAX_FONTS];
@@ -47,7 +48,17 @@ SDL_Texture *font_render_icon(font_ctx_s *ctx, Uint16 icon, SDL_Colour fg)
 	if(surf == NULL)
 		goto out;
 
-	tex = SDL_CreateTextureFromSurface(ctx->rend, surf);
+	if(surf->w > ctx->tex_min_w || surf->h > ctx->tex_min_h)
+	{
+		SDL_LogError(HAIYAJAN_LOG_CATEGORY_FONT,
+			       "Icon size (%ux%u) exceeds maximum texture size (%ux%u).",
+			       surf->w, surf->h, ctx->tex_min_w, ctx->tex_min_h);
+	}
+	else
+	{
+		tex = SDL_CreateTextureFromSurface(ctx->rend, surf);
+	}
+
 	SDL_FreeSurface(surf);
 
 out:
@@ -161,7 +172,17 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 		if(surf == NULL)
 			goto out;
 
-		ret = SDL_CreateTextureFromSurface(ctx->rend, surf);
+		if(surf->w > ctx->tex_min_w || surf->h > ctx->tex_min_h)
+		{
+			SDL_LogError(HAIYAJAN_LOG_CATEGORY_FONT,
+				     "Text size (%ux%u) exceeds maximum texture size (%ux%u).",
+				     surf->w, surf->h, ctx->tex_min_w, ctx->tex_min_h);
+		}
+		else
+		{
+			ret = SDL_CreateTextureFromSurface(ctx->rend, surf);
+		}
+
 		SDL_FreeSurface(surf);
 	}
 
