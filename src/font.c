@@ -194,24 +194,42 @@ static void font_close_ttf(font_ctx_s *ctx)
 void font_change_pt(font_ctx_s *ctx, unsigned hdpi, unsigned vdpi,
 		int icon_pt, int header_pt, int regular_pt)
 {
-	font_close_ttf(ctx);
+	SDL_assert(ctx->ui_icons != NULL);
+	SDL_assert(ctx->ui_header != NULL);
+	SDL_assert(ctx->ui_regular[0] != NULL);
+
+	TTF_SetFontSizeDPI(ctx->ui_icons, icon_pt, hdpi, vdpi);
+	TTF_SetFontSizeDPI(ctx->ui_header, header_pt, hdpi, vdpi);
+
+	for(unsigned i = 0; i < MAX_FONTS; i++)
+	{
+		if(ctx->ui_regular[i] == NULL)
+			break;
+
+		TTF_SetFontSizeDPI(ctx->ui_regular[i], regular_pt, hdpi, vdpi);
+	}
+}
+
+static void font_read_ttf(font_ctx_s *ctx)
+{
+	SDL_assert_paranoid(ctx->ui_icons == NULL);
+	SDL_assert_paranoid(ctx->ui_header == NULL);
+	SDL_assert_paranoid(ctx->ui_regular[0] == NULL);
 
 	/* Load built-in header font. */
 	{
 		SDL_RWops *hdr_font_mem;
 		hdr_font_mem = SDL_RWFromConstMem(NotoSansDisplay_SemiCondensedLight_Latin_ttf,
-			NotoSansDisplay_SemiCondensedLight_Latin_ttf_len);
-		ctx->ui_header = TTF_OpenFontDPIRW(hdr_font_mem, 1, header_pt,
-			hdpi, vdpi);
+						  NotoSansDisplay_SemiCondensedLight_Latin_ttf_len);
+		ctx->ui_header = TTF_OpenFontRW(hdr_font_mem, 1, 12);
 	}
 
 	/* Load built-in icon font. */
 	{
 		SDL_RWops *icon_font_mem;
 		icon_font_mem = SDL_RWFromConstMem(fabric_icons_ttf,
-			fabric_icons_ttf_len);
-		ctx->ui_icons = TTF_OpenFontDPIRW(icon_font_mem, 1, icon_pt,
-			hdpi, vdpi);
+						   fabric_icons_ttf_len);
+		ctx->ui_icons = TTF_OpenFontRW(icon_font_mem, 1, 12);
 	}
 
 	/* Load built-in regular font in-case platform dependant fonts cannot
@@ -219,9 +237,8 @@ void font_change_pt(font_ctx_s *ctx, unsigned hdpi, unsigned vdpi,
 	{
 		SDL_RWops *font_mem;
 		font_mem = SDL_RWFromConstMem(NotoSansDisplay_Regular_Latin_ttf,
-			NotoSansDisplay_Regular_Latin_ttf_len);
-		ctx->ui_regular[0] = TTF_OpenFontDPIRW(font_mem, 1,
-			regular_pt, hdpi, vdpi);
+					      NotoSansDisplay_Regular_Latin_ttf_len);
+		ctx->ui_regular[0] = TTF_OpenFontRW(font_mem, 1, 12);
 	}
 
 #if defined(__WINDOWS__)
@@ -251,12 +268,11 @@ void font_change_pt(font_ctx_s *ctx, unsigned hdpi, unsigned vdpi,
 			ui_regular_locs[i]);
 
 		/* Errors are ignored. */
-		ctx->ui_regular[s] = TTF_OpenFontDPI(loc, regular_pt,
-			hdpi, vdpi);
+		ctx->ui_regular[s] = TTF_OpenFont(loc, 12);
 		if(ctx->ui_regular[s] == NULL)
 			continue;
 
-		/* If a font if successfully opened, move to next pointer. */
+		/* If a font is successfully opened, move to next pointer. */
 		s++;
 	}
 
@@ -286,6 +302,28 @@ font_ctx_s *font_init(SDL_Renderer *rend)
 		goto out;
 
 	ctx->rend = rend;
+
+	{
+		SDL_RendererInfo rend_info;
+		if(SDL_GetRendererInfo(rend, &rend_info) < 0)
+		{
+			/* Minimum guaranteed texture size is 64, which is
+			 * unacceptable. Setting this to 1024, as supported by
+			 * everything I've seen since year 2000.
+			 * GeForce2 (2000) and Raspberry Pi 1 Model A (2011)
+			 * both support 2048x2048 pixels. */
+			ctx->tex_min_h = 1024;
+			ctx->tex_min_w = 1024;
+		}
+		else
+		{
+			ctx->tex_min_h = rend_info.max_texture_height;
+			ctx->tex_min_w = rend_info.max_texture_width;
+		}
+
+	}
+
+	font_read_ttf(ctx);
 
 out:
 	return ctx;
