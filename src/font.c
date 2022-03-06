@@ -11,6 +11,7 @@
 #include "fonts/NotoSansDisplay-Regular-Latin.h"
 #include "fonts/NotoSansDisplay-SemiCondensedLight-Latin.h"
 
+#include "all.h"
 #include "font.h"
 #include "SDL.h"
 #include "SDL_ttf.h"

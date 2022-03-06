@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "all.h"
 #include "font.h"
 #include "hedley.h"
 #include "SDL.h"
@@ -17,12 +18,6 @@
 #define UI_MIN_WINDOW_HEIGHT	144
 #define UI_DEFAULT_WINDOW_WIDTH 640
 #define UI_DEFAULT_WINDOW_HEIGHT 480
-
-enum {
-	HAIYAJAN_LOG_CATEGORY_MAIN = SDL_LOG_CATEGORY_CUSTOM,
-	HAIYAJAN_LOG_CATEGORY_UI,
-	HAIYAJAN_LOG_CATEGORY_CACHE
-};
 
 /* Private UI Context. */
 typedef struct ui_ctx ui_ctx_s;

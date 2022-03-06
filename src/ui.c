@@ -7,6 +7,7 @@
  * the Free Software Foundation.
  */
 
+#include "all.h"
 #include "cache.h"
 #include "font.h"
 #include "hedley.h"
