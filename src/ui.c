@@ -1142,16 +1142,11 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 		else if(w > rend_info.max_texture_width ||
 				h > rend_info.max_texture_height)
 		{
-			const char fmt[] = "Renderer target (%ux%u) is larger "
-					   "than the maximum texture size (%dx%d)";
-			SDL_LogError(HAIYAJAN_LOG_CATEGORY_UI, fmt,
-				    rend_info.max_texture_width,
-				    rend_info.max_texture_height,
-				    w, h);
-			SDL_SetError(fmt,
+			SDL_SetError("Renderer target (%ux%u) is larger "
+				     "than the maximum texture size (%dx%d)",
+				     w, h,
 				     rend_info.max_texture_width,
-				     rend_info.max_texture_height,
-				     w, h);
+				     rend_info.max_texture_height);
 			goto err;
 		}
 	}

@@ -412,7 +412,7 @@ out:
 
 err:
 	{
-		char buf[128];
+		char buf[512];
 		SDL_snprintf(buf, sizeof(buf),
 			"A critical error has occurred, and Haiyajan must "
 			"now close.\n"
