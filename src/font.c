@@ -205,6 +205,18 @@ static void font_close_ttf(font_ctx_s *ctx)
 	}
 }
 
+int font_get_height(font_ctx_s *ctx, font_style_e style)
+{
+	TTF_Font *f[] = {
+		ctx->ui_regular[0], ctx->ui_header, ctx->ui_icons
+	};
+
+	SDL_assert(ctx != NULL);
+	SDL_assert(style < FONT_STYLE_MAX);
+
+	return TTF_FontHeight(f[style]);
+}
+
 /**
  * Initialise fonts given a DPI. This function always succeeds; a backup font is
  * used if a font cannot be found on the running platform.

@@ -64,6 +64,14 @@ SDL_Texture *font_render_text(font_ctx_s *ctx, const char *str,
 	font_style_e s, font_quality_e q, SDL_Colour fg);
 
 /**
+ * Obtains font height for the selected style.
+ * \param ctx 	Font context.
+ * \param style Style of font to get height for.
+ * \return	Font height in pixels.
+ */
+int font_get_height(font_ctx_s *ctx, font_style_e style);
+
+/**
  * Scale font sizes depending on the DPI scale.
  * Internal font sizes are referenced to a DPI of 96.
  *
