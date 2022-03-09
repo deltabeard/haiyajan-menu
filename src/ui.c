@@ -1202,7 +1202,9 @@ ui_ctx_s *ui_init(SDL_Window *HEDLEY_RESTRICT win,
 	if(display_id < 0)
 		goto err;
 
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) && !SDL_VERSION_ATLEAST(2, 0, 22)
+	/* Support for SDL_GetDisplayDPI on Emscripten will be added in SDL
+	 * 2.0.22. */
 	{
 		float pixel_ratio = (float)emscripten_get_device_pixel_ratio();
 		dpi = dpi_reference * pixel_ratio;
