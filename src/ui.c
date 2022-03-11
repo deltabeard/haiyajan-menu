@@ -1003,6 +1003,7 @@ HEDLEY_NON_NULL(1)
 SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 {
 	SDL_Point vert;
+	int w, h;
 
 	SDL_assert(ctx->tex != NULL);
 	SDL_assert(ctx->static_tex != NULL);
@@ -1024,9 +1025,9 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 		return NULL;
 
 	/* Calculate where the first element should appear vertically. */
-	SDL_GetRendererOutputSize(ctx->ren, &vert.x, &vert.y);
-	vert.x /= 8;
-	vert.y /= 16;
+	SDL_GetRendererOutputSize(ctx->ren, &w, &h);
+	vert.x = w / 8;
+	vert.y = h / 16;
 	vert.y -= ctx->offset.px_y;
 
 	SDL_SetRenderDrawColor(ctx->ren, 20, 20, 20, SDL_ALPHA_OPAQUE);
@@ -1035,7 +1036,13 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 	for(const struct ui_element *el = ctx->current;
 			el->type != UI_ELEM_TYPE_END; el++)
 	{
+		/* TODO: Do not render elements that are offscreen from the
+		 * top. */
 		ui_draw_element(ctx, el, &vert, 0);
+
+		/* Don't draw any more elements if we go offscreen. */
+		if(vert.y > h)
+			break;
 	}
 
 	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "UI Rendered");
