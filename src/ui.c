@@ -1005,6 +1005,9 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 	SDL_Point vert;
 	int w, h;
 
+	/* Whether an element has been drawn offscreen below the output. */
+	SDL_bool off_after = SDL_FALSE;
+
 	SDL_assert(ctx->tex != NULL);
 	SDL_assert(ctx->static_tex != NULL);
 
@@ -1041,8 +1044,14 @@ SDL_Texture *ui_render_frame(ui_ctx_s *ctx)
 		ui_draw_element(ctx, el, &vert, 0);
 
 		/* Don't draw any more elements if we go offscreen. */
-		if(vert.y > h)
+		if(off_after == SDL_TRUE)
 			break;
+
+		/* Allow for one more element to be drawn offscreen. This
+		 * allows the user to scroll to the next hit box if it is
+		 * offscreen. */
+		if(vert.y > h)
+			off_after = SDL_TRUE;
 	}
 
 	SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "UI Rendered");
