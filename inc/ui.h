@@ -51,8 +51,7 @@ typedef enum
 	UI_ELEM_TYPE_END,
 	UI_ELEM_TYPE_LABEL,
 	UI_ELEM_TYPE_TILE,
-	UI_ELEM_TYPE_DYNAMIC,
-	UI_ELEM_TYPE_BAR
+	UI_ELEM_TYPE_DYNAMIC
 } ui_elem_type_e;
 
 /* Structures. */
@@ -128,12 +127,6 @@ struct ui_label
 	font_style_e style;
 };
 
-struct ui_bar
-{
-	/* Bar fill between 0 to SDL_MAX_UINT16. */
-	Uint16 value;
-};
-
 struct ui_dynamic
 {
 	/* Returns the number of elements in menu.
@@ -163,7 +156,6 @@ struct ui_element {
 		struct ui_dynamic dynamic;
 		struct ui_label label;
 		struct ui_tile tile;
-		struct ui_bar bar;
 	} elem;
 };
 

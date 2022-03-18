@@ -15,6 +15,13 @@
 #include "SDL.h"
 #include "ui.h"
 
+#define STB_DS_IMPLEMENTATION
+#define STBDS_REALLOC(context,ptr,size) SDL_realloc(ptr, size)
+#define STBDS_FREE(context,ptr)         SDL_free(ptr)
+#include "stb_ds.h"
+
+#include <stdint.h>
+
 #ifdef __EMSCRIPTEN__
 /* Required for DPI reporting. */
 # include <emscripten.h>
@@ -24,6 +31,31 @@ static const float dpi_reference = 96.0f;
 
 static const SDL_Colour text_colour_light = {
 	0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE
+};
+
+struct ui_cache_hashmap {
+	const struct ui_element *key;
+	struct ui_cache_ctx *value;
+};
+
+struct ui_cache_ctx {
+	ui_elem_type_e type;
+	float dpi;
+
+	union {
+		struct {
+			uint_fast32_t number_of_cached_elements;
+			struct ui_element *elements;
+			struct ui_cache_ctx *cache;
+		} dynamic;
+		struct {
+			SDL_Texture *label;
+		} label;
+		struct {
+			SDL_Texture *label;
+			SDL_Texture *icon;
+		} tiles;
+	} cache;
 };
 
 struct ui_ctx {
@@ -49,6 +81,7 @@ struct ui_ctx {
 
 	/* Cache of elements. */
 	struct cache_ctx *cache;
+	struct ui_cache_hashmap *cache_hashmap;
 
 	/* Font context used to draw text on UI elements. */
 	font_ctx_s *font;
@@ -106,8 +139,8 @@ typedef enum {
 	MENU_INSTR_EXEC_ITEM
 } menu_instruction_e;
 
-static const char *elem_type_str[] = {
-	"End", "Label", "Tile", "Bar"
+static const char *const elem_type_str[] = {
+	"End", "Label", "Tile"
 };
 
 /**
@@ -748,31 +781,41 @@ static void ui_draw_label(ui_ctx_s *HEDLEY_RESTRICT ctx,
 	const struct ui_element *HEDLEY_RESTRICT el,
 	SDL_Point *HEDLEY_RESTRICT p, unsigned seed)
 {
-	SDL_Texture *label_tex;
 	SDL_Rect dim = {
 		.x = p->x, .y = p->y
 	};
-	Hash label_hash;
+	struct ui_cache_hashmap *cache_entry;
+	struct ui_cache_ctx *cache;
 
 	/* Render text. */
-	label_hash = HASH_FN(el->label, SDL_strlen(el->label), seed);
-	label_tex = get_cached_texture(ctx->cache, UI_TEXTURE_PART_LABEL,
-		label_hash, el);
-	if(label_tex == NULL)
+	cache_entry = hmgetp_null(ctx->cache_hashmap, el);
+	if(cache_entry == NULL)
 	{
-		label_tex = font_render_text(ctx->font, el->label,
-			el->elem.label.style, FONT_QUALITY_HIGH,
-			text_colour_light);
-		if(label_tex == NULL)
+		cache = SDL_malloc(sizeof(*cache));
+		if(cache == NULL)
 			return;
 
+		cache->type = UI_ELEM_TYPE_LABEL;
+		cache->dpi = ctx->dpi;
+		cache->cache.label.label = font_render_text(
+			ctx->font, el->label, el->elem.label.style,
+			FONT_QUALITY_HIGH, text_colour_light);
+		if(cache->cache.label.label == NULL)
+		{
+			SDL_free(cache);
+			return;
+		}
+
 		/* FIXME: Missing checks. */
-		store_cached_texture(ctx->cache, UI_TEXTURE_PART_LABEL,
-			label_hash, el, label_tex);
+		hmput(ctx->cache_hashmap, el, cache);
+	}
+	else
+	{
+		cache = cache_entry->value;
 	}
 
-	SDL_QueryTexture(label_tex, NULL, NULL, &dim.w, &dim.h);
-	SDL_RenderCopy(ctx->ren, label_tex, NULL, &dim);
+	SDL_QueryTexture(cache->cache.label.label, NULL, NULL, &dim.w, &dim.h);
+	SDL_RenderCopy(ctx->ren, cache->cache.label.label, NULL, &dim);
 
 	/* Increment coordinates to next element. */
 	p->y += dim.h + ctx->padding.label;
@@ -1172,6 +1215,7 @@ static ui_ctx_s *ui_init_renderer(SDL_Renderer *HEDLEY_RESTRICT rend,
 	ctx->dpi_multiply = dpi / dpi_reference;
 
 	ctx->cache = init_cached_texture();
+	//ctx->new_cache;
 
 	ctx->font = font_init(rend);
 	if(ctx->font == NULL)
