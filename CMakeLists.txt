@@ -46,7 +46,7 @@ PROJECT(haiyajan-menu
         VERSION ${LAST_TAG}
         DESCRIPTION "User interface library for Haiyajan"
         HOMEPAGE_URL "https://github.com/deltabeard/haiyajan-menu")
-SET(HAIYAJAN_MENU_LICENSE "LGPL-3.0, Mahyar Koshkouei (c) 2021")
+SET(HAIYAJAN_MENU_LICENSE "LGPL-3.0, Mahyar Koshkouei (c) 2023")
 
 # Add dependencies to project.
 IF(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND APPLE)
@@ -74,9 +74,9 @@ ELSEIF((CMAKE_C_COMPILER_ID STREQUAL "GNU" OR
     # "C_STANDARD 99" sets gnu99 which is unacceptable.
     TARGET_COMPILE_OPTIONS(${PROJECT_NAME} PRIVATE -Wall -Wextra -std=c99 -pedantic)
     SET(CMAKE_C_FLAGS_DEBUG "-Og -g3")
-    SET(CMAKE_C_FLAGS_MINSIZEREL "-flto -Os -s")
-    SET(CMAKE_C_FLAGS_RELWITHDEBINFO "-flto -Ofast -g3")
-    SET(CMAKE_C_FLAGS_RELEASE "-flto -Ofast -g3")
+    SET(CMAKE_C_FLAGS_MINSIZEREL "-Os -g1")
+    SET(CMAKE_C_FLAGS_RELWITHDEBINFO "-Ofast -g3")
+    SET(CMAKE_C_FLAGS_RELEASE "-Ofast -g1")
 ELSEIF(MSVC)
     SET(CMAKE_C_FLAGS_DEBUG "/Od /Zi /diagnostics:caret")
     # /Od Turn off all optimisations.
@@ -110,10 +110,6 @@ ELSE()
     ADD_COMPILE_DEFINITIONS(NDEBUG)
 ENDIF()
 
-IF(MINGW)
-    ADD_COMPILE_DEFINITIONS(SDL_MAIN_HANDLED)
-ENDIF()
-
 # Discover libraries
 SET(LIBRARY_DISCOVER_METHOD "CPM" CACHE STRING
         "Tool to use for discovering dependencies; options are: VCPKG, PKG_CONFIG, CPM")
@@ -142,33 +138,37 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
     INCLUDE(ext/cmake/CPM.cmake)
     CPMADDPACKAGE(GITHUB_REPOSITORY libsdl-org/SDL
             NAME SDL2
-            GIT_TAG release-2.0.20
+            GIT_TAG release-2.26.3
             OPTIONS
             "SDL_SHARED_ENABLED_BY_DEFAULT OFF"
             "SDL_STATIC_ENABLED_BY_DEFAULT ON"
             "OPT_DEF_LIBC TRUE"
             "SDL_DISKAUDIO OFF"
             "EXTRA_CFLAGS -DSDL_LEAN_AND_MEAN"
+            "CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}"
             "CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG}"
             "CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL}"
             "CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO}"
             "CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE}")
-    IF(SDL2_ADDED)
-        # SDL_ttf tries to link to SDL2::SDL2 even in static builds.
-        ADD_LIBRARY(SDL2::SDL2 ALIAS SDL2-static)
-    ENDIF()
 
     # Disable all external library options in Freetype. Fonts packaged with
     # Haiyajan-UI and OS do not use these features.
     CPMADDPACKAGE(GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype.git
             NAME freetype
-            GIT_TAG VER-2-11-1
+            GIT_TAG VER-2-13-0
             OPTIONS
-            "CMAKE_DISABLE_FIND_PACKAGE_ZLIB TRUE"
             "CMAKE_DISABLE_FIND_PACKAGE_BZip2 TRUE"
-            "CMAKE_DISABLE_FIND_PACKAGE_PNG TRUE"
-            "CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz TRUE"
             "CMAKE_DISABLE_FIND_PACKAGE_BrotliDec TRUE"
+            "CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz TRUE"
+            "CMAKE_DISABLE_FIND_PACKAGE_PNG TRUE"
+            "CMAKE_DISABLE_FIND_PACKAGE_ZLIB TRUE"
+            "FT_DISABLE_BROTLI True"
+            "FT_DISABLE_BZIP2 True"
+            "FT_DISABLE_HARFBUZZ True"
+            "FT_DISABLE_PNG True"
+            "FT_DISABLE_ZLIB True"
+            "BUILD_SHARED_LIBS False"
+            "CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}"
             "CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG}"
             "CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL}"
             "CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO}"
@@ -179,11 +179,16 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
 
     CPMADDPACKAGE(GITHUB_REPOSITORY libsdl-org/SDL_ttf
             NAME SDL2_ttf
-            GIT_TAG release-2.0.18
+            GIT_TAG release-2.20.2
             OPTIONS
             "SDL2_DIR ${SDL2_SOURCE_DIR}"
             "FREETYPE_LIBRARY ${freetype_SOURCE_DIR}"
             "FREETYPE_INCLUDE_DIRS ${freetype_SOURCE_DIR}/include"
+            "BUILD_SHARED_LIBS FALSE"
+            "SDL2TTF_HARFBUZZ FALSE"
+            "SDL2TTF_SAMPLES FALSE"
+            "SDL2TTF_VENDORED FALSE"
+            "CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}"
             "CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG}"
             "CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL}"
             "CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO}"
@@ -192,7 +197,8 @@ ELSEIF(${LIBRARY_DISCOVER_METHOD} STREQUAL "CPM")
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${SDL2_SOURCE_DIR}/include)
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${freetype_SOURCE_DIR}/include)
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${SDL2_ttf_SOURCE_DIR})
-    TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE SDL2-static SDL2_ttf SDL2main)
+    TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE SDL2::SDL2-static SDL2_ttf
+        SDL2::SDL2main freetype)
     # TODO: Add GNU Fribidi
 ELSE()
     MESSAGE(SEND_ERROR "LIBRARY_DISCOVER_METHOD '${LIBRARY_DISCOVER_METHOD}' is not valid")
