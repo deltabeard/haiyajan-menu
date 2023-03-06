@@ -11,7 +11,6 @@ guidelines = 80
 indent_size = 8
 indent_style = tab
 c_include_path = inc
-guidelines = 80
 indent_brace_style = Allman
 vc_generate_documentation_comments = doxygen_slash_star
 
