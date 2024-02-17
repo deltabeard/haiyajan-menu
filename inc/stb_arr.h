@@ -218,7 +218,7 @@ static void stb__arrsize_(void **pp, int size, int limit, int len)
          void *p;
          if (a->limit >= 4 && limit < a->limit * 2)
             limit = a->limit * 2;
-         p = realloc(a, sizeof(*a) + limit*size);
+         p = SDL_realloc(a, sizeof(*a) + limit*size);
          if (p) {
             a = (stb__arr *) p;
             a->limit = limit;
