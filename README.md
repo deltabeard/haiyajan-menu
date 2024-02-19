@@ -6,6 +6,8 @@ UI toolkit for Haiyajan. Requires the SDL2, and SDL2_ttf libraries only. Written
 
 Simple to implement, simple to use.
 
+*This project is still a work in progress and an initial release is not yet available.*
+
 ![Image](meta/main_menu.gif)
 
 This UI toolkit requires the following run-time dependencies:
