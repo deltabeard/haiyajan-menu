@@ -62,7 +62,7 @@ jobs:
         run: tar cf haiyajan-menu-${GITHUB_REF#refs/tags/}.tar haiyajan-menu*
           
       - name: Upload output
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ runner.os }}-${{ matrix.arch_label }}
           path: |
@@ -75,7 +75,7 @@ jobs:
     needs: build
     steps:
       - name: Download build files
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: ${{ github.workspace }}/artifacts
       
@@ -88,7 +88,7 @@ jobs:
           zip -Rj9 Haiyajan-menu-${GITHUB_REF#refs/tags/}-Windows-x86_64.zip Windows-x86_64/Release/haiyajan-menu.exe
           zip -Rj9 Haiyajan-menu-${GITHUB_REF#refs/tags/}-Windows-x86_32.zip Windows-x86_32/Release/haiyajan-menu.exe
         
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         with:
           files: |
            Haiyajan-menu-${GITHUB_REF#refs/tags/}-Linux-x86_64.tar.xz
