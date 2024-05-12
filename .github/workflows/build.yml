@@ -47,7 +47,7 @@ jobs:
 
       - name: Setup Macos dependencies
         if: ${{ runner.os == 'macOS' }}
-        run: brew install sdl2_ttf
+        run: brew install sdl2 sdl2_ttf
 
       - name: Set up Linux dependencies
         if: ${{ runner.os == 'Linux' }}
