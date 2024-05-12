@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         build_type: [RelWithDebInfo]
         generator: [Ninja]
         include:
@@ -26,11 +26,6 @@ jobs:
             generator: "Visual Studio 17 2022"
             arch: amd64
             toolset: -T v143
-          - os: windows-2019
-            build_type: RelWithDebInfo
-            generator: "Visual Studio 16 2019"
-            arch: amd64_x86
-            toolset: -T v141_xp
 
     steps:
       - uses: actions/checkout@v4
@@ -44,10 +39,6 @@ jobs:
           arch: ${{ matrix.msvc_arch }}
 
       - uses: lukka/get-cmake@latest
-
-      - name: Setup Macos dependencies
-        if: ${{ runner.os == 'macOS' }}
-        run: brew install sdl2 sdl2_ttf
 
       - name: Set up Linux dependencies
         if: ${{ runner.os == 'Linux' }}
@@ -77,14 +68,10 @@ jobs:
           cd ${{ github.workspace }}/build
           tar cf haiyajan-menu.tar haiyajan-menu*
 
-      - name: Get Short SHA
-        id: vars
-        run: echo "{sha_short}=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
       - name: Upload output
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}${{ matrix.arch}}-${{ matrix.build_type }}-${{ steps.vars.outputs.sha_short }}
+          name: haiyajan-menu-${{ matrix.os }}${{ matrix.arch }}-${{ matrix.build_type }}-${{ github.sha }}
           path: |
             ${{ github.workspace }}/build/haiyajan-menu.tar
             ${{ github.workspace }}/build/**/haiyajan-menu.exe
