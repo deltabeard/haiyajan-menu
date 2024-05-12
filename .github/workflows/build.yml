@@ -71,7 +71,7 @@ jobs:
       - name: Upload output
         uses: actions/upload-artifact@v4
         with:
-          name: haiyajan-menu-${{ matrix.os }}${{ matrix.arch}}-${{ matrix.build_type }}-$GITHUB_SHA
+          name: haiyajan-menu-${{ matrix.os }}${{ matrix.arch }}-${{ matrix.build_type }}-${{ github.sha }}
           path: |
             ${{ github.workspace }}/build/haiyajan-menu.tar
             ${{ github.workspace }}/build/**/haiyajan-menu.exe
