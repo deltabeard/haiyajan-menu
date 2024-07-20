@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "configurePresets": [
+    {
+      "name": "default",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-dbg-vcpkg",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+		"LIBRARY_DISCOVER_METHOD": "VCPKG"
+      }
+    },
+	{
+      "name": "release",
+	  "inherits": "default",
+      "binaryDir": "${sourceDir}/build-rel-vcpkg",
+      "cacheVariables": {
+		"CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ]
+}
